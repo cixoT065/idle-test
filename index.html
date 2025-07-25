@@ -1294,8 +1294,9 @@
                     UIElements.monsterHpFill.style.width = `${(gameState.currentMonster.hp / gameState.currentMonster.maxHp) * 100}%`;
                 }
                 UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
-                UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`; UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
-                UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
+                UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`;
+UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
+UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
                 UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
                 UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
                 UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
