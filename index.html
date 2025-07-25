@@ -1588,7 +1588,10 @@
                     gameState.gold -= cost;
                     gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
                     console.log('Training costs object before update:', gameState.trainingCosts);
-                    gameState.trainingCosts[stat] = Math.round(cost * 1.06);
+                    gameState.trainingCosts = {
+                      ...gameState.trainingCosts,
+                      [stat]: Math.round(cost * 1.06)
+                    };
                     console.log('Training costs object after update:', gameState.trainingCosts);
                     logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                     if (stat === 'hp') gameState.player.currentHp += 5;
