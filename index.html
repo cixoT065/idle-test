@@ -1272,6 +1272,14 @@
                     return baseProbs;
                 }
 
+                function shuffleArray(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                    return array;
+                }
+                
                 function generateItemDrop(monster) {
                     if (gameState.inventory.length >= gameState.maxInventorySize) {
                         logAction('Inventory is full! Cannot pick up new item.', 'log-system');
@@ -1295,7 +1303,6 @@
                     const baseStatMultiplier = rarityInfo.statMod;
 
                     const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
                     const baseStatCountByRarity = {
                         'N': 1,
                         'R': 2,
@@ -1303,13 +1310,17 @@
                         'SSR': 4,
                         'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
                     };
+                
                     const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
-                    const shuffledStats = allPossibleBaseStats.sort(() => 0.5 - Math.random());
-                    
+                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
+                
+                    // Shuffle a copy of the array to avoid mutating original
+                    const shuffledStats = shuffleArray([...allPossibleBaseStats]);
+                
                     // Ensure we don't pick more stats than available
                     const count = Math.min(baseStatsToAssignCount, allPossibleBaseStats.length);
                     const selectedBaseStats = shuffledStats.slice(0, count);
-                    
+                
                     const newItem = {
                         id: Date.now() + Math.random(),
                         type: itemType,
@@ -1317,8 +1328,8 @@
                         name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
                         bonusStats: {}
                     };
-                    
-                    // Assign base stats randomly selected, scaled by rarity
+                
+                    // Assign base stats strictly
                     for (const stat of selectedBaseStats) {
                         let baseValue = defaultBaseValues[stat];
                         if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
@@ -1326,7 +1337,6 @@
                         }
                         newItem[stat] = Math.round(baseValue * baseStatMultiplier);
                     }
-
                     // Bonus stats assignment
                     const numBonusStats = rarityInfo.bonusStats;
                     const bonusMultiplier = rarityInfo.bonusMultiplier;
