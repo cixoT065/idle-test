@@ -1187,8 +1187,8 @@
 
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
-                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 2.5);
-                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 2.5);
+                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 1.75);
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 1.75);
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
                     logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
@@ -1296,7 +1296,7 @@
 
                     const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                     const baseStatCountByRarity = {
-                        'N': 1,
+                        'N': 2,
                         'R': 2,
                         'SR': 3,
                         'SSR': 4,
