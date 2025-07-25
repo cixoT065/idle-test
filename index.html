@@ -1760,7 +1760,7 @@
                     if (gameState.gold >= cost) {
                         gameState.gold -= cost;
                         gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                        gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                        gameState.trainingCosts[stat] = Math.round(cost * 1.06);
                         logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                         if (stat === 'hp') gameState.player.currentHp += 5;
                         updateUI();
@@ -1791,7 +1791,7 @@
                     if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
                         gameState.gold -= cost;
                         gameState.player.currentHp = totalStats.hp;
-                        gameState.restCost = Math.round(cost * 1.15);
+                        gameState.restCost = Math.round(cost * 1.05);
                         logAction(`You rest and restore your health to full.`, 'log-system');
                         updateUI();
                     }
