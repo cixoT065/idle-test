@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idle RPG</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --panel-bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --primary-color: #444444; /* Enabled button color */
+            --secondary-color: #333333;
+            --border-color: #2c2c2c;
+            --header-bg-color: #000000;
+            --hp-color: #999999;
+            --xp-color: #777777;
+            --gold-color: #cccccc;
+            --rebirth-color: #bbbbbb;
+            --disabled-bg-color: #222222;
+            --disabled-text-color: #555555;
+        }
+        body {
+            font-family: 'Verdana', 'Geneva', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+        }
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 280px;
+            background-color: var(--panel-bg-color);
+            border-right: 1px solid var(--border-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        .panel {
+            background-color: var(--panel-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 10px #000;
+        }
+        #system-panel {
+            margin-top: auto;
+        }
+        .panel-header {
+            background-color: var(--header-bg-color);
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 13px;
+        }
+        .panel-body {
+            padding: 15px;
+        }
+        .stat-bar {
+            background-color: #0a0a0a;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 5px 0 10px;
+            height: 20px;
+            border: 1px solid #000;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+            text-align: center;
+            font-size: 12px;
+            line-height: 20px;
+            color: #000;
+            text-shadow: 1px 1px 1px rgba(255,255,255,0.1);
+        }
+        #player-hp-fill { background-color: var(--hp-color); }
+        #player-xp-fill { background-color: var(--xp-color); }
+        #monster-hp-fill { background-color: #999999; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+            font-size: 13px;
+        }
+        .monster-area { text-align: center; }
+        #monster-name { font-size: 1.5em; font-weight: bold; margin: 20px 0; color: #ffffff; }
+        .activity-log-container {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #000;
+            padding: 10px;
+            background-color: #111;
+            border-radius: 3px;
+            flex-grow: 1;
+        }
+        .activity-log-container p { margin: 0 0 5px; font-size: 13px; }
+        
+        #global-tooltip {
+            display: none;
+            position: fixed;
+            background-color: #111;
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 4px;
+            z-index: 1000;
+            width: 250px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        
+        button, .button {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: 1px solid #000;
+            padding: 8px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 5px;
+            text-align: center;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+        button:hover:not(:disabled) {
+            background-color: #555555;
+        }
+        button:disabled {
+            background-color: var(--disabled-bg-color);
+            color: var(--disabled-text-color);
+            cursor: not-allowed;
+        }
+        .button-secondary { background-color: var(--secondary-color); color: var(--text-color); }
+        .button-secondary:hover:not(:disabled) { background-color: #444444; }
+        .button-danger { background-color: #505050; color: var(--text-color); }
+        .button-danger:hover:not(:disabled) { background-color: #616161; }
+
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: var(--panel-bg-color); margin: auto; padding: 30px; border: 1px solid var(--border-color);
+            width: 80%; max-width: 500px; border-radius: 4px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .modal-choices { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .modal-choices button { width: auto; padding: 12px 20px; }
+        
+        .gold-display { font-size: 1.2em; color: var(--gold-color); font-weight: bold; text-align: center; margin-bottom: 15px; }
+        
+        .log-player { color: #bbbbbb; }
+        .log-monster { color: #999999; }
+        .log-system { color: #e0e0e0; }
+        .log-drop { color: var(--gold-color); }
+        .log-error { color: #ffffff; font-weight: bold; }
+
+        .rebirth-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .rebirth-stat span { color: var(--text-color); }
+        .rebirth-stat .rebirth-value { color: var(--rebirth-color); font-weight: bold; }
+        .rebirth-stat button { width: 30px; height: 30px; padding: 0; font-size: 1.2em; flex-shrink: 0; }
+        
+        .equipment-slot-display { padding: 4px 0; position: relative; cursor: pointer; }
+
+        .tab-buttons { display: flex; padding: 0; border-bottom: 1px solid var(--border-color); }
+        .tab-button {
+            flex: 1; border: none; background-color: var(--panel-bg-color); color: var(--text-color);
+            padding: 10px; cursor: pointer; transition: background-color 0.2s, border-bottom-color 0.2s;
+            border-radius: 0; margin: 0; border-bottom: 3px solid transparent;
+        }
+        .tab-button.active { border-bottom-color: var(--text-color); font-weight: bold; background-color: var(--header-bg-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        #inventory-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .inventory-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            position: relative;
+        }
+        .inventory-item:hover { background-color: var(--header-bg-color); }
+        .equipped-tag {
+            color: #ffffff;
+            font-size: 0.8em;
+            margin-left: 8px;
+            font-style: italic;
+            font-weight: bold;
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                padding: 10px;
+            }
+            .sidebar {
+                display: contents;
+            }
+            .main-content {
+                order: 1;
+                padding: 0;
+            }
+            .panel {
+                width: auto;
+                margin-bottom: 15px;
+            }
+            #system-panel {
+                order: 99;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-header">Player Profile</div>
+                <div class="panel-body">
+                    <div id="player-info">
+                        <div>Name: <span id="player-name">Player</span></div>
+                        <div>Class: <span id="player-class">N/A</span></div>
+                        <div>Level: <span id="player-level">1</span></div>
+                    </div>
+                    <hr style="border-color: var(--border-color);">
+                    <div>HP: <span id="player-hp-text">100 / 100</span></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="player-hp-fill"></div></div>
+                    <div>XP: <span id="player-xp-text">0 / 100</span></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="player-xp-fill"></div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">Stats</div>
+                <div class="panel-body stats-grid">
+                    <div>ATK: <span id="player-atk">10</span></div>
+                    <div>DEF: <span id="player-def">5</span></div>
+                    <div>Crit Chance: <span id="player-crit-chance">5%</span></div>
+                    <div>Crit DMG: <span id="player-crit-dmg">150%</span></div>
+                    <div>Evasion: <span id="player-evasion">5%</span></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">Equipment</div>
+                <div class="panel-body" id="equipment-display"></div>
+            </div>
+            <div class="panel" id="system-panel">
+                <div class="panel-header">System</div>
+                <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="save-game-btn">Save Game</button>
+                    <button id="load-game-btn">Load Game</button>
+                    <button id="new-game-btn" class="button-danger">New Game</button>
+                    <button id="rebirth-btn" class="button-danger" style="display: none;">Rebirth</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="actions">Actions</button>
+                    <button class="tab-button" data-tab="inventory">Inventory</button>
+                    <button class="tab-button" data-tab="rebirth">Rebirth</button>
+                </div>
+                <div class="panel-body">
+                    <div id="tab-content-actions" class="tab-content active">
+                        <div class="gold-display">Gold: <span id="player-gold">0</span>G</div>
+                        <button id="train-atk-btn">Train ATK (5G)</button>
+                        <button id="train-def-btn">Train DEF (5G)</button>
+                        <button id="train-hp-btn">Train HP (5G)</button>
+                        <hr style="border-color: var(--border-color);">
+                        <button id="rest-btn">Rest (5G)</button>
+                    </div>
+                    <div id="tab-content-inventory" class="tab-content">
+                        <div id="inventory-list"></div>
+                        <div class="inventory-actions" style="margin-top: 10px;">
+                             <button id="sell-n-btn" class="button-secondary">Sell All N</button>
+                             <button id="sell-r-btn" class="button-secondary">Sell All R</button>
+                        </div>
+                    </div>
+                    <div id="tab-content-rebirth" class="tab-content">
+                        <div class="rebirth-points" style="color: var(--rebirth-color); font-weight: bold; font-size: 1.5em; text-align: center; margin-bottom: 15px;">Points: <span id="rebirth-points">0</span></div>
+                        <div class="rebirth-stat"><span>ATK Bonus: +<span id="rebirth-atk" class="rebirth-value">0</span></span><button id="invest-atk-btn">+</button></div>
+                        <div class="rebirth-stat"><span>DEF Bonus: +<span id="rebirth-def" class="rebirth-value">0</span></span><button id="invest-def-btn">+</button></div>
+                        <div class="rebirth-stat"><span>HP Bonus: +<span id="rebirth-hp" class="rebirth-value">0</span></span><button id="invest-hp-btn">+</button></div>
+                        <div class="rebirth-stat"><span>Gold Bonus: +<span id="rebirth-gold" class="rebirth-value">0</span>%</span><button id="invest-gold-btn">+</button></div>
+                        <div class="rebirth-stat"><span>XP Bonus: +<span id="rebirth-xp" class="rebirth-value">0</span>%</span><button id="invest-xp-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel monster-area">
+                <div class="panel-header">Combat</div>
+                <div class="panel-body">
+                    <h2 id="monster-name">Monster</h2>
+                    <div>HP: <span id="monster-hp-text">50 / 50</span></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="monster-hp-fill"></div></div>
+                    <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
+                    <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+                </div>
+            </div>
+            <div class="panel" style="flex-grow: 1;">
+                <div class="panel-header">Action Log</div>
+                <div class="panel-body activity-log-container" id="action-log">
+                    <p class="log-system">Welcome to Idle RPG. Select your class to begin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="class-selection-modal" class="modal">
+        <div class="modal-content">
+            <h2>Choose Your Class</h2>
+            <p>Your starting class determines your base stats and future path.</p>
+            <div class="modal-choices">
+                <button id="select-warrior">Warrior</button>
+                <button id="select-rogue">Rogue</button>
+                <button id="select-wizard">Wizard</button>
+            </div>
+        </div>
+    </div>
+    <div id="promotion-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="promotion-title">Class Promotion!</h2>
+            <p id="promotion-text">You have reached a new milestone. Choose your path:</p>
+            <div class="modal-choices" id="promotion-choices"></div>
+        </div>
+    </div>
+    
+    <!-- Global Tooltip -->
+    <div id="global-tooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let gameInterval;
+            let autoSaveInterval;
+            const SAVE_KEY = 'idleRPGSaveData';
+            
+            function getDefaultGameState() {
+                return {
+                    player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
+                    trainingCosts: { atk: 5, def: 5, hp: 5 }, restCost: 5,
+                    inventory: [], 
+                    equipment: { weapon: null, armor: null, boots: null },
+                    maxInventorySize: 20,
+                    rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } }
+                };
+            }
+
+            let gameState = getDefaultGameState();
+
+            const classes = {
+                'Warrior': { base: { hp: 100, atk: 8, def: 5, critChance: 0.05, critDmg: 1.5, evasion: 0.03 }, promotions: { 20: ['Knight', 'Berserker'], 40: {'Knight': ['Paladin', 'Guardian'], 'Berserker': ['Slayer', 'Warlord']}, 70: {'Paladin': ['Holy Knight'], 'Guardian': ['Aegis'], 'Slayer': ['Executioner'], 'Warlord': ['Conqueror']} } },
+                'Rogue':   { base: { hp: 80, atk: 10, def: 3, critChance: 0.10, critDmg: 1.75, evasion: 0.10 }, promotions: { 20: ['Assassin', 'Ranger'], 40: {'Assassin': ['Shadow', 'Reaper'], 'Ranger': ['Sharpshooter', 'Pathfinder']}, 70: {'Shadow': ['Phantom'], 'Reaper': ['Soul Carver'], 'Sharpshooter': ['Deadeye'], 'Pathfinder': ['Trailblazer']} } },
+                'Wizard':  { base: { hp: 70, atk: 12, def: 2, critChance: 0.07, critDmg: 1.6, evasion: 0.05 }, promotions: { 20: ['Mage', 'Sorcerer'], 40: {'Mage': ['Archmage', 'Elementalist'], 'Sorcerer': ['Warlock', 'Chronomancer']}, 70: {'Archmage': ['Grand Magus'], 'Elementalist': ['Avatar'], 'Warlock': ['Demonologist'], 'Chronomancer': ['Time Lord']} } },
+            };
+            const monsters = {
+                regular: [
+                    { name: 'Slime', baseHp: 30, baseAtk: 5, baseDef: 2, gold: 2, xp: 5, dropChance: 0.15 },
+                    { name: 'Giant Rat', baseHp: 25, baseAtk: 6, baseDef: 1, gold: 1, xp: 4, dropChance: 0.10 },
+                    { name: 'Goblin Scout', baseHp: 40, baseAtk: 7, baseDef: 3, gold: 3, xp: 6, dropChance: 0.20 },
+                    { name: 'Cave Bat', baseHp: 20, baseAtk: 8, baseDef: 0, gold: 1, xp: 3, dropChance: 0.08 }
+                ],
+                elite: [
+                    { name: 'Orc Grunt', baseHp: 120, baseAtk: 20, baseDef: 8, gold: 20, xp: 30, dropChance: 0.8, isElite: true },
+                    { name: 'Troll', baseHp: 150, baseAtk: 18, baseDef: 12, gold: 25, xp: 40, dropChance: 0.9, isElite: true },
+                    { name: 'Ogre Mage', baseHp: 100, baseAtk: 28, baseDef: 6, gold: 30, xp: 50, dropChance: 0.85, isElite: true }
+                ],
+                bosses: [
+                    { name: 'Grimgnaw the Goblin King', baseHp: 400, baseAtk: 35, baseDef: 15, gold: 150, xp: 200, dropChance: 1.0 },
+                    { name: 'The Slime Mother', baseHp: 600, baseAtk: 30, baseDef: 25, gold: 250, xp: 350, dropChance: 1.0 },
+                    { name: 'Xylar the Shadow Dragon', baseHp: 1000, baseAtk: 50, baseDef: 30, gold: 800, xp: 800, dropChance: 1.0 },
+                    { name: 'Malakor the Lich', baseHp: 800, baseAtk: 60, baseDef: 25, gold: 1000, xp: 1200, dropChance: 1.0 }
+                ]
+            };
+            const itemData = {
+                types: ['weapon', 'armor', 'boots'],
+                rarities: {
+                    N:   { color: '#888888', statMod: 1.0, value: 2,  bonusStats: 0, bonusMultiplier: 0 },
+                    R:   { color: '#aaaaaa', statMod: 1.2, value: 8,  bonusStats: 1, bonusMultiplier: 1.0 },
+                    SR:  { color: '#cccccc', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
+                    SSR: { color: '#e0e0e0', statMod: 2.0, value: 200,bonusStats: 3, bonusMultiplier: 2.2 },
+                    UR:  { color: '#ffffff', statMod: 2.8, value: 1000,bonusStats: 4, bonusMultiplier: 3.0 },
+                },
+                baseStats: { weapon: { atk: 5 }, armor: { def: 4, hp: 10 }, boots: { def: 2, evasion: 0.01 } },
+                bonusStatPools: {
+                    Warrior: { primary: ['hp', 'def', 'atk'], secondary: ['critDmg'] },
+                    Rogue:   { primary: ['critChance', 'evasion', 'atk'], secondary: ['critDmg'] },
+                    Wizard:  { primary: ['atk', 'critDmg', 'critChance'], secondary: [] },
+                    all: ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion']
+                },
+                names: {
+                    weapon: ['Sword', 'Axe', 'Mace', 'Dagger', 'Staff', 'Bow', 'Katana', 'Scythe', 'Spear', 'Rapier'],
+                    armor: ['Vest', 'Cuirass', 'Hauberk', 'Mail', 'Plate', 'Robe', 'Tunic', 'Jacket', 'Gown'],
+                    boots: ['Boots', 'Greaves', 'Slippers', 'Sandals', 'Shoes', 'Sabatons', 'Wraps'],
+                    prefixes: {
+                        Warrior: ['Mighty', 'Stalwart', 'Brutal', 'Savage', 'Guardian\'s'],
+                        Rogue: ['Swift', 'Silent', 'Vicious', 'Shadow', 'Assassin\'s'],
+                        Wizard: ['Arcane', 'Mystic', 'Elemental', 'Warlock\'s', 'Sage\'s'],
+                        Balanced: ['Fine', 'Superior', 'Masterwork', 'Exquisite', 'Perfect']
+                    }
+                }
+            };
+
+            const UIElements = {
+                playerName: document.getElementById('player-name'), playerClass: document.getElementById('player-class'), playerLevel: document.getElementById('player-level'),
+                playerHpText: document.getElementById('player-hp-text'), playerHpFill: document.getElementById('player-hp-fill'),
+                playerXpText: document.getElementById('player-xp-text'), playerXpFill: document.getElementById('player-xp-fill'),
+                playerAtk: document.getElementById('player-atk'), playerDef: document.getElementById('player-def'), playerCritChance: document.getElementById('player-crit-chance'),
+                playerCritDmg: document.getElementById('player-crit-dmg'), playerEvasion: document.getElementById('player-evasion'),
+                playerGold: document.getElementById('player-gold'), monsterName: document.getElementById('monster-name'),
+                monsterHpText: document.getElementById('monster-hp-text'), monsterHpFill: document.getElementById('monster-hp-fill'),
+                waveCounter: document.getElementById('wave-counter'), killCounter: document.getElementById('kill-counter'), actionLog: document.getElementById('action-log'),
+                challengeBossBtn: document.getElementById('challenge-boss-btn'), trainAtkBtn: document.getElementById('train-atk-btn'),
+                trainDefBtn: document.getElementById('train-def-btn'), trainHpBtn: document.getElementById('train-hp-btn'), restBtn: document.getElementById('rest-btn'),
+                classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
+                inventoryList: document.getElementById('inventory-list'), equipmentDisplay: document.getElementById('equipment-display'),
+                newGameBtn: document.getElementById('new-game-btn'), rebirthBtn: document.getElementById('rebirth-btn'),
+                saveGameBtn: document.getElementById('save-game-btn'), loadGameBtn: document.getElementById('load-game-btn'),
+                sellNBtn: document.getElementById('sell-n-btn'), sellRBtn: document.getElementById('sell-r-btn'),
+                rebirthPoints: document.getElementById('rebirth-points'), rebirthAtk: document.getElementById('rebirth-atk'),
+                rebirthDef: document.getElementById('rebirth-def'), rebirthHp: document.getElementById('rebirth-hp'),
+                rebirthGold: document.getElementById('rebirth-gold'), rebirthXp: document.getElementById('rebirth-xp'),
+                globalTooltip: document.getElementById('global-tooltip'),
+            };
+
+            function selectClass(className) {
+                const classInfo = classes[className];
+                gameState.player = {
+                    name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
+                    className: className, level: 1, xp: 0, 
+                    xpToNextLevel: 50,
+                    ...classInfo.base, currentHp: classInfo.base.hp, baseStats: { ...classInfo.base },
+                };
+                UIElements.classSelectionModal.style.display = 'none';
+                logAction('You have chosen the path of the ' + className + '.', 'log-system');
+                startGame();
+            }
+            
+            function getPlayerTotalStat(stat) {
+                if (!gameState.player) return 0;
+                let total = gameState.player.baseStats[stat] || 0;
+                if (['atk', 'def', 'hp'].includes(stat)) total += gameState.rebirth.bonuses[stat] || 0;
+                
+                for (const type in gameState.equipment) {
+                    const equippedId = gameState.equipment[type];
+                    if (equippedId) {
+                        const item = gameState.inventory.find(i => i.id === equippedId);
+                        if (item) {
+                            total += item[stat] || 0;
+                            if (item.bonusStats) {
+                                for (const bonus in item.bonusStats) {
+                                    if (bonus === stat) {
+                                        total += item.bonusStats[bonus];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return total;
+            }
+
+            function getPlayerTotalStats() {
+                 if (!gameState.player) return {};
+                 const totalStats = {
+                    hp: getPlayerTotalStat('hp'), atk: getPlayerTotalStat('atk'), def: getPlayerTotalStat('def'),
+                    critChance: getPlayerTotalStat('critChance'), critDmg: getPlayerTotalStat('critDmg'), evasion: getPlayerTotalStat('evasion'),
+                };
+                if (gameState.player.currentHp > totalStats.hp) gameState.player.currentHp = totalStats.hp;
+                return totalStats;
+            }
+
+            function startGame() {
+                if (gameInterval) clearInterval(gameInterval);
+                if (autoSaveInterval) clearInterval(autoSaveInterval);
+                
+                gameState.isRunning = true;
+                if (!gameState.currentMonster) spawnMonster();
+                
+                updateAllUIs();
+                gameInterval = setInterval(gameLoop, 1000);
+                autoSaveInterval = setInterval(saveGame, 30000);
+            }
+
+            function gameLoop() {
+                if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
+                let playerDamage = calculateDamage(getPlayerTotalStats(), gameState.currentMonster);
+                gameState.currentMonster.hp -= playerDamage.damage;
+                logAction(`You hit ${gameState.currentMonster.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player');
+
+                if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
+
+                let monsterDamage = calculateDamage(gameState.currentMonster, getPlayerTotalStats());
+                gameState.player.currentHp -= monsterDamage.damage;
+                logAction(`${gameState.currentMonster.name} hits you for ${monsterDamage.damage} damage.${monsterDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-monster');
+
+                if (gameState.player.currentHp <= 0) playerDefeated();
+                updateUI();
+            }
+
+            function calculateDamage(attacker, defender) {
+                if (Math.random() < (defender.evasion || 0)) {
+                    logAction(`${defender.name || 'You'} evaded the attack!`, 'log-system');
+                    return { damage: 0, isCrit: false };
+                }
+                let isCrit = Math.random() < (attacker.critChance || 0);
+                let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
+                let baseDamage = attacker.atk * critMultiplier;
+                let damageReduction = 1 - (defender.def / (defender.def + 100));
+                let finalDamage = Math.round(baseDamage * damageReduction);
+                return { damage: Math.max(1, finalDamage), isCrit: isCrit };
+            }
+
+            function monsterDefeated() {
+                logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
+                
+                const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
+                const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
+                const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
+                const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
+                gameState.gold += goldGained;
+                gameState.player.xp += xpGained;
+                logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
+
+                if (Math.random() < gameState.currentMonster.dropChance) {
+                    generateItemDrop(gameState.currentMonster);
+                }
+                
+                gameState.kills++;
+                if (gameState.currentMonster.isBoss) {
+                    gameState.wave++;
+                    gameState.kills = 0;
+                    UIElements.challengeBossBtn.disabled = true;
+                    UIElements.challengeBossBtn.textContent = 'Challenge Boss';
+                }
+
+                if (gameState.kills >= 10 && !gameState.currentMonster.isBoss) UIElements.challengeBossBtn.disabled = false;
+                if (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
+                
+                spawnMonster();
+            }
+            
+            function generateItemName(type, theme) {
+                const prefixList = itemData.names.prefixes[theme];
+                const prefix = prefixList[Math.floor(Math.random() * prefixList.length)];
+                const baseList = itemData.names[type];
+                const base = baseList[Math.floor(Math.random() * baseList.length)];
+                return `${prefix} ${base}`;
+            }
+
+            function getRarityProbabilities(wave) {
+                if (wave <= 10) {
+                    return { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
+                } else if (wave <= 30) {
+                    return { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
+                } else if (wave <= 50) {
+                    return { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
+                } else { // Wave 51+
+                    return { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
+                }
+            }
+
+            function generateItemDrop(monster) {
+                if (gameState.inventory.length >= gameState.maxInventorySize) {
+                    logAction('Inventory is full! Cannot pick up new item.', 'log-system');
+                    return;
+                }
+                const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
+                let rarityKey;
+
+                const probs = getRarityProbabilities(gameState.wave);
+                const rarityRand = Math.random();
+                let cumulativeProb = 0;
+
+                if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
+                else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
+                else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
+                else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
+                else rarityKey = 'UR';
+
+                const urBonusRand = Math.random();
+                if (monster.isBoss && urBonusRand < 0.10) {
+                    rarityKey = 'UR';
+                } else if (monster.isElite && urBonusRand < 0.02) {
+                    rarityKey = 'UR';
+                }
+                
+                const rarityInfo = itemData.rarities[rarityKey];
+                const baseItemStats = itemData.baseStats[itemType];
+                const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
+
+                const newItem = {
+                    id: Date.now() + Math.random(), type: itemType, rarity: rarityKey,
+                    name: generateItemName(itemType, theme),
+                    ...Object.fromEntries(Object.entries(baseItemStats).map(([stat, val]) => [stat, Math.round(val * rarityInfo.statMod)])),
+                    bonusStats: {}
+                };
+
+                // Apply stat penalties for specialized classes
+                if (theme === 'Rogue') {
+                    if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.8);
+                } else if (theme === 'Wizard') {
+                    if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.7);
+                    if (newItem.def) newItem.def = Math.round(newItem.def * 0.8);
+                }
+
+                const numBonusStats = rarityInfo.bonusStats;
+                const bonusMultiplier = rarityInfo.bonusMultiplier;
+                
+                let availableBonusStats = [];
+                if (theme === 'Balanced') {
+                    availableBonusStats = [...itemData.bonusStatPools.all];
+                } else {
+                    const pools = itemData.bonusStatPools[theme];
+                    availableBonusStats = [...pools.primary, ...pools.secondary];
+                }
+
+                for (let i = 0; i < numBonusStats; i++) {
+                    if (availableBonusStats.length === 0) break;
+
+                    let bonusStatType;
+                    // Prioritize primary stats for themed items
+                    if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
+                        const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
+                        if(primaryPool.length > 0) {
+                           bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
+                        } else {
+                           bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                        }
+                    } else {
+                        bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                    }
+                    
+                    // Remove selected stat to prevent duplicates
+                    availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
+                    
+                    let bonusValue;
+                    if (['critChance', 'evasion'].includes(bonusStatType)) {
+                        bonusValue = (Math.random() * 0.005 + 0.002) * bonusMultiplier;
+                    } else if (bonusStatType === 'critDmg') {
+                        bonusValue = (Math.random() * 0.03 + 0.02) * bonusMultiplier;
+                    } else {
+                        bonusValue = Math.round((Math.random() * 3 + 2) * bonusMultiplier);
+                    }
+
+                    if (!['critChance', 'evasion', 'critDmg'].includes(bonusStatType) && bonusValue < 1 && bonusMultiplier > 0) {
+                        bonusValue = 1;
+                    }
+                    
+                    newItem.bonusStats[bonusStatType] = bonusValue;
+                }
+                
+                gameState.inventory.push(newItem);
+                logAction(`You found a [${rarityKey}] ${newItem.name}!`, 'log-drop');
+                updateInventoryUI();
+            }
+
+            function playerDefeated() {
+                logAction('You have been defeated!', 'log-monster');
+                gameState.isRunning = false;
+                gameState.player.currentHp = 0;
+                if (gameState.currentMonster.isBoss) UIElements.challengeBossBtn.textContent = 'Retry Boss';
+                updateUI();
+            }
+
+            function spawnMonster(isBoss = false) {
+                gameState.isRunning = true;
+                let monsterTemplate;
+
+                if (isBoss) {
+                    const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
+                    monsterTemplate = monsters.bosses[bossIndex];
+                } else {
+                    const canSpawnElite = gameState.wave > 1;
+                    const rand = Math.random();
+                    if (canSpawnElite && rand < 0.15) {
+                        monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
+                    } else {
+                        monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
+                    }
+                }
+
+                const scale = 1 + (gameState.wave - 1) * 0.12;
+                
+                gameState.currentMonster = {
+                    ...monsterTemplate,
+                    hp: Math.round(monsterTemplate.baseHp * scale),
+                    maxHp: Math.round(monsterTemplate.baseHp * scale),
+                    atk: Math.round(monsterTemplate.baseAtk * scale),
+                    def: Math.round(monsterTemplate.baseDef * scale),
+                    gold: Math.round(monsterTemplate.gold * scale),
+                    xp: Math.round(monsterTemplate.xp * scale),
+                    isBoss: isBoss,
+                };
+                logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
+                updateUI();
+            }
+
+            function levelUp() {
+                gameState.player.level++;
+                gameState.player.xp = 0;
+                
+                const currentLevel = gameState.player.level;
+                let xpMultiplier = 1.35;
+                if (currentLevel < 20) {
+                    xpMultiplier = 1.25;
+                }
+                gameState.player.xpToNextLevel = Math.round(gameState.player.xpToNextLevel * xpMultiplier);
+                
+                gameState.player.baseStats.hp += 5;
+                gameState.player.baseStats.atk += 1;
+                if (gameState.player.level % 2 === 0) {
+                    gameState.player.baseStats.def += 1;
+                }
+                
+                gameState.player.currentHp = getPlayerTotalStats().hp;
+
+                logAction(`LEVEL UP! You are now level ${gameState.player.level}.`, 'log-system');
+                logAction('You feel invigorated, your health fully restored!', 'log-system');
+
+                if (gameState.player.level >= 70) UIElements.rebirthBtn.style.display = 'block';
+
+                const promotions = classes[gameState.player.className.split(' ')[0]]?.promotions;
+                if (promotions && promotions[gameState.player.level]) {
+                    const choiceList = Array.isArray(promotions[gameState.player.level]) ? promotions[gameState.player.level] : promotions[gameState.player.level][gameState.player.className];
+                    if (choiceList) promoteClass(choiceList);
+                }
+                updateUI();
+            }
+            
+            function promoteClass(choices) {
+                gameState.isRunning = false;
+                const promotionChoices = document.getElementById('promotion-choices');
+                promotionChoices.innerHTML = '';
+                choices.forEach(choice => {
+                    const btn = document.createElement('button');
+                    btn.textContent = choice;
+                    btn.onclick = () => {
+                        gameState.player.className = choice;
+                        gameState.player.baseStats.hp += 15; gameState.player.baseStats.atk += 3; gameState.player.baseStats.def += 2;
+                        gameState.player.currentHp = getPlayerTotalStats().hp;
+                        logAction(`You have been promoted to ${choice}!`, 'log-system');
+                        UIElements.promotionModal.style.display = 'none';
+                        gameState.isRunning = true;
+                        updateUI();
+                    };
+                    promotionChoices.appendChild(btn);
+                });
+                UIElements.promotionModal.style.display = 'flex';
+            }
+
+            function updateUI() {
+                if (!gameState.player) return;
+                const totalStats = getPlayerTotalStats();
+                UIElements.playerName.textContent = gameState.player.name; UIElements.playerClass.textContent = gameState.player.className;
+                UIElements.playerLevel.textContent = gameState.player.level; UIElements.playerHpText.textContent = `${Math.ceil(gameState.player.currentHp)} / ${totalStats.hp}`;
+                UIElements.playerHpFill.style.width = `${(gameState.player.currentHp / totalStats.hp) * 100}%`;
+                UIElements.playerXpText.textContent = `${gameState.player.xp} / ${gameState.player.xpToNextLevel}`;
+                UIElements.playerXpFill.style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
+                UIElements.playerAtk.textContent = totalStats.atk; UIElements.playerDef.textContent = totalStats.def;
+                UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
+                UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
+                UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
+                UIElements.playerGold.textContent = gameState.gold;
+
+                if (gameState.currentMonster) {
+                    UIElements.monsterName.textContent = gameState.currentMonster.name;
+                    UIElements.monsterHpText.textContent = `${Math.ceil(gameState.currentMonster.hp)} / ${gameState.currentMonster.maxHp}`;
+                    UIElements.monsterHpFill.style.width = `${(gameState.currentMonster.hp / gameState.currentMonster.maxHp) * 100}%`;
+                }
+
+                UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
+                UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`; UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
+                UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
+                UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
+                UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp; UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
+
+                UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
+                UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
+                UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
+                UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
+                UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
+            }
+
+            function updateInventoryUI() {
+                const list = UIElements.inventoryList;
+                list.innerHTML = '';
+                const equippedIds = Object.values(gameState.equipment);
+
+                gameState.inventory.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'inventory-item';
+                    
+                    const isEquipped = equippedIds.includes(item.id);
+                    const rarityColor = itemData.rarities[item.rarity].color;
+                    let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                    
+                    let itemHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
+                    if (isEquipped) {
+                        itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
+                    }
+                    itemDiv.innerHTML = itemHTML;
+
+                    itemDiv.addEventListener('mouseover', (event) => showTooltip(event, item, isEquipped));
+                    itemDiv.addEventListener('mouseout', hideTooltip);
+                    itemDiv.onclick = () => {
+                        if (isEquipped) unequipItem(item.type);
+                        else equipItem(item);
+                    };
+                    list.appendChild(itemDiv);
+                });
+            }
+            
+            function updateEquipmentUI() {
+                const display = UIElements.equipmentDisplay;
+                display.innerHTML = '';
+                ['weapon', 'armor', 'boots'].forEach(type => {
+                    const equippedId = gameState.equipment[type];
+                    const item = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
+                    
+                    const itemSlot = document.createElement('div');
+                    itemSlot.className = 'equipment-slot-display';
+                    
+                    let nameHTML = '---';
+                    if (item) {
+                        const rarityColor = itemData.rarities[item.rarity].color;
+                        let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                        nameHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
+                        itemSlot.onclick = () => unequipItem(type);
+                        itemSlot.addEventListener('mouseover', (event) => showTooltip(event, item, true));
+                        itemSlot.addEventListener('mouseout', hideTooltip);
+                    }
+
+                    itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
+                    display.appendChild(itemSlot);
+                });
+            }
+
+            function showTooltip(event, item, isEquipped) {
+                const tooltip = UIElements.globalTooltip;
+                
+                const rarityColor = itemData.rarities[item.rarity].color;
+                let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                
+                let tooltipText = `<strong style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name} (${item.type})</strong>\n`;
+                tooltipText += `Rarity: ${item.rarity}\n`;
+                tooltipText += `--------\n`;
+                if(item.atk) tooltipText += `ATK: ${item.atk}\n`;
+                if(item.def) tooltipText += `DEF: ${item.def}\n`;
+                if(item.hp) tooltipText += `HP: ${item.hp}\n`;
+                
+                if (Object.keys(item.bonusStats).length > 0) {
+                    tooltipText += `--------\n`;
+                    for(const [stat, value] of Object.entries(item.bonusStats)) {
+                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                            tooltipText += `${statName}: +${(value * 100).toFixed(1)}%\n`;
+                        } else {
+                            tooltipText += `${statName}: +${Math.round(value)}\n`;
+                        }
+                    }
+                }
+                
+                const sellValue = itemData.rarities[item.rarity].value;
+                tooltipText += `\nSell Value: ${sellValue}G\n`;
+                tooltipText += `\n(Click to ${isEquipped ? 'unequip' : 'equip'})`;
+                
+                tooltip.innerHTML = tooltipText.replace(/\n/g, '<br>');
+                tooltip.style.display = 'block';
+
+                const targetRect = event.currentTarget.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+
+                let top = targetRect.top - tooltipRect.height - 5;
+                let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+
+                if (top < 0) {
+                    top = targetRect.bottom + 5;
+                }
+                if (left < 0) {
+                    left = 5;
+                }
+                if (left + tooltipRect.width > window.innerWidth) {
+                    left = window.innerWidth - tooltipRect.width - 5;
+                }
+
+                tooltip.style.top = `${top}px`;
+                tooltip.style.left = `${left}px`;
+            }
+
+            function hideTooltip() {
+                UIElements.globalTooltip.style.display = 'none';
+            }
+
+            function equipItem(itemToEquip) {
+                gameState.equipment[itemToEquip.type] = itemToEquip.id;
+                logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
+                updateAllUIs();
+            }
+
+            function unequipItem(itemType) {
+                const equippedId = gameState.equipment[itemType];
+                if (!equippedId) return;
+
+                const itemToUnequip = gameState.inventory.find(item => item.id === equippedId);
+                gameState.equipment[itemType] = null;
+                if (itemToUnequip) {
+                    logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
+                }
+                updateAllUIs();
+            }
+
+            function logAction(message, typeClass) {
+                const p = document.createElement('p');
+                p.textContent = message;
+                if (typeClass) p.classList.add(typeClass);
+                UIElements.actionLog.appendChild(p);
+                UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
+            }
+            
+            function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); }
+            
+            function handleNewGame() {
+                clearInterval(gameInterval);
+                clearInterval(autoSaveInterval);
+                try {
+                    localStorage.removeItem(SAVE_KEY);
+                } catch (e) { /* Fail silently */ }
+                
+                const rebirthData = gameState.rebirth;
+                gameState = getDefaultGameState();
+                gameState.rebirth = rebirthData;
+
+                UIElements.actionLog.innerHTML = '';
+                logAction('The world fades and is born anew. Choose your class.', 'log-system');
+                UIElements.rebirthBtn.style.display = 'none';
+                UIElements.classSelectionModal.style.display = 'flex';
+                updateAllUIs();
+            }
+
+            function handleRebirth() {
+                if (!gameState.player || gameState.player.level < 70) return;
+
+                if (confirm('Are you sure you want to rebirth? Your current progress will be reset for permanent bonuses.')) {
+                    const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
+                    
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    try {
+                        localStorage.removeItem(SAVE_KEY);
+                    } catch (e) { /* Fail silently */ }
+
+                    const rebirthData = gameState.rebirth;
+                    rebirthData.points += pointsGained;
+
+                    gameState = getDefaultGameState();
+                    gameState.rebirth = rebirthData;
+
+                    logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system');
+                    UIElements.rebirthBtn.style.display = 'none';
+                    UIElements.classSelectionModal.style.display = 'flex';
+                    updateAllUIs();
+                }
+            }
+
+            function investPoint(stat) {
+                if (gameState.rebirth.points > 0) {
+                    gameState.rebirth.points--;
+                    if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 1;
+                    else gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : 1);
+                    updateAllUIs();
+                }
+            }
+
+            function sellItemsByRarity(rarity) {
+                let soldCount = 0;
+                let goldEarned = 0;
+                const equippedIds = Object.values(gameState.equipment);
+
+                const itemsToKeep = gameState.inventory.filter(item => {
+                    if (item.rarity === rarity && !equippedIds.includes(item.id)) {
+                        goldEarned += itemData.rarities[item.rarity].value;
+                        soldCount++;
+                        return false;
+                    }
+                    return true;
+                });
+                
+                if (soldCount > 0) {
+                    gameState.inventory = itemsToKeep;
+                    gameState.gold += goldEarned;
+                    logAction(`Sold ${soldCount} [${rarity}] item(s) for ${goldEarned}G.`, 'log-system');
+                    updateAllUIs();
+                } else {
+                    logAction(`No unequipped [${rarity}] items to sell.`, 'log-system');
+                }
+            }
+            
+            function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
+
+            function deepMerge(target, source) {
+                let output = Object.assign({}, target);
+                if (isObject(target) && isObject(source)) {
+                    Object.keys(source).forEach(key => {
+                        if (isObject(source[key])) {
+                            if (!(key in target)) Object.assign(output, { [key]: source[key] });
+                            else output[key] = deepMerge(target[key], source[key]);
+                        } else {
+                            Object.assign(output, { [key]: source[key] });
+                        }
+                    });
+                }
+                return output;
+            }
+
+            function saveGame() {
+                if (!gameState.player) return;
+                try {
+                    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+                    logAction('Game saved.', 'log-system');
+                } catch (e) {
+                    console.error("Save failed:", e);
+                    logAction('SAVE FAILED: Browser storage is disabled or unavailable.', 'log-error');
+                }
+            }
+
+            function loadGame() {
+                try {
+                    const savedData = localStorage.getItem(SAVE_KEY);
+                    if (!savedData) {
+                        return false;
+                    }
+                    
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    
+                    const loadedState = JSON.parse(savedData);
+                    gameState = deepMerge(getDefaultGameState(), loadedState);
+                    
+                    logAction("Game loaded successfully.", 'log-system');
+                    UIElements.classSelectionModal.style.display = 'none';
+                    startGame();
+                    return true;
+                } catch (e) {
+                    console.error("Load failed:", e);
+                    logAction('LOAD FAILED: Browser storage is disabled or unavailable.', 'log-error');
+                    return false;
+                }
+            }
+
+            function setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        const tabId = button.getAttribute('data-tab');
+                        tabContents.forEach(content => {
+                            content.classList.remove('active');
+                            if (content.id === `tab-content-${tabId}`) {
+                                content.classList.add('active');
+                            }
+                        });
+                    });
+                });
+            }
+
+            // --- INITIALIZATION ---
+            setupTabs();
+            
+            // Event Listeners
+            document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
+            document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
+            document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
+            UIElements.newGameBtn.addEventListener('click', handleNewGame);
+            UIElements.rebirthBtn.addEventListener('click', handleRebirth);
+            UIElements.saveGameBtn.addEventListener('click', saveGame);
+            UIElements.loadGameBtn.addEventListener('click', loadGame);
+
+            UIElements.challengeBossBtn.addEventListener('click', () => {
+                if (gameState.player.currentHp <= 0) {
+                    gameState.player.currentHp = getPlayerTotalStats().hp * 0.5;
+                    logAction('You gather your will and stand up again!', 'log-system');
+                }
+                spawnMonster(true);
+                UIElements.challengeBossBtn.disabled = true;
+            });
+            UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
+            UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
+            UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
+            UIElements.restBtn.addEventListener('click', () => {
+                const cost = gameState.restCost;
+                const totalStats = getPlayerTotalStats();
+                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
+                    gameState.gold -= cost;
+                    gameState.player.currentHp = totalStats.hp;
+                    gameState.restCost = Math.round(cost * 1.15);
+                    logAction(`You rest and restore your health to full.`, 'log-system');
+                    if (!gameState.isRunning && gameState.player.currentHp > 0) spawnMonster();
+                    updateUI();
+                }
+            });
+            document.getElementById('invest-atk-btn').onclick = () => investPoint('atk');
+            document.getElementById('invest-def-btn').onclick = () => investPoint('def');
+            document.getElementById('invest-hp-btn').onclick = () => investPoint('hp');
+            document.getElementById('invest-gold-btn').onclick = () => investPoint('gold');
+            document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
+            UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
+            UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
+            
+            function trainStat(stat) {
+                const cost = gameState.trainingCosts[stat];
+                if (gameState.gold >= cost) {
+                    gameState.gold -= cost;
+                    gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
+                    gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                    logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
+                    if (stat === 'hp') gameState.player.currentHp += 5;
+                    updateUI();
+                }
+            }
+            
+            if (!loadGame()) {
+                UIElements.classSelectionModal.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>
