@@ -1583,20 +1583,20 @@ UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`;
             }
 
             function trainStat(stat) {
+                console.log('trainStat called for:', stat);
+                console.log('Current cost before training:', gameState.trainingCosts[stat]);
+                
                 const cost = gameState.trainingCosts[stat];
                 console.log(`Before training ${stat}: cost = ${cost}`);
                 if (gameState.gold >= cost) {
                     gameState.gold -= cost;
                     gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                    console.log('Training costs object before update:', gameState.trainingCosts);
-                    gameState.trainingCosts = {
-                      ...gameState.trainingCosts,
-                      [stat]: Math.round(cost * 1.06)
-                    };
-                    console.log('Training costs object after update:', gameState.trainingCosts);
+                    gameState.trainingCosts = Math.round(cost * 1.06);
                     logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                     if (stat === 'hp') gameState.player.currentHp += 5;
                     updateUI();
+                    console.log('trainStat called for:', stat);
+                console.log('Current cost after training:', gameState.trainingCosts[stat]);
                 } else {
                     console.log(`Not enough gold to train ${stat}. Current gold: ${gameState.gold}, cost: ${cost}`);
                 }
