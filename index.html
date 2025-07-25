@@ -170,6 +170,18 @@
         .modal-choices { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
         .modal-choices button { width: auto; padding: 12px 20px; }
         
+        #manual-save-textarea {
+            width: 100%;
+            height: 120px;
+            background-color: #0a0a0a;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
         .gold-display { font-size: 1.2em; color: var(--gold-color); font-weight: bold; text-align: center; margin-bottom: 15px; }
         
         .log-player { color: #bbbbbb; }
@@ -244,6 +256,7 @@
 
     <div class="main-container">
         <div class="sidebar">
+            <!-- Player Profile, Stats, Equipment Panels... -->
             <div class="panel">
                 <div class="panel-header">Player Profile</div>
                 <div class="panel-body">
@@ -276,8 +289,9 @@
             <div class="panel" id="system-panel">
                 <div class="panel-header">System</div>
                 <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="save-game-btn">Save Game</button>
-                    <button id="load-game-btn">Load Game</button>
+                    <button id="manual-save-btn">Save Game</button>
+                    <button id="manual-load-btn">Load Game</button>
+                    <hr style="border-color: var(--border-color);">
                     <button id="new-game-btn" class="button-danger">New Game</button>
                     <button id="rebirth-btn" class="button-danger" style="display: none;">Rebirth</button>
                 </div>
@@ -285,6 +299,7 @@
         </div>
 
         <div class="main-content">
+            <!-- Main content panels... -->
             <div class="panel">
                 <div class="tab-buttons">
                     <button class="tab-button active" data-tab="actions">Actions</button>
@@ -355,6 +370,14 @@
             <div class="modal-choices" id="promotion-choices"></div>
         </div>
     </div>
+    <div id="manual-save-modal" class="modal">
+        <div class="modal-content">
+            <h2>Game Saved!</h2>
+            <p>Copy this code and save it somewhere safe. Use the Load Game button to restore your progress.</p>
+            <textarea id="manual-save-textarea" readonly></textarea>
+            <button id="close-save-modal-btn">Close</button>
+        </div>
+    </div>
     
     <!-- Global Tooltip -->
     <div id="global-tooltip"></div>
@@ -362,9 +385,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let gameInterval;
-            let autoSaveInterval;
+            // Auto-saving is no longer feasible with the manual method
+            // let autoSaveInterval; 
             const SAVE_KEY = 'idleRPGSaveData';
             
+            // ... (rest of the initial setup, getDefaultGameState, classes, monsters, itemData, UIElements are all the same) ...
             function getDefaultGameState() {
                 return {
                     player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
@@ -445,13 +470,147 @@
                 classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
                 inventoryList: document.getElementById('inventory-list'), equipmentDisplay: document.getElementById('equipment-display'),
                 newGameBtn: document.getElementById('new-game-btn'), rebirthBtn: document.getElementById('rebirth-btn'),
-                saveGameBtn: document.getElementById('save-game-btn'), loadGameBtn: document.getElementById('load-game-btn'),
+                manualSaveBtn: document.getElementById('manual-save-btn'), manualLoadBtn: document.getElementById('manual-load-btn'),
+                manualSaveModal: document.getElementById('manual-save-modal'), manualSaveTextarea: document.getElementById('manual-save-textarea'),
+                closeSaveModalBtn: document.getElementById('close-save-modal-btn'),
                 sellNBtn: document.getElementById('sell-n-btn'), sellRBtn: document.getElementById('sell-r-btn'),
                 rebirthPoints: document.getElementById('rebirth-points'), rebirthAtk: document.getElementById('rebirth-atk'),
                 rebirthDef: document.getElementById('rebirth-def'), rebirthHp: document.getElementById('rebirth-hp'),
                 rebirthGold: document.getElementById('rebirth-gold'), rebirthXp: document.getElementById('rebirth-xp'),
                 globalTooltip: document.getElementById('global-tooltip'),
             };
+
+            // --- ALL GAME LOGIC FUNCTIONS (selectClass, getPlayerTotalStat, etc.) remain the same ---
+            // ... from selectClass to promoteClass ...
+            // The only change is in startGame, we remove the auto-save interval
+            
+            function startGame() {
+                if (gameInterval) clearInterval(gameInterval);
+                // if (autoSaveInterval) clearInterval(autoSaveInterval); // Removed auto-save
+                
+                gameState.isRunning = true;
+                if (!gameState.currentMonster) spawnMonster();
+                
+                updateAllUIs();
+                gameInterval = setInterval(gameLoop, 1000);
+                // autoSaveInterval = setInterval(saveGame, 30000); // Removed auto-save
+            }
+
+            // ... The rest of the game logic functions are identical ...
+            // (gameLoop, calculateDamage, monsterDefeated, generateItemName, getRarityProbabilities, generateItemDrop,
+            // playerDefeated, spawnMonster, levelUp, promoteClass, updateUI, updateInventoryUI, updateEquipmentUI,
+            // showTooltip, hideTooltip, equipItem, unequipItem, logAction, updateAllUIs, handleNewGame, handleRebirth,
+            // investPoint, sellItemsByRarity, isObject, deepMerge, setupTabs, trainStat)
+
+            // --- NEW AND MODIFIED SAVE/LOAD FUNCTIONS ---
+            
+            function manualSave() {
+                if (!gameState.player) {
+                    logAction("No game started to save.", 'log-error');
+                    return;
+                }
+                try {
+                    const gameStateString = JSON.stringify(gameState);
+                    // btoa() encodes the string in Base64, making it a single block of text that's safe to copy/paste.
+                    const encodedSave = btoa(gameStateString);
+                    
+                    UIElements.manualSaveTextarea.value = encodedSave;
+                    UIElements.manualSaveModal.style.display = 'flex';
+                    UIElements.manualSaveTextarea.select(); // auto-select the text for easy copying
+                    logAction("Game state encoded. Copy the code from the pop-up.", 'log-system');
+                } catch (e) {
+                    console.error("Manual save failed:", e);
+                    logAction('SAVE FAILED: Could not encode the game state.', 'log-error');
+                }
+            }
+
+            function manualLoad() {
+                const encodedSave = prompt("Please paste your save code here:");
+
+                if (!encodedSave) {
+                    logAction("Load cancelled.", 'log-system');
+                    return;
+                }
+
+                try {
+                    // atob() decodes the Base64 string back to the original JSON string.
+                    const gameStateString = atob(encodedSave);
+                    const loadedState = JSON.parse(gameStateString);
+                    
+                    // Basic validation to see if it's a valid save
+                    if (!loadedState.player || !loadedState.rebirth) {
+                        throw new Error("Invalid save file format.");
+                    }
+
+                    clearInterval(gameInterval);
+                    
+                    gameState = deepMerge(getDefaultGameState(), loadedState);
+                    
+                    logAction("Game loaded successfully from code.", 'log-system');
+                    UIElements.classSelectionModal.style.display = 'none';
+                    startGame();
+
+                } catch (e) {
+                    console.error("Manual load failed:", e);
+                    logAction('LOAD FAILED: The provided save code is invalid or corrupted.', 'log-error');
+                }
+            }
+
+            // --- EVENT LISTENERS ---
+            // Initial class selection
+            document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
+            document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
+            document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
+            
+            // System buttons
+            UIElements.manualSaveBtn.addEventListener('click', manualSave);
+            UIElements.manualLoadBtn.addEventListener('click', manualLoad);
+            UIElements.closeSaveModalBtn.addEventListener('click', () => {
+                UIElements.manualSaveModal.style.display = 'none';
+            });
+            UIElements.newGameBtn.addEventListener('click', handleNewGame);
+            UIElements.rebirthBtn.addEventListener('click', handleRebirth);
+
+            // ... (All other event listeners remain the same) ...
+             UIElements.challengeBossBtn.addEventListener('click', () => {
+                if (gameState.player.currentHp <= 0) {
+                    gameState.player.currentHp = getPlayerTotalStats().hp * 0.5;
+                    logAction('You gather your will and stand up again!', 'log-system');
+                }
+                spawnMonster(true);
+                UIElements.challengeBossBtn.disabled = true;
+            });
+            UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
+            UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
+            UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
+            UIElements.restBtn.addEventListener('click', () => {
+                const cost = gameState.restCost;
+                const totalStats = getPlayerTotalStats();
+                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
+                    gameState.gold -= cost;
+                    gameState.player.currentHp = totalStats.hp;
+                    gameState.restCost = Math.round(cost * 1.15);
+                    logAction(`You rest and restore your health to full.`, 'log-system');
+                    if (!gameState.isRunning && gameState.player.currentHp > 0) spawnMonster();
+                    updateUI();
+                }
+            });
+            document.getElementById('invest-atk-btn').onclick = () => investPoint('atk');
+            document.getElementById('invest-def-btn').onclick = () => investPoint('def');
+            document.getElementById('invest-hp-btn').onclick = () => investPoint('hp');
+            document.getElementById('invest-gold-btn').onclick = () => investPoint('gold');
+            document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
+            UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
+            UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
+
+            // --- INITIALIZATION ---
+            setupTabs();
+            logAction("To start, choose a class or load a game using a save code.", 'log-system');
+            UIElements.classSelectionModal.style.display = 'flex';
+            
+            // All other functions like selectClass, getPlayerTotalStats, gameLoop, etc., are assumed to be here, unchanged.
+            // Make sure to copy the entire script from the previous version and only replace the save/load parts as shown.
+            // I've included the full script here for completeness.
 
             function selectClass(className) {
                 const classInfo = classes[className];
@@ -498,18 +657,6 @@
                 };
                 if (gameState.player.currentHp > totalStats.hp) gameState.player.currentHp = totalStats.hp;
                 return totalStats;
-            }
-
-            function startGame() {
-                if (gameInterval) clearInterval(gameInterval);
-                if (autoSaveInterval) clearInterval(autoSaveInterval);
-                
-                gameState.isRunning = true;
-                if (!gameState.currentMonster) spawnMonster();
-                
-                updateAllUIs();
-                gameInterval = setInterval(gameLoop, 1000);
-                autoSaveInterval = setInterval(saveGame, 30000);
             }
 
             function gameLoop() {
@@ -952,11 +1099,6 @@
             
             function handleNewGame() {
                 clearInterval(gameInterval);
-                clearInterval(autoSaveInterval);
-                try {
-                    localStorage.removeItem(SAVE_KEY);
-                } catch (e) { /* Fail silently */ }
-                
                 const rebirthData = gameState.rebirth;
                 gameState = getDefaultGameState();
                 gameState.rebirth = rebirthData;
@@ -975,11 +1117,6 @@
                     const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
                     
                     clearInterval(gameInterval);
-                    clearInterval(autoSaveInterval);
-                    try {
-                        localStorage.removeItem(SAVE_KEY);
-                    } catch (e) { /* Fail silently */ }
-
                     const rebirthData = gameState.rebirth;
                     rebirthData.points += pointsGained;
 
@@ -1043,41 +1180,6 @@
                 return output;
             }
 
-            function saveGame() {
-                if (!gameState.player) return;
-                try {
-                    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
-                    logAction('Game saved.', 'log-system');
-                } catch (e) {
-                    console.error("Save failed:", e);
-                    logAction('SAVE FAILED: Browser storage is disabled or unavailable.', 'log-error');
-                }
-            }
-
-            function loadGame() {
-                try {
-                    const savedData = localStorage.getItem(SAVE_KEY);
-                    if (!savedData) {
-                        return false;
-                    }
-                    
-                    clearInterval(gameInterval);
-                    clearInterval(autoSaveInterval);
-                    
-                    const loadedState = JSON.parse(savedData);
-                    gameState = deepMerge(getDefaultGameState(), loadedState);
-                    
-                    logAction("Game loaded successfully.", 'log-system');
-                    UIElements.classSelectionModal.style.display = 'none';
-                    startGame();
-                    return true;
-                } catch (e) {
-                    console.error("Load failed:", e);
-                    logAction('LOAD FAILED: Browser storage is disabled or unavailable.', 'log-error');
-                    return false;
-                }
-            }
-
             function setupTabs() {
                 const tabButtons = document.querySelectorAll('.tab-button');
                 const tabContents = document.querySelectorAll('.tab-content');
@@ -1096,49 +1198,6 @@
                 });
             }
 
-            // --- INITIALIZATION ---
-            setupTabs();
-            
-            // Event Listeners
-            document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
-            document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
-            document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
-            UIElements.newGameBtn.addEventListener('click', handleNewGame);
-            UIElements.rebirthBtn.addEventListener('click', handleRebirth);
-            UIElements.saveGameBtn.addEventListener('click', saveGame);
-            UIElements.loadGameBtn.addEventListener('click', loadGame);
-
-            UIElements.challengeBossBtn.addEventListener('click', () => {
-                if (gameState.player.currentHp <= 0) {
-                    gameState.player.currentHp = getPlayerTotalStats().hp * 0.5;
-                    logAction('You gather your will and stand up again!', 'log-system');
-                }
-                spawnMonster(true);
-                UIElements.challengeBossBtn.disabled = true;
-            });
-            UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
-            UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
-            UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
-            UIElements.restBtn.addEventListener('click', () => {
-                const cost = gameState.restCost;
-                const totalStats = getPlayerTotalStats();
-                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
-                    gameState.gold -= cost;
-                    gameState.player.currentHp = totalStats.hp;
-                    gameState.restCost = Math.round(cost * 1.15);
-                    logAction(`You rest and restore your health to full.`, 'log-system');
-                    if (!gameState.isRunning && gameState.player.currentHp > 0) spawnMonster();
-                    updateUI();
-                }
-            });
-            document.getElementById('invest-atk-btn').onclick = () => investPoint('atk');
-            document.getElementById('invest-def-btn').onclick = () => investPoint('def');
-            document.getElementById('invest-hp-btn').onclick = () => investPoint('hp');
-            document.getElementById('invest-gold-btn').onclick = () => investPoint('gold');
-            document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
-            UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
-            UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
-            
             function trainStat(stat) {
                 const cost = gameState.trainingCosts[stat];
                 if (gameState.gold >= cost) {
@@ -1149,10 +1208,6 @@
                     if (stat === 'hp') gameState.player.currentHp += 5;
                     updateUI();
                 }
-            }
-            
-            if (!loadGame()) {
-                UIElements.classSelectionModal.style.display = 'flex';
             }
         });
     </script>
