@@ -1296,19 +1296,20 @@
 
                     const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                     const baseStatCountByRarity = {
-                        'N': 2,
+                        'N': 1,
                         'R': 2,
                         'SR': 3,
                         'SSR': 4,
                         'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
                     };
+                    
                     const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
                     const shuffledStats = allPossibleBaseStats.sort(() => 0.5 - Math.random());
-                    const selectedBaseStats = shuffledStats.slice(0, baseStatsToAssignCount);
-
-                    // Default base values if not defined for item type
-                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
-
+                    
+                    // Ensure we don't pick more stats than available
+                    const count = Math.min(baseStatsToAssignCount, allPossibleBaseStats.length);
+                    const selectedBaseStats = shuffledStats.slice(0, count);
+                    
                     const newItem = {
                         id: Date.now() + Math.random(),
                         type: itemType,
@@ -1316,7 +1317,7 @@
                         name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
                         bonusStats: {}
                     };
-
+                    
                     // Assign base stats randomly selected, scaled by rarity
                     for (const stat of selectedBaseStats) {
                         let baseValue = defaultBaseValues[stat];
