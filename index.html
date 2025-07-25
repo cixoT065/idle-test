@@ -1006,33 +1006,36 @@
             }
 
             function monsterDefeated() {
-                logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
+                    logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
+                    
+                    const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
+                    const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
                 
-                const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
-                const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
-                const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
-                const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
-                gameState.gold += goldGained;
-                gameState.player.xp += xpGained;
-                logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
-
-                if (Math.random() < gameState.currentMonster.dropChance) {
-                    generateItemDrop(gameState.currentMonster);
+                    // Increase base multipliers here (e.g., 2.5x instead of 1x)
+                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 2.5);
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 2.5);
+                
+                    gameState.gold += goldGained;
+                    gameState.player.xp += xpGained;
+                    logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
+                
+                    if (Math.random() < gameState.currentMonster.dropChance) {
+                        generateItemDrop(gameState.currentMonster);
+                    }
+                    
+                    gameState.kills++;
+                    if (gameState.currentMonster.isBoss) {
+                        gameState.wave++;
+                        gameState.kills = 0;
+                        UIElements.challengeBossBtn.disabled = true;
+                        UIElements.challengeBossBtn.textContent = 'Challenge Boss';
+                    }
+                
+                    if (gameState.kills >= 10 && !gameState.currentMonster.isBoss) UIElements.challengeBossBtn.disabled = false;
+                    if (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
+                    
+                    spawnMonster();
                 }
-                
-                gameState.kills++;
-                if (gameState.currentMonster.isBoss) {
-                    gameState.wave++;
-                    gameState.kills = 0;
-                    UIElements.challengeBossBtn.disabled = true;
-                    UIElements.challengeBossBtn.textContent = 'Challenge Boss';
-                }
-
-                if (gameState.kills >= 10 && !gameState.currentMonster.isBoss) UIElements.challengeBossBtn.disabled = false;
-                if (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
-                
-                spawnMonster();
-            }
             
             function playerDefeated() {
                 gameState.player.currentHp = 0;
