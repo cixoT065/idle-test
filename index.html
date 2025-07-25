@@ -19,6 +19,7 @@
             --rebirth-color: #bbbbbb;
             --disabled-bg-color: #222222;
             --disabled-text-color: #555555;
+            --skill-color: #ffffff;
         }
         body {
             font-family: 'Verdana', 'Geneva', sans-serif;
@@ -127,7 +128,7 @@
             border: 1px solid var(--border-color);
             white-space: pre-wrap;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            pointer-events: none;
+            pointer-events: auto;
         }
         
         button, .button {
@@ -189,6 +190,7 @@
         .log-system { color: #e0e0e0; }
         .log-drop { color: var(--gold-color); }
         .log-error { color: #ffffff; font-weight: bold; }
+        .log-skill { color: var(--skill-color); font-style: italic; font-weight: bold; }
 
         .rebirth-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .rebirth-stat span { color: var(--text-color); }
@@ -225,6 +227,28 @@
             margin-left: 8px;
             font-style: italic;
             font-weight: bold;
+        }
+
+        .tooltip-button {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        #skill-display .skill-entry {
+            margin-bottom: 10px;
+        }
+        #skill-display strong {
+            color: var(--skill-color);
+            font-size: 14px;
+        }
+        #skill-display p {
+            margin: 5px 0 0;
+            font-style: italic;
+            color: #ccc;
+            font-size: 12px;
         }
 
         @media (max-width: 900px) {
@@ -285,11 +309,15 @@
                 <div class="panel-header">Equipment</div>
                 <div class="panel-body" id="equipment-display"></div>
             </div>
+            <div class="panel" id="skill-panel" style="display: none;">
+                <div class="panel-header">Active Skills</div>
+                <div class="panel-body" id="skill-display"></div>
+            </div>
             <div class="panel" id="system-panel">
                 <div class="panel-header">System</div>
                 <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="manual-save-btn">Save Game</button>
-                    <button id="manual-load-btn">Load Game</button>
+                    <button id="manual-save-btn">Export Save</button>
+                    <button id="manual-load-btn">Import Save</button>
                     <hr style="border-color: var(--border-color);">
                     <button id="new-game-btn" class="button-danger">New Game</button>
                     <button id="rebirth-btn" class="button-danger" style="display: none;">Rebirth</button>
@@ -343,7 +371,6 @@
             <div class="panel" style="flex-grow: 1;">
                 <div class="panel-header">Action Log</div>
                 <div class="panel-body activity-log-container" id="action-log">
-                    <p class="log-system">Welcome to Idle RPG. Select your class to begin.</p>
                 </div>
             </div>
         </div>
@@ -371,7 +398,7 @@
     <div id="manual-save-modal" class="modal">
         <div class="modal-content">
             <h2>Game Saved!</h2>
-            <p>Copy this code and save it somewhere safe. Use the Load Game button to restore your progress.</p>
+            <p>Copy this code and save it somewhere safe. Use the Import Save button to restore your progress.</p>
             <textarea id="manual-save-textarea" readonly></textarea>
             <button id="close-save-modal-btn">Close</button>
         </div>
@@ -383,6 +410,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let gameInterval;
+            let autoSaveInterval;
+            let tooltipHideTimer;
+            const SAVE_KEY = 'idleRpgSaveData_v2'; // Changed key to avoid conflicts with old saves
             
             function getDefaultGameState() {
                 return {
@@ -391,7 +421,8 @@
                     inventory: [], 
                     equipment: { weapon: null, armor: null, boots: null },
                     maxInventorySize: 20,
-                    rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } }
+                    rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
+                    playerTemp: {} // This holds transient data that should not be saved/loaded directly
                 };
             }
 
@@ -402,6 +433,43 @@
                 'Rogue':   { base: { hp: 80, atk: 10, def: 3, critChance: 0.10, critDmg: 1.75, evasion: 0.10 }, promotions: { 20: ['Assassin', 'Ranger'], 40: {'Assassin': ['Shadow', 'Reaper'], 'Ranger': ['Sharpshooter', 'Pathfinder']}, 70: {'Shadow': ['Phantom'], 'Reaper': ['Soul Carver'], 'Sharpshooter': ['Deadeye'], 'Pathfinder': ['Trailblazer']} } },
                 'Wizard':  { base: { hp: 70, atk: 12, def: 2, critChance: 0.07, critDmg: 1.6, evasion: 0.05 }, promotions: { 20: ['Mage', 'Sorcerer'], 40: {'Mage': ['Archmage', 'Elementalist'], 'Sorcerer': ['Warlock', 'Chronomancer']}, 70: {'Archmage': ['Grand Magus'], 'Elementalist': ['Avatar'], 'Warlock': ['Demonologist'], 'Chronomancer': ['Time Lord']} } },
             };
+            
+            const promotionSkills = {
+                // Warrior Path
+                'Knight': { name: 'Aegis Block', description: '15% chance to block all incoming damage.' },
+                'Paladin': { name: 'Holy Shield', description: 'Aegis Block now also heals you for 5% of your Max HP.' },
+                'Holy Knight': { name: 'Divine Retribution', description: 'Holy Shield now also retaliates for 100% of your DEF as Holy damage.' },
+                'Guardian': { name: 'Stand Firm', description: 'Aegis Block now also grants +30% DEF for 3 seconds.' },
+                'Aegis': { name: 'Thornmail', description: 'Stand Firm now also reflects 20% of pre-mitigation damage back to the attacker.' },
+                'Berserker': { name: 'Frenzy', description: 'Gain +8% ATK for every 10% of missing health.' },
+                'Slayer': { name: 'Execute', description: 'Attacks against enemies below 20% HP deal 50% more damage.' },
+                'Executioner': { name: 'Cull the Weak', description: 'Execute threshold increased to 30% HP and bonus damage increased to 100%.' },
+                'Warlord': { name: 'Battle Rush', description: 'Attacks have a 20% chance to grant +20% ATK for 3 seconds.' },
+                'Conqueror': { name: 'Unyielding Assault', description: 'Battle Rush now also grants 10% Lifesteal.' },
+                // Rogue Path
+                'Assassin': { name: 'Bleed', description: 'Critical hits cause the enemy to bleed for 30% of your ATK each second for 3 seconds.' },
+                'Shadow': { name: 'Shadow Step', description: 'Attacks have a 10% chance to grant a guaranteed critical hit on your next attack.' },
+                'Phantom': { name: 'Invisibility', description: 'Shadow Step now grants a guaranteed crit and 100% evasion for your next attack.' },
+                'Reaper': { name: 'Hemorrhage', description: 'Bleed can now stack up to 3 times.' },
+                'Soul Carver': { name: 'Exsanguinate', description: 'Bleed damage ticks can now critically strike.' },
+                'Ranger': { name: 'Double Shot', description: '15% chance to attack a second time for 60% damage.' },
+                'Sharpshooter': { name: 'Focus', description: 'Every 5th attack is a guaranteed critical hit.' },
+                'Deadeye': { name: 'Lethal Precision', description: 'Guaranteed criticals from Focus deal +50% critical damage.' },
+                'Pathfinder': { name: 'Sunder', description: 'Attacks have a 25% chance to reduce enemy DEF by 10% for 5 seconds.' },
+                'Trailblazer': { name: 'Armor Shatter', description: 'Sunder now stacks up to 3 times and also reduces enemy ATK by 5%.' },
+                // Wizard Path
+                'Mage': { name: 'Arcane Power', description: 'Attacks have a 10% chance to unleash a spell for 250% of your ATK as bonus damage.' },
+                'Archmage': { name: 'High Voltage', description: 'Arcane Power proc chance increased to 15% and damage to 300%.' },
+                'Grand Magus': { name: 'Chain Lightning', description: 'Arcane Power hits now explode, dealing an additional 150% ATK damage.' },
+                'Elementalist': { name: 'Combustion', description: 'Arcane Power now also applies a burn for 50% of your ATK for 3 seconds.' },
+                'Avatar': { name: 'Apocalypse', description: 'Combustion burn damage is increased to 100% ATK and also reduces enemy DEF by 15%.' },
+                'Sorcerer': { name: 'Soul Drain', description: 'Attacks have a 5% chance to deal 150% damage and heal you for 50% of the damage dealt.' },
+                'Warlock': { name: 'Devour Soul', description: 'Soul Drain proc chance increased to 8% and heal increased to 75%.' },
+                'Demonologist': { name: 'Annihilate', description: 'Devour Soul now deals bonus damage equal to 5% of the monster\'s max HP.' },
+                'Chronomancer': { name: 'Time Warp', description: 'Soul Drain now also has a 50% chance to make the monster miss its next attack.' },
+                'Time Lord': { name: 'Paradox', description: 'Time Warp now always makes the monster miss its next attack.' }
+            };
+
             const monsters = {
                 regular: [
                     { name: 'Slime', baseHp: 30, baseAtk: 5, baseDef: 2, gold: 2, xp: 5, dropChance: 0.15 },
@@ -416,9 +484,7 @@
                 ],
                 bosses: [
                     { name: 'Grimgnaw the Goblin King', baseHp: 400, baseAtk: 35, baseDef: 15, gold: 150, xp: 200, dropChance: 1.0 },
-                    { name: 'The Slime Mother', baseHp: 600, baseAtk: 30, baseDef: 25, gold: 250, xp: 350, dropChance: 1.0 },
-                    { name: 'Xylar the Shadow Dragon', baseHp: 1000, baseAtk: 50, baseDef: 30, gold: 800, xp: 800, dropChance: 1.0 },
-                    { name: 'Malakor the Lich', baseHp: 800, baseAtk: 60, baseDef: 25, gold: 1000, xp: 1200, dropChance: 1.0 }
+                    { name: 'The Slime Mother', baseHp: 600, baseAtk: 30, baseDef: 25, gold: 250, xp: 350, dropChance: 1.0 }
                 ]
             };
             const itemData = {
@@ -472,23 +538,154 @@
                 rebirthDef: document.getElementById('rebirth-def'), rebirthHp: document.getElementById('rebirth-hp'),
                 rebirthGold: document.getElementById('rebirth-gold'), rebirthXp: document.getElementById('rebirth-xp'),
                 globalTooltip: document.getElementById('global-tooltip'),
+                skillPanel: document.getElementById('skill-panel'),
+                skillDisplay: document.getElementById('skill-display'),
             };
 
+            function startGame() {
+                if (gameInterval) clearInterval(gameInterval);
+                if (autoSaveInterval) clearInterval(autoSaveInterval);
+                
+                gameState.isRunning = true;
+                if (!gameState.currentMonster) spawnMonster();
+                
+                updateAllUIs();
+                gameInterval = setInterval(gameLoop, 1000);
+                autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
+            }
+
+            function autoSaveToLocalStorage() {
+                if (!gameState.player || !gameState.isRunning) return;
+                try {
+                    // Create a clean copy for saving, excluding transient data
+                    const stateToSave = { ...gameState };
+                    delete stateToSave.playerTemp; // Do not save temporary data
+                    
+                    const gameStateString = JSON.stringify(stateToSave);
+                    localStorage.setItem(SAVE_KEY, gameStateString);
+                } catch (e) {
+                    console.error("Auto-save to localStorage failed:", e);
+                    logAction("Auto-save failed. Your browser may be blocking storage. Use Export Save as a backup.", "log-error");
+                    clearInterval(autoSaveInterval);
+                }
+            }
+
+            function loadFromLocalStorage() {
+                try {
+                    const savedState = localStorage.getItem(SAVE_KEY);
+                    if (savedState) {
+                        const loadedState = JSON.parse(savedState);
+                        // Stronger validation
+                        if (!loadedState.player || !loadedState.player.baseStats || !loadedState.rebirth || !Array.isArray(loadedState.inventory)) {
+                            throw new Error("Invalid or corrupted save data in localStorage.");
+                        }
+                        
+                        // Perform the merge
+                        gameState = deepMerge(getDefaultGameState(), loadedState);
+                        
+                        // ** CRITICAL FIX: Explicitly reset all transient data after loading **
+                        gameState.playerTemp = {}; 
+                        if (gameState.currentMonster) {
+                            gameState.currentMonster.debuffs = {};
+                        }
+                        
+                        logAction("Game loaded automatically from browser storage.", 'log-system');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("Failed to load from localStorage:", e);
+                    logAction('Could not auto-load game. The data might be corrupted. Starting new game.', 'log-error');
+                    localStorage.removeItem(SAVE_KEY);
+                }
+                return false;
+            }
+
+            function manualSave() { 
+                if (!gameState.player) {
+                    logAction("No game started to export.", 'log-error');
+                    return;
+                }
+                try {
+                    const stateToSave = { ...gameState };
+                    delete stateToSave.playerTemp;
+                    const gameStateString = JSON.stringify(stateToSave);
+                    const encodedSave = btoa(gameStateString);
+                    
+                    UIElements.manualSaveTextarea.value = encodedSave;
+                    UIElements.manualSaveModal.style.display = 'flex';
+                    UIElements.manualSaveTextarea.select();
+                    logAction("Exported save state. Copy the code from the pop-up.", 'log-system');
+                } catch (e) {
+                    console.error("Manual save export failed:", e);
+                    logAction('EXPORT FAILED: Could not encode the game state.', 'log-error');
+                }
+            }
+
+            function manualLoad() { 
+                const encodedSave = prompt("Please paste your save code here to import it:");
+                if (!encodedSave) {
+                    logAction("Import cancelled.", 'log-system');
+                    return;
+                }
+                try {
+                    const gameStateString = atob(encodedSave);
+                    const loadedState = JSON.parse(gameStateString);
+                    
+                    if (!loadedState.player || !loadedState.player.baseStats) {
+                        throw new Error("Invalid save file format.");
+                    }
+
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    
+                    gameState = deepMerge(getDefaultGameState(), loadedState);
+                    // Also reset transient data on manual load
+                    gameState.playerTemp = {};
+                    if (gameState.currentMonster) {
+                        gameState.currentMonster.debuffs = {};
+                    }
+                    
+                    logAction("Game imported successfully from code.", 'log-system');
+                    UIElements.classSelectionModal.style.display = 'none';
+                    startGame();
+
+                } catch (e) {
+                    console.error("Manual load import failed:", e);
+                    logAction('IMPORT FAILED: The provided save code is invalid or corrupted.', 'log-error');
+                }
+            }
+
+            function initializeGame() {
+                setupTabs();
+                if (loadFromLocalStorage()) {
+                    UIElements.classSelectionModal.style.display = 'none';
+                    startGame();
+                } else {
+                    logAction("Welcome to Idle RPG. Select your class to begin, or import a save.", 'log-system');
+                    UIElements.classSelectionModal.style.display = 'flex';
+                }
+            }
+            
             function selectClass(className) {
                 const classInfo = classes[className];
                 gameState.player = {
                     name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
-                    className: className, level: 1, xp: 0, 
+                    className: className,
+                    baseClassName: className,
+                    level: 1, xp: 0, 
                     xpToNextLevel: 50,
                     ...classInfo.base, currentHp: classInfo.base.hp, baseStats: { ...classInfo.base },
+                    activeSkills: [],
                 };
                 UIElements.classSelectionModal.style.display = 'none';
                 logAction('You have chosen the path of the ' + className + '.', 'log-system');
                 startGame();
             }
             
-            function getPlayerTotalStat(stat) {
+            function getPlayerTotalStat(stat, tempStats) {
+                const stats = tempStats || getPlayerTotalStats();
                 if (!gameState.player) return 0;
+
                 let total = gameState.player.baseStats[stat] || 0;
                 if (['atk', 'def', 'hp'].includes(stat)) total += gameState.rebirth.bonuses[stat] || 0;
                 
@@ -500,60 +697,262 @@
                             total += item[stat] || 0;
                             if (item.bonusStats) {
                                 for (const bonus in item.bonusStats) {
-                                    if (bonus === stat) {
-                                        total += item.bonusStats[bonus];
-                                    }
+                                    if (bonus === stat) total += item.bonusStats[bonus];
                                 }
                             }
                         }
                     }
                 }
+
+                if (stat === 'atk' && gameState.player.activeSkills.includes('Frenzy')) {
+                    const missingHpPercent = 1 - (gameState.player.currentHp / stats.hp);
+                    const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
+                    total *= (1 + frenzyBonus);
+                }
+
+                if (stat === 'def' && gameState.playerTemp.standFirm > 0) {
+                    total *= 1.30;
+                }
+
                 return total;
             }
 
             function getPlayerTotalStats() {
                  if (!gameState.player) return {};
-                 const totalStats = {
-                    hp: getPlayerTotalStat('hp'), atk: getPlayerTotalStat('atk'), def: getPlayerTotalStat('def'),
-                    critChance: getPlayerTotalStat('critChance'), critDmg: getPlayerTotalStat('critDmg'), evasion: getPlayerTotalStat('evasion'),
-                };
-                if (gameState.player.currentHp > totalStats.hp) gameState.player.currentHp = totalStats.hp;
-                return totalStats;
+                 const stats = {};
+                 stats.hp = getPlayerTotalStat('hp', stats);
+                 stats.atk = getPlayerTotalStat('atk', stats);
+                 stats.def = getPlayerTotalStat('def', stats);
+                 stats.critChance = getPlayerTotalStat('critChance', stats);
+                 stats.critDmg = getPlayerTotalStat('critDmg', stats);
+                 stats.evasion = getPlayerTotalStat('evasion', stats);
+
+                 if (gameState.player.currentHp > stats.hp) gameState.player.currentHp = stats.hp;
+                 return stats;
             }
 
-            function startGame() {
-                if (gameInterval) clearInterval(gameInterval);
-                gameState.isRunning = true;
-                if (!gameState.currentMonster) spawnMonster();
-                updateAllUIs();
-                gameInterval = setInterval(gameLoop, 1000);
+            function handleDebuffs() {
+                const monster = gameState.currentMonster;
+                if (monster.debuffs) {
+                    if (monster.debuffs.bleed && monster.debuffs.bleed.duration > 0) {
+                        const bleed = monster.debuffs.bleed;
+                        let bleedDamage = bleed.damage;
+                        if (gameState.player.activeSkills.includes('Exsanguinate') && Math.random() < getPlayerTotalStats().critChance) {
+                           bleedDamage = Math.round(bleedDamage * getPlayerTotalStats().critDmg);
+                           logAction(`Your bleed critically strikes for ${bleedDamage} damage!`, 'log-skill');
+                        } else {
+                           logAction(`${monster.name} bleeds for ${bleedDamage} damage.`, 'log-skill');
+                        }
+                        monster.hp -= bleedDamage;
+                        bleed.duration--;
+                    }
+                    if (monster.debuffs.burn && monster.debuffs.burn.duration > 0) {
+                        const burn = monster.debuffs.burn;
+                        monster.hp -= burn.damage;
+                        logAction(`${monster.name} burns for ${burn.damage} damage.`, 'log-skill');
+                        burn.duration--;
+                    }
+                    if (monster.debuffs.sunder && monster.debuffs.sunder.duration > 0) {
+                        monster.debuffs.sunder.duration--;
+                    }
+                }
+            }
+
+            function handlePlayerBuffs() {
+                if (gameState.playerTemp.standFirm > 0) gameState.playerTemp.standFirm--;
+                if (gameState.playerTemp.battleRush > 0) gameState.playerTemp.battleRush--;
             }
 
             function gameLoop() {
                 if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
-                let playerDamage = calculateDamage(getPlayerTotalStats(), gameState.currentMonster);
-                gameState.currentMonster.hp -= playerDamage.damage;
-                logAction(`You hit ${gameState.currentMonster.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player');
-
+                
+                handlePlayerBuffs();
+                handleDebuffs();
                 if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
 
-                let monsterDamage = calculateDamage(gameState.currentMonster, getPlayerTotalStats());
-                gameState.player.currentHp -= monsterDamage.damage;
-                logAction(`${gameState.currentMonster.name} hits you for ${monsterDamage.damage} damage.${monsterDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-monster');
+                // Player's turn
+                const playerStats = getPlayerTotalStats();
+                let playerDamage = calculateDamage(playerStats, gameState.currentMonster);
+                
+                let isGuaranteedCrit = false;
+
+                if (gameState.player.activeSkills.includes('Focus')) {
+                    gameState.playerTemp.focusCounter = (gameState.playerTemp.focusCounter || 0) + 1;
+                    if (gameState.playerTemp.focusCounter >= 5) {
+                        isGuaranteedCrit = true;
+                        gameState.playerTemp.focusCounter = 0;
+                    }
+                }
+                if (gameState.player.activeSkills.includes('Shadow Step') && Math.random() < 0.10) {
+                    isGuaranteedCrit = true;
+                    if (gameState.player.activeSkills.includes('Invisibility')) {
+                        gameState.playerTemp.invisible = true;
+                    }
+                }
+
+                const finalDamage = applyPlayerAttackSkills(playerDamage, playerStats, isGuaranteedCrit);
+                gameState.currentMonster.hp -= finalDamage;
+                if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
+
+                if (gameState.player.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
+                    const secondShotStats = {...playerStats, atk: playerStats.atk * 0.6};
+                    const secondShotDamage = calculateDamage(secondShotStats, gameState.currentMonster);
+                    const finalSecondShotDamage = applyPlayerAttackSkills(secondShotDamage, secondShotStats, false);
+                    gameState.currentMonster.hp -= finalSecondShotDamage;
+                    logAction(`Double Shot triggers, firing again!`, 'log-skill');
+                    if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
+                }
+
+                // Monster's turn
+                if (gameState.currentMonster.hp > 0) {
+                    if (gameState.playerTemp.monsterMiss > 0) {
+                        logAction(`${gameState.currentMonster.name} is dazed and misses its attack!`, 'log-skill');
+                        gameState.playerTemp.monsterMiss--;
+                    } else {
+                        let monsterDamage = calculateDamage(gameState.currentMonster, playerStats);
+                        gameState.player.currentHp -= monsterDamage.damage;
+                        logAction(`${gameState.currentMonster.name} hits you for ${monsterDamage.damage} damage.`, 'log-monster');
+                    }
+                }
 
                 if (gameState.player.currentHp <= 0) playerDefeated();
-                updateUI();
+                updateAllUIs();
             }
 
-            function calculateDamage(attacker, defender) {
-                if (Math.random() < (defender.evasion || 0)) {
-                    logAction(`${defender.name || 'You'} evaded the attack!`, 'log-system');
+            function applyPlayerAttackSkills(damageInfo, stats, isGuaranteedCrit) {
+                let finalDamage = damageInfo.damage;
+                let isCrit = damageInfo.isCrit || isGuaranteedCrit;
+                
+                if (isGuaranteedCrit) {
+                    const critMultiplier = stats.critDmg + (gameState.player.activeSkills.includes('Lethal Precision') ? 0.5 : 0);
+                    finalDamage = Math.round(stats.atk * critMultiplier * (1 - (gameState.currentMonster.def / (gameState.currentMonster.def + 100))));
+                    logAction(`A focused attack lands a critical hit!`, 'log-skill');
+                }
+
+                const hpPercent = gameState.currentMonster.hp / gameState.currentMonster.maxHp;
+                if (gameState.player.activeSkills.includes('Execute') && hpPercent < 0.2) {
+                    finalDamage = Math.round(finalDamage * 1.5);
+                }
+                if (gameState.player.activeSkills.includes('Cull the Weak') && hpPercent < 0.3) {
+                    finalDamage = Math.round(finalDamage * 2.0);
+                }
+                
+                const arcaneProcChance = gameState.player.activeSkills.includes('High Voltage') ? 0.15 : 0.10;
+                if (gameState.player.activeSkills.includes('Arcane Power') && Math.random() < arcaneProcChance) {
+                    let arcaneDamage = stats.atk * (gameState.player.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
+                    if (gameState.player.activeSkills.includes('Chain Lightning')) {
+                        arcaneDamage += stats.atk * 1.5;
+                    }
+                    arcaneDamage = Math.round(arcaneDamage);
+                    finalDamage += arcaneDamage;
+                    logAction(`Arcane Power unleashes a spell for ${arcaneDamage} bonus damage!`, 'log-skill');
+
+                    if (gameState.player.activeSkills.includes('Combustion')) {
+                        const burnDamage = Math.round(stats.atk * (gameState.player.activeSkills.includes('Apocalypse') ? 1.0 : 0.5));
+                        gameState.currentMonster.debuffs.burn = { damage: burnDamage, duration: 3 };
+                        logAction(`The target is set ablaze!`, 'log-skill');
+                        if (gameState.player.activeSkills.includes('Apocalypse')) {
+                           gameState.currentMonster.debuffs.sunder = { stacks: 1, amount: 0.15, duration: 5 };
+                        }
+                    }
+                }
+
+                const soulDrainProcChance = gameState.player.activeSkills.includes('Devour Soul') ? 0.08 : 0.05;
+                if (gameState.player.activeSkills.includes('Soul Drain') && Math.random() < soulDrainProcChance) {
+                    let bonusDamage = finalDamage * 0.5;
+                    if (gameState.player.activeSkills.includes('Annihilate')) {
+                        bonusDamage += gameState.currentMonster.maxHp * 0.05;
+                    }
+                    bonusDamage = Math.round(bonusDamage);
+                    finalDamage += bonusDamage;
+                    
+                    const healAmount = Math.round(finalDamage * (gameState.player.activeSkills.includes('Devour Soul') ? 0.75 : 0.5));
+                    gameState.player.currentHp = Math.min(stats.hp, gameState.player.currentHp + healAmount);
+                    logAction(`Soul Drain activates, dealing ${bonusDamage} bonus damage and healing for ${healAmount} HP!`, 'log-skill');
+                    
+                    if (gameState.player.activeSkills.includes('Time Warp')) {
+                        if (gameState.player.activeSkills.includes('Paradox') || Math.random() < 0.5) {
+                            gameState.playerTemp.monsterMiss = (gameState.playerTemp.monsterMiss || 0) + 1;
+                        }
+                    }
+                }
+
+                logAction(`You hit ${gameState.currentMonster.name} for ${finalDamage} damage.${isCrit ? ' (CRIT!)' : ''}`, 'log-player');
+
+                if (isCrit && gameState.player.activeSkills.includes('Bleed')) {
+                    const maxStacks = gameState.player.activeSkills.includes('Hemorrhage') ? 3 : 1;
+                    if (!gameState.currentMonster.debuffs.bleed || (gameState.currentMonster.debuffs.bleed.stacks || 1) < maxStacks) {
+                        const bleedDamage = Math.round(stats.atk * 0.3);
+                        if (gameState.currentMonster.debuffs.bleed) {
+                           gameState.currentMonster.debuffs.bleed.stacks++;
+                           gameState.currentMonster.debuffs.bleed.damage += bleedDamage;
+                           gameState.currentMonster.debuffs.bleed.duration = 3;
+                        } else {
+                           gameState.currentMonster.debuffs.bleed = { damage: bleedDamage, duration: 3, stacks: 1 };
+                        }
+                        logAction(`Your critical hit causes the ${gameState.currentMonster.name} to bleed!`, 'log-skill');
+                    }
+                }
+                
+                return finalDamage;
+            }
+
+            function calculateDamage(attacker, defenderStats) {
+                let defenderEvasion = defenderStats.evasion;
+                if (gameState.playerTemp.invisible) {
+                    defenderEvasion = 1; 
+                    gameState.playerTemp.invisible = false;
+                }
+
+                if (Math.random() < defenderEvasion) {
+                    logAction(`${attacker.name}'s attack was evaded!`, 'log-system');
                     return { damage: 0, isCrit: false };
                 }
+
+                if (gameState.player.activeSkills.includes('Aegis Block') && attacker === gameState.currentMonster) {
+                    if (Math.random() < 0.15) {
+                        logAction(`Your Aegis Block skill activates, negating all damage!`, 'log-skill');
+                        if (gameState.player.activeSkills.includes('Holy Shield')) {
+                            const healAmount = Math.round(defenderStats.hp * 0.05);
+                            gameState.player.currentHp = Math.min(defenderStats.hp, gameState.player.currentHp + healAmount);
+                            logAction(`Holy Shield heals you for ${healAmount} HP.`, 'log-skill');
+                        }
+                        if (gameState.player.activeSkills.includes('Divine Retribution')) {
+                            const retaliateDamage = Math.round(defenderStats.def);
+                            gameState.currentMonster.hp -= retaliateDamage;
+                            logAction(`Divine Retribution strikes back for ${retaliateDamage} damage!`, 'log-skill');
+                        }
+                        if (gameState.player.activeSkills.includes('Stand Firm')) {
+                            gameState.playerTemp.standFirm = 3;
+                            logAction(`Stand Firm activates, boosting your DEF!`, 'log-skill');
+                        }
+                        if (gameState.player.activeSkills.includes('Thornmail')) {
+                             const reflectDamage = Math.round(attacker.atk * 0.2);
+                             gameState.currentMonster.hp -= reflectDamage;
+                             logAction(`Thornmail reflects ${reflectDamage} damage!`, 'log-skill');
+                        }
+                        return { damage: 0, isCrit: false };
+                    }
+                }
+                
                 let isCrit = Math.random() < (attacker.critChance || 0);
                 let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
-                let baseDamage = attacker.atk * critMultiplier;
-                let damageReduction = 1 - (defender.def / (defender.def + 100));
+                
+                let attackerAtk = attacker.atk;
+                if (gameState.playerTemp.battleRush > 0 && attacker === gameState.player) {
+                    attackerAtk *= 1.20;
+                }
+
+                let baseDamage = attackerAtk * critMultiplier;
+                
+                let defenderDef = defenderStats.def;
+                if (gameState.currentMonster.debuffs && gameState.currentMonster.debuffs.sunder && attacker === gameState.player) {
+                    const sunderStacks = gameState.currentMonster.debuffs.sunder.stacks || 1;
+                    const sunderAmount = gameState.currentMonster.debuffs.sunder.amount || 0.10;
+                    defenderDef *= (1 - (sunderAmount * sunderStacks));
+                }
+
+                let damageReduction = 1 - (defenderDef / (defenderDef + 100));
                 let finalDamage = Math.round(baseDamage * damageReduction);
                 return { damage: Math.max(1, finalDamage), isCrit: isCrit };
             }
@@ -587,43 +986,26 @@
                 spawnMonster();
             }
             
-            // THIS IS THE MODIFIED FUNCTION
             function playerDefeated() {
-                gameState.player.currentHp = 0; // Set HP to 0 before doing anything else.
+                gameState.player.currentHp = 0;
 
-                // Check if the defeat was by a boss monster
                 if (gameState.currentMonster && gameState.currentMonster.isBoss) {
                     logAction('The boss\'s power overwhelms you, sending you back to safety!', 'log-error');
-
-                    // Restore player to 50% HP
                     const totalStats = getPlayerTotalStats();
                     gameState.player.currentHp = totalStats.hp * 0.5;
                     logAction(`You are revived with 50% health.`, 'log-system');
-
-                    // Reset the boss button
                     UIElements.challengeBossBtn.disabled = true;
                     UIElements.challengeBossBtn.textContent = 'Challenge Boss';
-
-                    // Spawn a new regular monster to continue the fight.
                     spawnMonster(); 
                 } else {
-                    // Logic for being defeated by a regular monster.
                     logAction('You have been defeated by a monster!', 'log-monster');
-                    
-                    // Calculate and apply XP penalty (10% of XP to next level)
                     const xpPenalty = Math.round(gameState.player.xpToNextLevel * 0.10);
                     gameState.player.xp -= xpPenalty;
-                    if (gameState.player.xp < 0) {
-                        gameState.player.xp = 0;
-                    }
+                    if (gameState.player.xp < 0) gameState.player.xp = 0;
                     logAction(`As a penalty, you lose ${xpPenalty} XP.`, 'log-error');
-
-                    // Auto-revive with 50% health
                     const totalStats = getPlayerTotalStats();
-                    gameState.player.currentHp = totalStats.hp * 0.5;
+                    gameState.player.currentHp = totalStats.hp * 0.25;
                     logAction(`You are automatically revived with 25% health.`, 'log-system');
-
-                    // Restart combat with a new monster
                     spawnMonster();
                 }
             }
@@ -637,15 +1019,10 @@
             }
 
             function getRarityProbabilities(wave) {
-                if (wave <= 10) {
-                    return { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
-                } else if (wave <= 30) {
-                    return { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
-                } else if (wave <= 50) {
-                    return { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
-                } else { // Wave 51+
-                    return { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
-                }
+                if (wave <= 10) return { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
+                if (wave <= 30) return { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
+                if (wave <= 50) return { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
+                return { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
             }
 
             function generateItemDrop(monster) {
@@ -655,81 +1032,50 @@
                 }
                 const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
                 let rarityKey;
-
                 const probs = getRarityProbabilities(gameState.wave);
                 const rarityRand = Math.random();
                 let cumulativeProb = 0;
-
                 if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
                 else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
                 else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
                 else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
                 else rarityKey = 'UR';
-
                 const urBonusRand = Math.random();
-                if (monster.isBoss && urBonusRand < 0.10) {
-                    rarityKey = 'UR';
-                } else if (monster.isElite && urBonusRand < 0.02) {
-                    rarityKey = 'UR';
-                }
+                if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
+                else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
                 
                 const rarityInfo = itemData.rarities[rarityKey];
                 const baseItemStats = itemData.baseStats[itemType];
                 const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
-
                 const newItem = {
                     id: Date.now() + Math.random(), type: itemType, rarity: rarityKey,
                     name: generateItemName(itemType, theme),
                     ...Object.fromEntries(Object.entries(baseItemStats).map(([stat, val]) => [stat, Math.round(val * rarityInfo.statMod)])),
                     bonusStats: {}
                 };
-
-                if (theme === 'Rogue') {
-                    if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.8);
-                } else if (theme === 'Wizard') {
-                    if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.7);
-                    if (newItem.def) newItem.def = Math.round(newItem.def * 0.8);
-                }
-
+                if (theme === 'Rogue') { if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.8); }
+                else if (theme === 'Wizard') { if (newItem.hp) newItem.hp = Math.round(newItem.hp * 0.7); if (newItem.def) newItem.def = Math.round(newItem.def * 0.8); }
                 const numBonusStats = rarityInfo.bonusStats;
                 const bonusMultiplier = rarityInfo.bonusMultiplier;
-                
                 let availableBonusStats = [];
-                if (theme === 'Balanced') {
-                    availableBonusStats = [...itemData.bonusStatPools.all];
-                } else {
-                    const pools = itemData.bonusStatPools[theme];
-                    availableBonusStats = [...pools.primary, ...pools.secondary];
-                }
-
+                if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
+                else { const pools = itemData.bonusStatPools[theme]; availableBonusStats = [...pools.primary, ...pools.secondary]; }
                 for (let i = 0; i < numBonusStats; i++) {
                     if (availableBonusStats.length === 0) break;
                     let bonusStatType;
                     if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
                         const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
-                        if(primaryPool.length > 0) {
-                           bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
-                        } else {
-                           bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                        }
-                    } else {
-                        bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                    }
+                        if(primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
+                        else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                    } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
                     availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
                     let bonusValue;
-                    if (['critChance', 'evasion'].includes(bonusStatType)) {
-                        bonusValue = (Math.random() * 0.005 + 0.002) * bonusMultiplier;
-                    } else if (bonusStatType === 'critDmg') {
-                        bonusValue = (Math.random() * 0.03 + 0.02) * bonusMultiplier;
-                    } else {
-                        bonusValue = Math.round((Math.random() * 3 + 2) * bonusMultiplier);
-                    }
-                    if (!['critChance', 'evasion', 'critDmg'].includes(bonusStatType) && bonusValue < 1 && bonusMultiplier > 0) {
-                        bonusValue = 1;
-                    }
+                    if (['critChance', 'evasion'].includes(bonusStatType)) bonusValue = (Math.random() * 0.005 + 0.002) * bonusMultiplier;
+                    else if (bonusStatType === 'critDmg') bonusValue = (Math.random() * 0.03 + 0.02) * bonusMultiplier;
+                    else bonusValue = Math.round((Math.random() * 3 + 2) * bonusMultiplier);
+                    if (!['critChance', 'evasion', 'critDmg'].includes(bonusStatType) && bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
                     newItem.bonusStats[bonusStatType] = bonusValue;
                 }
-                
                 gameState.inventory.push(newItem);
                 logAction(`You found a [${rarityKey}] ${newItem.name}!`, 'log-drop');
                 updateInventoryUI();
@@ -738,69 +1084,50 @@
             function spawnMonster(isBoss = false) {
                 gameState.isRunning = true;
                 let monsterTemplate;
-
                 if (isBoss) {
                     const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
                     monsterTemplate = monsters.bosses[bossIndex];
                 } else {
                     const canSpawnElite = gameState.wave > 1;
                     const rand = Math.random();
-                    if (canSpawnElite && rand < 0.15) {
-                        monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
-                    } else {
-                        monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
-                    }
+                    if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
+                    else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
                 }
-
                 const scale = 1 + (gameState.wave - 1) * 0.12;
-                
                 gameState.currentMonster = {
                     ...monsterTemplate,
-                    hp: Math.round(monsterTemplate.baseHp * scale),
-                    maxHp: Math.round(monsterTemplate.baseHp * scale),
-                    atk: Math.round(monsterTemplate.baseAtk * scale),
-                    def: Math.round(monsterTemplate.baseDef * scale),
-                    gold: Math.round(monsterTemplate.gold * scale),
-                    xp: Math.round(monsterTemplate.xp * scale),
+                    hp: Math.round(monsterTemplate.baseHp * scale), maxHp: Math.round(monsterTemplate.baseHp * scale),
+                    atk: Math.round(monsterTemplate.baseAtk * scale), def: Math.round(monsterTemplate.baseDef * scale),
+                    gold: Math.round(monsterTemplate.gold * scale), xp: Math.round(monsterTemplate.xp * scale),
                     isBoss: isBoss,
+                    debuffs: {},
                 };
                 logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
                 updateUI();
             }
 
             function levelUp() {
-                gameState.player.level++;
-                gameState.player.xp = 0;
-                
+                gameState.player.level++; gameState.player.xp = 0;
                 const currentLevel = gameState.player.level;
                 let xpMultiplier = 1.35;
-                if (currentLevel < 20) {
-                    xpMultiplier = 1.25;
-                }
+                if (currentLevel < 20) xpMultiplier = 1.25;
                 gameState.player.xpToNextLevel = Math.round(gameState.player.xpToNextLevel * xpMultiplier);
-                
-                gameState.player.baseStats.hp += 5;
-                gameState.player.baseStats.atk += 1;
-                if (gameState.player.level % 2 === 0) {
-                    gameState.player.baseStats.def += 1;
-                }
-                
+                gameState.player.baseStats.hp += 5; gameState.player.baseStats.atk += 1;
+                if (gameState.player.level % 2 === 0) gameState.player.baseStats.def += 1;
                 gameState.player.currentHp = getPlayerTotalStats().hp;
-
                 logAction(`LEVEL UP! You are now level ${gameState.player.level}.`, 'log-system');
                 logAction('You feel invigorated, your health fully restored!', 'log-system');
-
                 if (gameState.player.level >= 70) UIElements.rebirthBtn.style.display = 'block';
-
-                const promotions = classes[gameState.player.className.split(' ')[0]]?.promotions;
+                
+                const promotions = classes[gameState.player.baseClassName]?.promotions;
                 if (promotions && promotions[gameState.player.level]) {
                     const choiceList = Array.isArray(promotions[gameState.player.level]) ? promotions[gameState.player.level] : promotions[gameState.player.level][gameState.player.className];
-                    if (choiceList) promoteClass(choiceList);
+                    if (choiceList) showPromotionModal(choiceList);
                 }
                 updateUI();
             }
             
-            function promoteClass(choices) {
+            function showPromotionModal(choices) {
                 gameState.isRunning = false;
                 const promotionChoices = document.getElementById('promotion-choices');
                 promotionChoices.innerHTML = '';
@@ -809,12 +1136,18 @@
                     btn.textContent = choice;
                     btn.onclick = () => {
                         gameState.player.className = choice;
-                        gameState.player.baseStats.hp += 15; gameState.player.baseStats.atk += 3; gameState.player.baseStats.def += 2;
-                        gameState.player.currentHp = getPlayerTotalStats().hp;
+                        const skill = promotionSkills[choice];
+                        if (skill) {
+                            gameState.player.activeSkills.push(skill.name);
+                            logAction(`You have learned the skill: ${skill.name}!`, 'log-skill');
+                        }
+                        
                         logAction(`You have been promoted to ${choice}!`, 'log-system');
+                        gameState.player.currentHp = getPlayerTotalStats().hp;
+                        
                         UIElements.promotionModal.style.display = 'none';
                         gameState.isRunning = true;
-                        updateUI();
+                        updateAllUIs();
                     };
                     promotionChoices.appendChild(btn);
                 });
@@ -829,52 +1162,59 @@
                 UIElements.playerHpFill.style.width = `${(gameState.player.currentHp / totalStats.hp) * 100}%`;
                 UIElements.playerXpText.textContent = `${gameState.player.xp} / ${gameState.player.xpToNextLevel}`;
                 UIElements.playerXpFill.style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
-                UIElements.playerAtk.textContent = totalStats.atk; UIElements.playerDef.textContent = totalStats.def;
+                UIElements.playerAtk.textContent = Math.round(totalStats.atk); UIElements.playerDef.textContent = Math.round(totalStats.def);
                 UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
                 UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
                 UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
                 UIElements.playerGold.textContent = gameState.gold;
-
                 if (gameState.currentMonster) {
                     UIElements.monsterName.textContent = gameState.currentMonster.name;
                     UIElements.monsterHpText.textContent = `${Math.ceil(gameState.currentMonster.hp)} / ${gameState.currentMonster.maxHp}`;
                     UIElements.monsterHpFill.style.width = `${(gameState.currentMonster.hp / gameState.currentMonster.maxHp) * 100}%`;
                 }
-
                 UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
                 UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`; UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
                 UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
                 UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
                 UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
-                // THIS IS THE CORRECTED LOGIC FOR THE REST BUTTON
                 UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
-
                 UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
                 UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
                 UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
                 UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
                 UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
+
+                if (gameState.player.activeSkills.length > 0) {
+                    UIElements.skillDisplay.innerHTML = '';
+                    gameState.player.activeSkills.forEach(skillName => {
+                        const skillKey = Object.keys(promotionSkills).find(key => promotionSkills[key].name === skillName);
+                        const skillData = promotionSkills[skillKey];
+                        if (skillData) {
+                            const skillEntry = document.createElement('div');
+                            skillEntry.className = 'skill-entry';
+                            skillEntry.innerHTML = `<strong>${skillData.name}</strong><p>${skillData.description}</p>`;
+                            UIElements.skillDisplay.appendChild(skillEntry);
+                        }
+                    });
+                    UIElements.skillPanel.style.display = 'flex';
+                } else {
+                    UIElements.skillPanel.style.display = 'none';
+                }
             }
 
             function updateInventoryUI() {
                 const list = UIElements.inventoryList;
                 list.innerHTML = '';
                 const equippedIds = Object.values(gameState.equipment);
-
                 gameState.inventory.forEach(item => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'inventory-item';
-                    
                     const isEquipped = equippedIds.includes(item.id);
                     const rarityColor = itemData.rarities[item.rarity].color;
                     let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
-                    
                     let itemHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
-                    if (isEquipped) {
-                        itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
-                    }
+                    if (isEquipped) itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
                     itemDiv.innerHTML = itemHTML;
-
                     itemDiv.addEventListener('mouseover', (event) => showTooltip(event, item, isEquipped));
                     itemDiv.addEventListener('mouseout', hideTooltip);
                     itemDiv.onclick = () => {
@@ -891,10 +1231,8 @@
                 ['weapon', 'armor', 'boots'].forEach(type => {
                     const equippedId = gameState.equipment[type];
                     const item = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
-                    
                     const itemSlot = document.createElement('div');
                     itemSlot.className = 'equipment-slot-display';
-                    
                     let nameHTML = '---';
                     if (item) {
                         const rarityColor = itemData.rarities[item.rarity].color;
@@ -904,66 +1242,79 @@
                         itemSlot.addEventListener('mouseover', (event) => showTooltip(event, item, true));
                         itemSlot.addEventListener('mouseout', hideTooltip);
                     }
-
                     itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
                     display.appendChild(itemSlot);
                 });
             }
 
             function showTooltip(event, item, isEquipped) {
+                clearTimeout(tooltipHideTimer);
                 const tooltip = UIElements.globalTooltip;
-                
+                tooltip.innerHTML = ''; 
+
                 const rarityColor = itemData.rarities[item.rarity].color;
                 let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+
+                const nameEl = document.createElement('strong');
+                nameEl.style.color = rarityColor;
+                nameEl.style.fontWeight = fontWeight;
+                nameEl.textContent = `${item.name} (${item.type})`;
+                tooltip.appendChild(nameEl);
+
+                const addLine = (text) => { tooltip.appendChild(document.createElement('br')); tooltip.appendChild(document.createTextNode(text)); };
                 
-                let tooltipText = `<strong style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name} (${item.type})</strong>\n`;
-                tooltipText += `Rarity: ${item.rarity}\n`;
-                tooltipText += `--------\n`;
-                if(item.atk) tooltipText += `ATK: ${item.atk}\n`;
-                if(item.def) tooltipText += `DEF: ${item.def}\n`;
-                if(item.hp) tooltipText += `HP: ${item.hp}\n`;
+                addLine(`Rarity: ${item.rarity}`);
+                addLine(`--------`);
+                if(item.atk) addLine(`ATK: ${item.atk}`);
+                if(item.def) addLine(`DEF: ${item.def}`);
+                if(item.hp) addLine(`HP: ${item.hp}`);
                 
                 if (Object.keys(item.bonusStats).length > 0) {
-                    tooltipText += `--------\n`;
+                    addLine(`--------`);
                     for(const [stat, value] of Object.entries(item.bonusStats)) {
                         const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                            tooltipText += `${statName}: +${(value * 100).toFixed(1)}%\n`;
-                        } else {
-                            tooltipText += `${statName}: +${Math.round(value)}\n`;
-                        }
+                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
+                        else addLine(`${statName}: +${Math.round(value)}`);
                     }
                 }
                 
                 const sellValue = itemData.rarities[item.rarity].value;
-                tooltipText += `\nSell Value: ${sellValue}G\n`;
-                tooltipText += `\n(Click to ${isEquipped ? 'unequip' : 'equip'})`;
+                tooltip.appendChild(document.createElement('br'));
+                addLine(`Sell Value: ${sellValue}G`);
                 
-                tooltip.innerHTML = tooltipText.replace(/\n/g, '<br>');
-                tooltip.style.display = 'block';
+                const actionText = document.createElement('span');
+                actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
+                actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
+                tooltip.appendChild(actionText);
 
+                if (!isEquipped) {
+                    const sellButton = document.createElement('button');
+                    sellButton.textContent = `Sell for ${sellValue}G`;
+                    sellButton.className = 'button button-secondary tooltip-button';
+                    sellButton.onclick = (e) => {
+                        e.stopPropagation(); 
+                        sellItem(item.id);
+                    };
+                    tooltip.appendChild(sellButton);
+                }
+                
+                tooltip.style.display = 'block';
                 const targetRect = event.currentTarget.getBoundingClientRect();
                 const tooltipRect = tooltip.getBoundingClientRect();
-
                 let top = targetRect.top - tooltipRect.height - 5;
                 let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-
-                if (top < 0) {
-                    top = targetRect.bottom + 5;
-                }
-                if (left < 0) {
-                    left = 5;
-                }
-                if (left + tooltipRect.width > window.innerWidth) {
-                    left = window.innerWidth - tooltipRect.width - 5;
-                }
-
+                if (top < 0) top = targetRect.bottom + 5;
+                if (left < 0) left = 5;
+                if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
                 tooltip.style.top = `${top}px`;
                 tooltip.style.left = `${left}px`;
             }
 
             function hideTooltip() {
-                UIElements.globalTooltip.style.display = 'none';
+                clearTimeout(tooltipHideTimer);
+                tooltipHideTimer = setTimeout(() => {
+                    UIElements.globalTooltip.style.display = 'none';
+                }, 200);
             }
 
             function equipItem(itemToEquip) {
@@ -975,12 +1326,26 @@
             function unequipItem(itemType) {
                 const equippedId = gameState.equipment[itemType];
                 if (!equippedId) return;
-
                 const itemToUnequip = gameState.inventory.find(item => item.id === equippedId);
                 gameState.equipment[itemType] = null;
-                if (itemToUnequip) {
-                    logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
+                if (itemToUnequip) logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
+                updateAllUIs();
+            }
+
+            function sellItem(itemId) {
+                const itemIndex = gameState.inventory.findIndex(i => i.id === itemId);
+                if (itemIndex === -1) return;
+                const item = gameState.inventory[itemIndex];
+                const equippedIds = Object.values(gameState.equipment);
+                if (equippedIds.includes(item.id)) {
+                    logAction("Cannot sell an equipped item. Please unequip it first.", 'log-error');
+                    return;
                 }
+                const sellValue = itemData.rarities[item.rarity].value;
+                gameState.gold += sellValue;
+                gameState.inventory.splice(itemIndex, 1);
+                logAction(`Sold [${item.rarity}] ${item.name} for ${sellValue}G.`, 'log-system');
+                hideTooltip();
                 updateAllUIs();
             }
 
@@ -996,10 +1361,14 @@
             
             function handleNewGame() {
                 clearInterval(gameInterval);
+                clearInterval(autoSaveInterval);
+                try {
+                    localStorage.removeItem(SAVE_KEY);
+                } catch(e) { console.error("Could not clear localStorage on new game.", e); }
+
                 const rebirthData = gameState.rebirth;
                 gameState = getDefaultGameState();
                 gameState.rebirth = rebirthData;
-
                 UIElements.actionLog.innerHTML = '';
                 logAction('The world fades and is born anew. Choose your class.', 'log-system');
                 UIElements.rebirthBtn.style.display = 'none';
@@ -1009,17 +1378,18 @@
 
             function handleRebirth() {
                 if (!gameState.player || gameState.player.level < 70) return;
-
                 if (confirm('Are you sure you want to rebirth? Your current progress will be reset for permanent bonuses.')) {
                     const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
-                    
                     clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    try {
+                        localStorage.removeItem(SAVE_KEY);
+                    } catch(e) { console.error("Could not clear localStorage on rebirth.", e); }
+                    
                     const rebirthData = gameState.rebirth;
                     rebirthData.points += pointsGained;
-
                     gameState = getDefaultGameState();
                     gameState.rebirth = rebirthData;
-
                     logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system');
                     UIElements.rebirthBtn.style.display = 'none';
                     UIElements.classSelectionModal.style.display = 'flex';
@@ -1040,7 +1410,6 @@
                 let soldCount = 0;
                 let goldEarned = 0;
                 const equippedIds = Object.values(gameState.equipment);
-
                 const itemsToKeep = gameState.inventory.filter(item => {
                     if (item.rarity === rarity && !equippedIds.includes(item.id)) {
                         goldEarned += itemData.rarities[item.rarity].value;
@@ -1049,7 +1418,6 @@
                     }
                     return true;
                 });
-                
                 if (soldCount > 0) {
                     gameState.inventory = itemsToKeep;
                     gameState.gold += goldEarned;
@@ -1066,64 +1434,14 @@
                 let output = Object.assign({}, target);
                 if (isObject(target) && isObject(source)) {
                     Object.keys(source).forEach(key => {
-                        if (isObject(source[key])) {
-                            if (!(key in target)) Object.assign(output, { [key]: source[key] });
-                            else output[key] = deepMerge(target[key], source[key]);
+                        if (isObject(source[key]) && key in target && isObject(target[key])) {
+                            output[key] = deepMerge(target[key], source[key]);
                         } else {
                             Object.assign(output, { [key]: source[key] });
                         }
                     });
                 }
                 return output;
-            }
-
-            function manualSave() {
-                if (!gameState.player) {
-                    logAction("No game started to save.", 'log-error');
-                    return;
-                }
-                try {
-                    const gameStateString = JSON.stringify(gameState);
-                    const encodedSave = btoa(gameStateString);
-                    
-                    UIElements.manualSaveTextarea.value = encodedSave;
-                    UIElements.manualSaveModal.style.display = 'flex';
-                    UIElements.manualSaveTextarea.select();
-                    logAction("Game state encoded. Copy the code from the pop-up.", 'log-system');
-                } catch (e) {
-                    console.error("Manual save failed:", e);
-                    logAction('SAVE FAILED: Could not encode the game state.', 'log-error');
-                }
-            }
-
-            function manualLoad() {
-                const encodedSave = prompt("Please paste your save code here:");
-
-                if (!encodedSave) {
-                    logAction("Load cancelled.", 'log-system');
-                    return;
-                }
-
-                try {
-                    const gameStateString = atob(encodedSave);
-                    const loadedState = JSON.parse(gameStateString);
-                    
-                    if (!loadedState.player || !loadedState.rebirth) {
-                        throw new Error("Invalid save file format.");
-                    }
-
-                    clearInterval(gameInterval);
-                    
-                    gameState = deepMerge(getDefaultGameState(), loadedState);
-                    
-                    logAction("Game loaded successfully from code.", 'log-system');
-                    UIElements.classSelectionModal.style.display = 'none';
-                    startGame();
-
-                } catch (e) {
-                    console.error("Manual load failed:", e);
-                    logAction('LOAD FAILED: The provided save code is invalid or corrupted.', 'log-error');
-                }
             }
 
             function setupTabs() {
@@ -1136,9 +1454,7 @@
                         const tabId = button.getAttribute('data-tab');
                         tabContents.forEach(content => {
                             content.classList.remove('active');
-                            if (content.id === `tab-content-${tabId}`) {
-                                content.classList.add('active');
-                            }
+                            if (content.id === `tab-content-${tabId}`) content.classList.add('active');
                         });
                     });
                 });
@@ -1160,19 +1476,12 @@
             document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
             document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
             document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
-            
             UIElements.manualSaveBtn.addEventListener('click', manualSave);
             UIElements.manualLoadBtn.addEventListener('click', manualLoad);
-            UIElements.closeSaveModalBtn.addEventListener('click', () => {
-                UIElements.manualSaveModal.style.display = 'none';
-            });
+            UIElements.closeSaveModalBtn.addEventListener('click', () => { UIElements.manualSaveModal.style.display = 'none'; });
             UIElements.newGameBtn.addEventListener('click', handleNewGame);
             UIElements.rebirthBtn.addEventListener('click', handleRebirth);
-
-            UIElements.challengeBossBtn.addEventListener('click', () => {
-                spawnMonster(true);
-                UIElements.challengeBossBtn.disabled = true;
-            });
+            UIElements.challengeBossBtn.addEventListener('click', () => { spawnMonster(true); UIElements.challengeBossBtn.disabled = true; });
             UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
             UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
             UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
@@ -1194,11 +1503,12 @@
             document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
             UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
             UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
+            
+            UIElements.globalTooltip.addEventListener('mouseover', () => clearTimeout(tooltipHideTimer));
+            UIElements.globalTooltip.addEventListener('mouseout', hideTooltip);
 
-            // --- INITIALIZATION ---
-            setupTabs();
-            logAction("To start, choose a class or load a game using a save code.", 'log-system');
-            UIElements.classSelectionModal.style.display = 'flex';
+            // --- KICK OFF THE GAME ---
+            initializeGame();
         });
     </script>
 </body>
