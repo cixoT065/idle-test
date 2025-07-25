@@ -1019,10 +1019,32 @@
             }
 
             function getRarityProbabilities(wave) {
-                if (wave <= 10) return { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
-                if (wave <= 30) return { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
-                if (wave <= 50) return { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
-                return { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
+                // Base probabilities
+                let baseProbs;
+                if (wave <= 10) baseProbs = { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
+                else if (wave <= 30) baseProbs = { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
+                else if (wave <= 50) baseProbs = { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
+                else baseProbs = { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
+            
+                // Increase chances for better rarities gradually after wave 50
+                if (wave > 50) {
+                    const extra = Math.min((wave - 50) * 0.002, 0.1); // max +10% boost
+                    baseProbs.SR = Math.min(baseProbs.SR + extra, 0.6);
+                    baseProbs.SSR = Math.min(baseProbs.SSR + extra, 0.25);
+                    baseProbs.UR = Math.min(baseProbs.UR + extra, 0.1);
+                    // Adjust N and R down accordingly
+                    const reduce = extra * 3;
+                    baseProbs.N = Math.max(baseProbs.N - reduce, 0);
+                    baseProbs.R = Math.max(baseProbs.R - reduce, 0);
+                }
+            
+                // Normalize to sum 1
+                const total = Object.values(baseProbs).reduce((a,b) => a+b, 0);
+                for (const key in baseProbs) {
+                    baseProbs[key] /= total;
+                }
+            
+                return baseProbs;
             }
 
             function generateItemDrop(monster) {
@@ -1141,9 +1163,12 @@
                 const scale = 1 + (gameState.wave - 1) * 0.12;
                 gameState.currentMonster = {
                     ...monsterTemplate,
-                    hp: Math.round(monsterTemplate.baseHp * scale), maxHp: Math.round(monsterTemplate.baseHp * scale),
-                    atk: Math.round(monsterTemplate.baseAtk * scale), def: Math.round(monsterTemplate.baseDef * scale),
-                    gold: Math.round(monsterTemplate.gold * scale), xp: Math.round(monsterTemplate.xp * scale),
+                    hp: Math.round(monsterTemplate.baseHp * scale),
+                    maxHp: Math.round(monsterTemplate.baseHp * scale),
+                    atk: Math.round(monsterTemplate.baseAtk * scale),
+                    def: Math.round(monsterTemplate.baseDef * scale),
+                    gold: Math.round(monsterTemplate.gold * scale),
+                    xp: Math.round(monsterTemplate.xp * Math.pow(1.05, gameState.wave - 1)), // exponential XP scaling
                     isBoss: isBoss,
                     debuffs: {},
                 };
