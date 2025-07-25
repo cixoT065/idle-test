@@ -1295,6 +1295,7 @@
                     const baseStatMultiplier = rarityInfo.statMod;
 
                     const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
                     const baseStatCountByRarity = {
                         'N': 1,
                         'R': 2,
@@ -1302,7 +1303,6 @@
                         'SSR': 4,
                         'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
                     };
-                    
                     const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
                     const shuffledStats = allPossibleBaseStats.sort(() => 0.5 - Math.random());
                     
