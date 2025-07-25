@@ -1586,7 +1586,8 @@
                 if (gameState.gold >= cost) {
                     gameState.gold -= cost;
                     gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                    gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                    // Reduce cost increase multiplier from 1.12 to 1.06 for slower growth
+                    gameState.trainingCosts[stat] = Math.round(cost * 1.06);
                     logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                     if (stat === 'hp') gameState.player.currentHp += 5;
                     updateUI();
