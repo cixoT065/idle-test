@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,8 @@
             --bg-color: #0a0a0a;
             --panel-bg-color: #1a1a1a;
             --text-color: #e0e0e0;
-            --primary-color: #444444; /* Enabled button color */
+            --primary-color: #444444;
+            /* Enabled button color */
             --secondary-color: #333333;
             --border-color: #2c2c2c;
             --header-bg-color: #000000;
@@ -21,6 +23,7 @@
             --disabled-text-color: #555555;
             --skill-color: #ffffff;
         }
+
         body {
             font-family: 'Verdana', 'Geneva', sans-serif;
             background-color: var(--bg-color);
@@ -29,10 +32,12 @@
             padding: 0;
             font-size: 14px;
         }
+
         .main-container {
             display: flex;
             height: 100vh;
         }
+
         .sidebar {
             width: 280px;
             background-color: var(--panel-bg-color);
@@ -44,6 +49,7 @@
             overflow-y: auto;
             flex-shrink: 0;
         }
+
         .main-content {
             flex-grow: 1;
             padding: 15px;
@@ -52,6 +58,7 @@
             gap: 15px;
             overflow-y: auto;
         }
+
         .panel {
             background-color: var(--panel-bg-color);
             border: 1px solid var(--border-color);
@@ -61,9 +68,11 @@
             flex-direction: column;
             box-shadow: inset 0 0 10px #000;
         }
+
         #system-panel {
             margin-top: auto;
         }
+
         .panel-header {
             background-color: var(--header-bg-color);
             padding: 10px 15px;
@@ -73,9 +82,11 @@
             letter-spacing: 1px;
             font-size: 13px;
         }
+
         .panel-body {
             padding: 15px;
         }
+
         .stat-bar {
             background-color: #0a0a0a;
             border-radius: 2px;
@@ -84,6 +95,7 @@
             height: 20px;
             border: 1px solid #000;
         }
+
         .stat-bar-fill {
             height: 100%;
             transition: width 0.3s ease-in-out;
@@ -91,19 +103,39 @@
             font-size: 12px;
             line-height: 20px;
             color: #000;
-            text-shadow: 1px 1px 1px rgba(255,255,255,0.1);
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.1);
         }
-        #player-hp-fill { background-color: var(--hp-color); }
-        #player-xp-fill { background-color: var(--xp-color); }
-        #monster-hp-fill { background-color: #999999; }
+
+        #player-hp-fill {
+            background-color: var(--hp-color);
+        }
+
+        #player-xp-fill {
+            background-color: var(--xp-color);
+        }
+
+        #monster-hp-fill {
+            background-color: #999999;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px 12px;
             font-size: 13px;
         }
-        .monster-area { text-align: center; }
-        #monster-name { font-size: 1.5em; font-weight: bold; margin: 20px 0; color: #ffffff; }
+
+        .monster-area {
+            text-align: center;
+        }
+
+        #monster-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #ffffff;
+        }
+
         .activity-log-container {
             height: 200px;
             overflow-y: auto;
@@ -113,8 +145,12 @@
             border-radius: 3px;
             flex-grow: 1;
         }
-        .activity-log-container p { margin: 0 0 5px; font-size: 13px; }
-        
+
+        .activity-log-container p {
+            margin: 0 0 5px;
+            font-size: 13px;
+        }
+
         #global-tooltip {
             display: none;
             position: fixed;
@@ -127,11 +163,12 @@
             font-size: 13px;
             border: 1px solid var(--border-color);
             white-space: pre-wrap;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             pointer-events: auto;
         }
-        
-        button, .button {
+
+        button,
+        .button {
             background-color: var(--primary-color);
             color: var(--text-color);
             border: 1px solid #000;
@@ -147,30 +184,73 @@
             display: inline-block;
             box-sizing: border-box;
         }
+
         button:hover:not(:disabled) {
             background-color: #555555;
         }
+
         button:disabled {
             background-color: var(--disabled-bg-color);
             color: var(--disabled-text-color);
             cursor: not-allowed;
         }
-        .button-secondary { background-color: var(--secondary-color); color: var(--text-color); }
-        .button-secondary:hover:not(:disabled) { background-color: #444444; }
-        .button-danger { background-color: #505050; color: var(--text-color); }
-        .button-danger:hover:not(:disabled) { background-color: #616161; }
+
+        .button-secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .button-secondary:hover:not(:disabled) {
+            background-color: #444444;
+        }
+
+        .button-danger {
+            background-color: #505050;
+            color: var(--text-color);
+        }
+
+        .button-danger:hover:not(:disabled) {
+            background-color: #616161;
+        }
 
         .modal {
-            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center;
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
         }
+
         .modal-content {
-            background-color: var(--panel-bg-color); margin: auto; padding: 30px; border: 1px solid var(--border-color);
-            width: 80%; max-width: 500px; border-radius: 4px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            background-color: var(--panel-bg-color);
+            margin: auto;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 4px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
-        .modal-choices { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        .modal-choices button { width: auto; padding: 12px 20px; }
-        
+
+        .modal-choices {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-choices button {
+            width: auto;
+            padding: 12px 20px;
+        }
+
         #manual-save-textarea {
             width: 100%;
             height: 120px;
@@ -183,44 +263,121 @@
             word-break: break-all;
         }
 
-        .gold-display { font-size: 1.2em; color: var(--gold-color); font-weight: bold; text-align: center; margin-bottom: 15px; }
-        
-        .log-player { color: #bbbbbb; }
-        .log-monster { color: #999999; }
-        .log-system { color: #e0e0e0; }
-        .log-drop { color: var(--gold-color); }
-        .log-error { color: #ffffff; font-weight: bold; }
-        .log-skill { color: var(--skill-color); font-style: italic; font-weight: bold; }
-
-        .rebirth-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .rebirth-stat span { color: var(--text-color); }
-        .rebirth-stat .rebirth-value { color: var(--rebirth-color); font-weight: bold; }
-        .rebirth-stat button { width: 30px; height: 30px; padding: 0; font-size: 1.2em; flex-shrink: 0; }
-        
-        .equipment-slot-display { padding: 4px 0; position: relative; cursor: pointer; }
-
-        .tab-buttons { display: flex; padding: 0; border-bottom: 1px solid var(--border-color); }
-        .tab-button {
-            flex: 1; border: none; background-color: var(--panel-bg-color); color: var(--text-color);
-            padding: 10px; cursor: pointer; transition: background-color 0.2s, border-bottom-color 0.2s;
-            border-radius: 0; margin: 0; border-bottom: 3px solid transparent;
+        .gold-display {
+            font-size: 1.2em;
+            color: var(--gold-color);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
         }
-        .tab-button.active { border-bottom-color: var(--text-color); font-weight: bold; background-color: var(--header-bg-color); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
+
+        .log-player {
+            color: #bbbbbb;
+        }
+
+        .log-monster {
+            color: #999999;
+        }
+
+        .log-system {
+            color: #e0e0e0;
+        }
+
+        .log-drop {
+            color: var(--gold-color);
+        }
+
+        .log-error {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .log-skill {
+            color: var(--skill-color);
+            font-style: italic;
+            font-weight: bold;
+        }
+
+        .rebirth-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .rebirth-stat span {
+            color: var(--text-color);
+        }
+
+        .rebirth-stat .rebirth-value {
+            color: var(--rebirth-color);
+            font-weight: bold;
+        }
+
+        .rebirth-stat button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .equipment-slot-display {
+            padding: 4px 0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tab-buttons {
+            display: flex;
+            padding: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-button {
+            flex: 1;
+            border: none;
+            background-color: var(--panel-bg-color);
+            color: var(--text-color);
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-bottom-color 0.2s;
+            border-radius: 0;
+            margin: 0;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button.active {
+            border-bottom-color: var(--text-color);
+            font-weight: bold;
+            background-color: var(--header-bg-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         #inventory-list {
             max-height: 200px;
             overflow-y: auto;
             padding-right: 10px;
         }
+
         .inventory-item {
             padding: 8px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             position: relative;
         }
-        .inventory-item:hover { background-color: var(--header-bg-color); }
+
+        .inventory-item:hover {
+            background-color: var(--header-bg-color);
+        }
+
         .equipped-tag {
             color: #ffffff;
             font-size: 0.8em;
@@ -240,10 +397,12 @@
         #skill-display .skill-entry {
             margin-bottom: 10px;
         }
+
         #skill-display strong {
             color: var(--skill-color);
             font-size: 14px;
         }
+
         #skill-display p {
             margin: 5px 0 0;
             font-style: italic;
@@ -257,17 +416,21 @@
                 height: auto;
                 padding: 10px;
             }
+
             .sidebar {
                 display: contents;
             }
+
             .main-content {
                 order: 1;
                 padding: 0;
             }
+
             .panel {
                 width: auto;
                 margin-bottom: 15px;
             }
+
             #system-panel {
                 order: 99;
                 margin-top: 0;
@@ -276,6 +439,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="main-container">
@@ -290,9 +454,13 @@
                     </div>
                     <hr style="border-color: var(--border-color);">
                     <div>HP: <span id="player-hp-text">100 / 100</span></div>
-                    <div class="stat-bar"><div class="stat-bar-fill" id="player-hp-fill"></div></div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" id="player-hp-fill"></div>
+                    </div>
                     <div>XP: <span id="player-xp-text">0 / 100</span></div>
-                    <div class="stat-bar"><div class="stat-bar-fill" id="player-xp-fill"></div></div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" id="player-xp-fill"></div>
+                    </div>
                 </div>
             </div>
             <div class="panel">
@@ -339,6 +507,7 @@
                         <button id="train-def-btn">Train DEF (5G)</button>
                         <button id="train-hp-btn">Train HP (5G)</button>
                         <hr style="border-color: var(--border-color);">
+                        <button id="rest-btn">Rest (5G)</button>
                         <div style="display: flex; gap: 10px; margin-top: 10px;">
                             <button id="rest-btn" style="flex: 1;">Rest (5G)</button>
                             <button id="camp-btn" style="flex: 1;">Camp</button>
@@ -348,681 +517,687 @@
                     <div id="tab-content-inventory" class="tab-content">
                         <div id="inventory-list"></div>
                         <div class="inventory-actions" style="margin-top: 10px;">
-                             <button id="sell-n-btn" class="button-secondary">Sell All N</button>
-                             <button id="sell-r-btn" class="button-secondary">Sell All R</button>
+                            <button id="sell-n-btn" class="button-secondary">Sell All N</button>
+                            <button id="sell-r-btn" class="button-secondary">Sell All R</button>
                         </div>
                     </div>
                     <div id="tab-content-rebirth" class="tab-content">
-                        <div class="rebirth-points" style="color: var(--rebirth-color); font-weight: bold; font-size: 1.5em; text-align: center; margin-bottom: 15px;">Points: <span id="rebirth-points">0</span></div>
-                        <div class="rebirth-stat"><span>ATK Bonus: +<span id="rebirth-atk" class="rebirth-value">0</span></span><button id="invest-atk-btn">+</button></div>
-                        <div class="rebirth-stat"><span>DEF Bonus: +<span id="rebirth-def" class="rebirth-value">0</span></span><button id="invest-def-btn">+</button></div>
-                        <div class="rebirth-stat"><span>HP Bonus: +<span id="rebirth-hp" class="rebirth-value">0</span></span><button id="invest-hp-btn">+</button></div>
-                        <div class="rebirth-stat"><span>Gold Bonus: +<span id="rebirth-gold" class="rebirth-value">0</span>%</span><button id="invest-gold-btn">+</button></div>
-                        <div class="rebirth-stat"><span>XP Bonus: +<span id="rebirth-xp" class="rebirth-value">0</span>%</span><button id="invest-xp-btn">+</button>
+                        <div class="rebirth-points"
+                            style="color: var(--rebirth-color); font-weight: bold; font-size: 1.5em; text-align: center; margin-bottom: 15px;">
+                            Points: <span id="rebirth-points">0</span></div>
+                        <div class="rebirth-stat"><span>ATK Bonus: +<span id="rebirth-atk"
+                                    class="rebirth-value">0</span></span><button id="invest-atk-btn">+</button></div>
+                        <div class="rebirth-stat"><span>DEF Bonus: +<span id="rebirth-def"
+                                    class="rebirth-value">0</span></span><button id="invest-def-btn">+</button></div>
+                        <div class="rebirth-stat"><span>HP Bonus: +<span id="rebirth-hp"
+                                    class="rebirth-value">0</span></span><button id="invest-hp-btn">+</button></div>
+                        <div class="rebirth-stat"><span>Gold Bonus: +<span id="rebirth-gold"
+                                    class="rebirth-value">0</span>%</span><button id="invest-gold-btn">+</button></div>
+                        <div class="rebirth-stat"><span>XP Bonus: +<span id="rebirth-xp"
+                                    class="rebirth-value">0</span>%</span><button id="invest-xp-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel monster-area">
+                    <div class="panel-header">Combat</div>
+                    <div class="panel-body">
+                        <h2 id="monster-name">Monster</h2>
+                        <div>HP: <span id="monster-hp-text">50 / 50</span></div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" id="monster-hp-fill"></div>
+                        </div>
+                        <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
+                        <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+                    </div>
+                </div>
+                <div class="panel" style="flex-grow: 1;">
+                    <div class="panel-header">Action Log</div>
+                    <div class="panel-body activity-log-container" id="action-log">
                     </div>
                 </div>
             </div>
-            <div class="panel monster-area">
-                <div class="panel-header">Combat</div>
-                <div class="panel-body">
-                    <h2 id="monster-name">Monster</h2>
-                    <div>HP: <span id="monster-hp-text">50 / 50</span></div>
-                    <div class="stat-bar"><div class="stat-bar-fill" id="monster-hp-fill"></div></div>
-                    <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
-                    <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+        </div>
+
+        <!-- Modals -->
+        <div id="class-selection-modal" class="modal">
+            <div class="modal-content">
+                <h2>Choose Your Class</h2>
+                <p>Your starting class determines your base stats and future path.</p>
+                <div class="modal-choices">
+                    <button id="select-warrior">Warrior</button>
+                    <button id="select-rogue">Rogue</button>
+                    <button id="select-wizard">Wizard</button>
                 </div>
             </div>
-            <div class="panel" style="flex-grow: 1;">
-                <div class="panel-header">Action Log</div>
-                <div class="panel-body activity-log-container" id="action-log">
-                </div>
+        </div>
+        <div id="promotion-modal" class="modal">
+            <div class="modal-content">
+                <h2 id="promotion-title">Class Promotion!</h2>
+                <p id="promotion-text">You have reached a new milestone. Choose your path:</p>
+                <div class="modal-choices" id="promotion-choices"></div>
             </div>
         </div>
-    </div>
-
-    <!-- Modals -->
-    <div id="class-selection-modal" class="modal">
-        <div class="modal-content">
-            <h2>Choose Your Class</h2>
-            <p>Your starting class determines your base stats and future path.</p>
-            <div class="modal-choices">
-                <button id="select-warrior">Warrior</button>
-                <button id="select-rogue">Rogue</button>
-                <button id="select-wizard">Wizard</button>
+        <div id="manual-save-modal" class="modal">
+            <div class="modal-content">
+                <h2>Game Saved!</h2>
+                <p>Copy this code and save it somewhere safe. Use the Import Save button to restore your progress.</p>
+                <textarea id="manual-save-textarea" readonly></textarea>
+                <button id="close-save-modal-btn">Close</button>
             </div>
         </div>
-    </div>
-    <div id="promotion-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="promotion-title">Class Promotion!</h2>
-            <p id="promotion-text">You have reached a new milestone. Choose your path:</p>
-            <div class="modal-choices" id="promotion-choices"></div>
-        </div>
-    </div>
-    <div id="manual-save-modal" class="modal">
-        <div class="modal-content">
-            <h2>Game Saved!</h2>
-            <p>Copy this code and save it somewhere safe. Use the Import Save button to restore your progress.</p>
-            <textarea id="manual-save-textarea" readonly></textarea>
-            <button id="close-save-modal-btn">Close</button>
-        </div>
-    </div>
-    
-    <!-- Global Tooltip -->
-    <div id="global-tooltip"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            let gameInterval;
-            let autoSaveInterval;
-            let tooltipHideTimer;
-            const SAVE_KEY = 'idleRpgSaveData_v2'; // Changed key to avoid conflicts with old saves
-            
-            function getDefaultGameState() {
-                return {
-                    player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
-                    trainingCosts: { atk: 5, def: 5, hp: 5 }, restCost: 5,
-                    inventory: [], 
-                    equipment: { weapon: null, armor: null, boots: null },
-                    maxInventorySize: 20,
-                    rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
-                    playerTemp: {} // This holds transient data that should not be saved/loaded directly
+        <!-- Global Tooltip -->
+        <div id="global-tooltip"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                let gameInterval;
+                let autoSaveInterval;
+                let tooltipHideTimer;
+                const SAVE_KEY = 'idleRpgSaveData_v2'; // Changed key to avoid conflicts with old saves
+
+                function getDefaultGameState() {
+                    return {
+                        player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
+                        trainingCosts: { atk: 5, def: 5, hp: 5 }, restCost: 5,
+                        inventory: [],
+                        equipment: { weapon: null, armor: null, boots: null },
+                        maxInventorySize: 20,
+                        rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
+                        playerTemp: {} // This holds transient data that should not be saved/loaded directly
+                    };
+                }
+
+                let gameState = getDefaultGameState();
+
+                const classes = {
+                    'Warrior': { base: { hp: 100, atk: 8, def: 5, critChance: 0.05, critDmg: 1.5, evasion: 0.03 }, promotions: { 20: ['Knight', 'Berserker'], 40: { 'Knight': ['Paladin', 'Guardian'], 'Berserker': ['Slayer', 'Warlord'] }, 70: { 'Paladin': ['Holy Knight'], 'Guardian': ['Aegis'], 'Slayer': ['Executioner'], 'Warlord': ['Conqueror'] } } },
+                    'Rogue': { base: { hp: 80, atk: 10, def: 3, critChance: 0.10, critDmg: 1.75, evasion: 0.10 }, promotions: { 20: ['Assassin', 'Ranger'], 40: { 'Assassin': ['Shadow', 'Reaper'], 'Ranger': ['Sharpshooter', 'Pathfinder'] }, 70: { 'Shadow': ['Phantom'], 'Reaper': ['Soul Carver'], 'Sharpshooter': ['Deadeye'], 'Pathfinder': ['Trailblazer'] } } },
+                    'Wizard': { base: { hp: 70, atk: 12, def: 2, critChance: 0.07, critDmg: 1.6, evasion: 0.05 }, promotions: { 20: ['Mage', 'Sorcerer'], 40: { 'Mage': ['Archmage', 'Elementalist'], 'Sorcerer': ['Warlock', 'Chronomancer'] }, 70: { 'Archmage': ['Grand Magus'], 'Elementalist': ['Avatar'], 'Warlock': ['Demonologist'], 'Chronomancer': ['Time Lord'] } } },
                 };
-            }
 
-            let gameState = getDefaultGameState();
+                const promotionSkills = {
+                    // Warrior Path
+                    'Knight': { name: 'Aegis Block', description: '15% chance to block all incoming damage.' },
+                    'Paladin': { name: 'Holy Shield', description: 'Aegis Block now also heals you for 5% of your Max HP.' },
+                    'Holy Knight': { name: 'Divine Retribution', description: 'Holy Shield now also retaliates for 100% of your DEF as Holy damage.' },
+                    'Guardian': { name: 'Stand Firm', description: 'Aegis Block now also grants +30% DEF for 3 seconds.' },
+                    'Aegis': { name: 'Thornmail', description: 'Stand Firm now also reflects 20% of pre-mitigation damage back to the attacker.' },
+                    'Berserker': { name: 'Frenzy', description: 'Gain +8% ATK for every 10% of missing health.' },
+                    'Slayer': { name: 'Execute', description: 'Attacks against enemies below 20% HP deal 50% more damage.' },
+                    'Executioner': { name: 'Cull the Weak', description: 'Execute threshold increased to 30% HP and bonus damage increased to 100%.' },
+                    'Warlord': { name: 'Battle Rush', description: 'Attacks have a 20% chance to grant +20% ATK for 3 seconds.' },
+                    'Conqueror': { name: 'Unyielding Assault', description: 'Battle Rush now also grants 10% Lifesteal.' },
+                    // Rogue Path
+                    'Assassin': { name: 'Bleed', description: 'Critical hits cause the enemy to bleed for 30% of your ATK each second for 3 seconds.' },
+                    'Shadow': { name: 'Shadow Step', description: 'Attacks have a 10% chance to grant a guaranteed critical hit on your next attack.' },
+                    'Phantom': { name: 'Invisibility', description: 'Shadow Step now grants a guaranteed crit and 100% evasion for your next attack.' },
+                    'Reaper': { name: 'Hemorrhage', description: 'Bleed can now stack up to 3 times.' },
+                    'Soul Carver': { name: 'Exsanguinate', description: 'Bleed damage ticks can now critically strike.' },
+                    'Ranger': { name: 'Double Shot', description: '15% chance to attack a second time for 60% damage.' },
+                    'Sharpshooter': { name: 'Focus', description: 'Every 5th attack is a guaranteed critical hit.' },
+                    'Deadeye': { name: 'Lethal Precision', description: 'Guaranteed criticals from Focus deal +50% critical damage.' },
+                    'Pathfinder': { name: 'Sunder', description: 'Attacks have a 25% chance to reduce enemy DEF by 10% for 5 seconds.' },
+                    'Trailblazer': { name: 'Armor Shatter', description: 'Sunder now stacks up to 3 times and also reduces enemy ATK by 5%.' },
+                    // Wizard Path
+                    'Mage': { name: 'Arcane Power', description: 'Attacks have a 10% chance to unleash a spell for 250% of your ATK as bonus damage.' },
+                    'Archmage': { name: 'High Voltage', description: 'Arcane Power proc chance increased to 15% and damage to 300%.' },
+                    'Grand Magus': { name: 'Chain Lightning', description: 'Arcane Power hits now explode, dealing an additional 150% ATK damage.' },
+                    'Elementalist': { name: 'Combustion', description: 'Arcane Power now also applies a burn for 50% of your ATK for 3 seconds.' },
+                    'Avatar': { name: 'Apocalypse', description: 'Combustion burn damage is increased to 100% ATK and also reduces enemy DEF by 15%.' },
+                    'Sorcerer': { name: 'Soul Drain', description: 'Attacks have a 5% chance to deal 150% damage and heal you for 50% of the damage dealt.' },
+                    'Warlock': { name: 'Devour Soul', description: 'Soul Drain proc chance increased to 8% and heal increased to 75%.' },
+                    'Demonologist': { name: 'Annihilate', description: 'Devour Soul now deals bonus damage equal to 5% of the monster\'s max HP.' },
+                    'Chronomancer': { name: 'Time Warp', description: 'Soul Drain now also has a 50% chance to make the monster miss its next attack.' },
+                    'Time Lord': { name: 'Paradox', description: 'Time Warp now always makes the monster miss its next attack.' }
+                };
 
-            const classes = {
-                'Warrior': { base: { hp: 100, atk: 8, def: 5, critChance: 0.05, critDmg: 1.5, evasion: 0.03 }, promotions: { 20: ['Knight', 'Berserker'], 40: {'Knight': ['Paladin', 'Guardian'], 'Berserker': ['Slayer', 'Warlord']}, 70: {'Paladin': ['Holy Knight'], 'Guardian': ['Aegis'], 'Slayer': ['Executioner'], 'Warlord': ['Conqueror']} } },
-                'Rogue':   { base: { hp: 80, atk: 10, def: 3, critChance: 0.10, critDmg: 1.75, evasion: 0.10 }, promotions: { 20: ['Assassin', 'Ranger'], 40: {'Assassin': ['Shadow', 'Reaper'], 'Ranger': ['Sharpshooter', 'Pathfinder']}, 70: {'Shadow': ['Phantom'], 'Reaper': ['Soul Carver'], 'Sharpshooter': ['Deadeye'], 'Pathfinder': ['Trailblazer']} } },
-                'Wizard':  { base: { hp: 70, atk: 12, def: 2, critChance: 0.07, critDmg: 1.6, evasion: 0.05 }, promotions: { 20: ['Mage', 'Sorcerer'], 40: {'Mage': ['Archmage', 'Elementalist'], 'Sorcerer': ['Warlock', 'Chronomancer']}, 70: {'Archmage': ['Grand Magus'], 'Elementalist': ['Avatar'], 'Warlock': ['Demonologist'], 'Chronomancer': ['Time Lord']} } },
-            };
-            
-            const promotionSkills = {
-                // Warrior Path
-                'Knight': { name: 'Aegis Block', description: '15% chance to block all incoming damage.' },
-                'Paladin': { name: 'Holy Shield', description: 'Aegis Block now also heals you for 5% of your Max HP.' },
-                'Holy Knight': { name: 'Divine Retribution', description: 'Holy Shield now also retaliates for 100% of your DEF as Holy damage.' },
-                'Guardian': { name: 'Stand Firm', description: 'Aegis Block now also grants +30% DEF for 3 seconds.' },
-                'Aegis': { name: 'Thornmail', description: 'Stand Firm now also reflects 20% of pre-mitigation damage back to the attacker.' },
-                'Berserker': { name: 'Frenzy', description: 'Gain +8% ATK for every 10% of missing health.' },
-                'Slayer': { name: 'Execute', description: 'Attacks against enemies below 20% HP deal 50% more damage.' },
-                'Executioner': { name: 'Cull the Weak', description: 'Execute threshold increased to 30% HP and bonus damage increased to 100%.' },
-                'Warlord': { name: 'Battle Rush', description: 'Attacks have a 20% chance to grant +20% ATK for 3 seconds.' },
-                'Conqueror': { name: 'Unyielding Assault', description: 'Battle Rush now also grants 10% Lifesteal.' },
-                // Rogue Path
-                'Assassin': { name: 'Bleed', description: 'Critical hits cause the enemy to bleed for 30% of your ATK each second for 3 seconds.' },
-                'Shadow': { name: 'Shadow Step', description: 'Attacks have a 10% chance to grant a guaranteed critical hit on your next attack.' },
-                'Phantom': { name: 'Invisibility', description: 'Shadow Step now grants a guaranteed crit and 100% evasion for your next attack.' },
-                'Reaper': { name: 'Hemorrhage', description: 'Bleed can now stack up to 3 times.' },
-                'Soul Carver': { name: 'Exsanguinate', description: 'Bleed damage ticks can now critically strike.' },
-                'Ranger': { name: 'Double Shot', description: '15% chance to attack a second time for 60% damage.' },
-                'Sharpshooter': { name: 'Focus', description: 'Every 5th attack is a guaranteed critical hit.' },
-                'Deadeye': { name: 'Lethal Precision', description: 'Guaranteed criticals from Focus deal +50% critical damage.' },
-                'Pathfinder': { name: 'Sunder', description: 'Attacks have a 25% chance to reduce enemy DEF by 10% for 5 seconds.' },
-                'Trailblazer': { name: 'Armor Shatter', description: 'Sunder now stacks up to 3 times and also reduces enemy ATK by 5%.' },
-                // Wizard Path
-                'Mage': { name: 'Arcane Power', description: 'Attacks have a 10% chance to unleash a spell for 250% of your ATK as bonus damage.' },
-                'Archmage': { name: 'High Voltage', description: 'Arcane Power proc chance increased to 15% and damage to 300%.' },
-                'Grand Magus': { name: 'Chain Lightning', description: 'Arcane Power hits now explode, dealing an additional 150% ATK damage.' },
-                'Elementalist': { name: 'Combustion', description: 'Arcane Power now also applies a burn for 50% of your ATK for 3 seconds.' },
-                'Avatar': { name: 'Apocalypse', description: 'Combustion burn damage is increased to 100% ATK and also reduces enemy DEF by 15%.' },
-                'Sorcerer': { name: 'Soul Drain', description: 'Attacks have a 5% chance to deal 150% damage and heal you for 50% of the damage dealt.' },
-                'Warlock': { name: 'Devour Soul', description: 'Soul Drain proc chance increased to 8% and heal increased to 75%.' },
-                'Demonologist': { name: 'Annihilate', description: 'Devour Soul now deals bonus damage equal to 5% of the monster\'s max HP.' },
-                'Chronomancer': { name: 'Time Warp', description: 'Soul Drain now also has a 50% chance to make the monster miss its next attack.' },
-                'Time Lord': { name: 'Paradox', description: 'Time Warp now always makes the monster miss its next attack.' }
-            };
+                const monsters = {
+                    regular: [
+                        { name: 'Slime', baseHp: 30, baseAtk: 5, baseDef: 2, gold: 2, xp: 5, dropChance: 0.15 },
+                        { name: 'Giant Rat', baseHp: 25, baseAtk: 6, baseDef: 1, gold: 1, xp: 4, dropChance: 0.10 },
+                        { name: 'Goblin Scout', baseHp: 40, baseAtk: 7, baseDef: 3, gold: 3, xp: 6, dropChance: 0.20 },
+                        { name: 'Cave Bat', baseHp: 20, baseAtk: 8, baseDef: 0, gold: 1, xp: 3, dropChance: 0.08 }
+                    ],
+                    elite: [
+                        { name: 'Orc Grunt', baseHp: 120, baseAtk: 20, baseDef: 8, gold: 20, xp: 30, dropChance: 0.8, isElite: true },
+                        { name: 'Troll', baseHp: 150, baseAtk: 18, baseDef: 12, gold: 25, xp: 40, dropChance: 0.9, isElite: true },
+                        { name: 'Ogre Mage', baseHp: 100, baseAtk: 28, baseDef: 6, gold: 30, xp: 50, dropChance: 0.85, isElite: true }
+                    ],
+                    bosses: [
+                        { name: 'Grimgnaw the Goblin King', baseHp: 400, baseAtk: 35, baseDef: 15, gold: 150, xp: 200, dropChance: 1.0 },
+                        { name: 'The Slime Mother', baseHp: 600, baseAtk: 30, baseDef: 25, gold: 250, xp: 350, dropChance: 1.0 }
+                    ]
+                };
+                const itemData = {
+                    types: ['weapon', 'armor', 'boots'],
+                    rarities: {
+                        N: { color: '#888888', statMod: 1.0, value: 2, bonusStats: 0, bonusMultiplier: 0 },
+                        R: { color: '#aaaaaa', statMod: 1.2, value: 8, bonusStats: 1, bonusMultiplier: 1.0 },
+                        SR: { color: '#cccccc', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
+                        SSR: { color: '#e0e0e0', statMod: 2.0, value: 200, bonusStats: 3, bonusMultiplier: 2.2 },
+                        UR: { color: '#ffffff', statMod: 2.8, value: 1000, bonusStats: 4, bonusMultiplier: 3.0 },
+                    },
+                    baseStats: { weapon: { atk: 5 }, armor: { def: 4, hp: 10 }, boots: { def: 2, evasion: 0.01 } },
+                    bonusStatPools: {
+                        Warrior: { primary: ['hp', 'def', 'atk'], secondary: ['critDmg'] },
+                        Rogue: { primary: ['critChance', 'evasion', 'atk'], secondary: ['critDmg'] },
+                        Wizard: { primary: ['atk', 'critDmg', 'critChance'], secondary: [] },
+                        all: ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion']
+                    },
+                    names: {
+                        weapon: ['Sword', 'Axe', 'Mace', 'Dagger', 'Staff', 'Bow', 'Katana', 'Scythe', 'Spear', 'Rapier'],
+                        armor: ['Vest', 'Cuirass', 'Hauberk', 'Mail', 'Plate', 'Robe', 'Tunic', 'Jacket', 'Gown'],
+                        boots: ['Boots', 'Greaves', 'Slippers', 'Sandals', 'Shoes', 'Sabatons', 'Wraps'],
+                        prefixes: {
+                            Warrior: ['Mighty', 'Stalwart', 'Brutal', 'Savage', 'Guardian\'s'],
+                            Rogue: ['Swift', 'Silent', 'Vicious', 'Shadow', 'Assassin\'s'],
+                            Wizard: ['Arcane', 'Mystic', 'Elemental', 'Warlock\'s', 'Sage\'s'],
+                            Balanced: ['Fine', 'Superior', 'Masterwork', 'Exquisite', 'Perfect']
+                        }
+                    }
+                };
 
-            const monsters = {
-                regular: [
-                    { name: 'Slime', baseHp: 30, baseAtk: 5, baseDef: 2, gold: 2, xp: 5, dropChance: 0.15 },
-                    { name: 'Giant Rat', baseHp: 25, baseAtk: 6, baseDef: 1, gold: 1, xp: 4, dropChance: 0.10 },
-                    { name: 'Goblin Scout', baseHp: 40, baseAtk: 7, baseDef: 3, gold: 3, xp: 6, dropChance: 0.20 },
-                    { name: 'Cave Bat', baseHp: 20, baseAtk: 8, baseDef: 0, gold: 1, xp: 3, dropChance: 0.08 }
-                ],
-                elite: [
-                    { name: 'Orc Grunt', baseHp: 120, baseAtk: 20, baseDef: 8, gold: 20, xp: 30, dropChance: 0.8, isElite: true },
-                    { name: 'Troll', baseHp: 150, baseAtk: 18, baseDef: 12, gold: 25, xp: 40, dropChance: 0.9, isElite: true },
-                    { name: 'Ogre Mage', baseHp: 100, baseAtk: 28, baseDef: 6, gold: 30, xp: 50, dropChance: 0.85, isElite: true }
-                ],
-                bosses: [
-                    { name: 'Grimgnaw the Goblin King', baseHp: 400, baseAtk: 35, baseDef: 15, gold: 150, xp: 200, dropChance: 1.0 },
-                    { name: 'The Slime Mother', baseHp: 600, baseAtk: 30, baseDef: 25, gold: 250, xp: 350, dropChance: 1.0 }
-                ]
-            };
-            const itemData = {
-                types: ['weapon', 'armor', 'boots'],
-                rarities: {
-                    N:   { color: '#888888', statMod: 1.0, value: 2,  bonusStats: 0, bonusMultiplier: 0 },
-                    R:   { color: '#aaaaaa', statMod: 1.2, value: 8,  bonusStats: 1, bonusMultiplier: 1.0 },
-                    SR:  { color: '#cccccc', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
-                    SSR: { color: '#e0e0e0', statMod: 2.0, value: 200,bonusStats: 3, bonusMultiplier: 2.2 },
-                    UR:  { color: '#ffffff', statMod: 2.8, value: 1000,bonusStats: 4, bonusMultiplier: 3.0 },
-                },
-                baseStats: { weapon: { atk: 5 }, armor: { def: 4, hp: 10 }, boots: { def: 2, evasion: 0.01 } },
-                bonusStatPools: {
-                    Warrior: { primary: ['hp', 'def', 'atk'], secondary: ['critDmg'] },
-                    Rogue:   { primary: ['critChance', 'evasion', 'atk'], secondary: ['critDmg'] },
-                    Wizard:  { primary: ['atk', 'critDmg', 'critChance'], secondary: [] },
-                    all: ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion']
-                },
-                names: {
-                    weapon: ['Sword', 'Axe', 'Mace', 'Dagger', 'Staff', 'Bow', 'Katana', 'Scythe', 'Spear', 'Rapier'],
-                    armor: ['Vest', 'Cuirass', 'Hauberk', 'Mail', 'Plate', 'Robe', 'Tunic', 'Jacket', 'Gown'],
-                    boots: ['Boots', 'Greaves', 'Slippers', 'Sandals', 'Shoes', 'Sabatons', 'Wraps'],
-                    prefixes: {
-                        Warrior: ['Mighty', 'Stalwart', 'Brutal', 'Savage', 'Guardian\'s'],
-                        Rogue: ['Swift', 'Silent', 'Vicious', 'Shadow', 'Assassin\'s'],
-                        Wizard: ['Arcane', 'Mystic', 'Elemental', 'Warlock\'s', 'Sage\'s'],
-                        Balanced: ['Fine', 'Superior', 'Masterwork', 'Exquisite', 'Perfect']
+                const UIElements = {
+                    playerName: document.getElementById('player-name'), playerClass: document.getElementById('player-class'), playerLevel: document.getElementById('player-level'),
+                    playerHpText: document.getElementById('player-hp-text'), playerHpFill: document.getElementById('player-hp-fill'),
+                    playerXpText: document.getElementById('player-xp-text'), playerXpFill: document.getElementById('player-xp-fill'),
+                    playerAtk: document.getElementById('player-atk'), playerDef: document.getElementById('player-def'), playerCritChance: document.getElementById('player-crit-chance'),
+                    playerCritDmg: document.getElementById('player-crit-dmg'), playerEvasion: document.getElementById('player-evasion'),
+                    playerGold: document.getElementById('player-gold'), monsterName: document.getElementById('monster-name'),
+                    monsterHpText: document.getElementById('monster-hp-text'), monsterHpFill: document.getElementById('monster-hp-fill'),
+                    waveCounter: document.getElementById('wave-counter'), killCounter: document.getElementById('kill-counter'), actionLog: document.getElementById('action-log'),
+                    challengeBossBtn: document.getElementById('challenge-boss-btn'), trainAtkBtn: document.getElementById('train-atk-btn'),
+                    trainDefBtn: document.getElementById('train-def-btn'), trainHpBtn: document.getElementById('train-hp-btn'), restBtn: document.getElementById('rest-btn'),
+                    classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
+                    inventoryList: document.getElementById('inventory-list'), equipmentDisplay: document.getElementById('equipment-display'),
+                    newGameBtn: document.getElementById('new-game-btn'), rebirthBtn: document.getElementById('rebirth-btn'),
+                    manualSaveBtn: document.getElementById('manual-save-btn'), manualLoadBtn: document.getElementById('manual-load-btn'),
+                    manualSaveModal: document.getElementById('manual-save-modal'), manualSaveTextarea: document.getElementById('manual-save-textarea'),
+                    closeSaveModalBtn: document.getElementById('close-save-modal-btn'),
+                    sellNBtn: document.getElementById('sell-n-btn'), sellRBtn: document.getElementById('sell-r-btn'),
+                    rebirthPoints: document.getElementById('rebirth-points'), rebirthAtk: document.getElementById('rebirth-atk'),
+                    rebirthDef: document.getElementById('rebirth-def'), rebirthHp: document.getElementById('rebirth-hp'),
+                    rebirthGold: document.getElementById('rebirth-gold'), rebirthXp: document.getElementById('rebirth-xp'),
+                    globalTooltip: document.getElementById('global-tooltip'),
+                    skillPanel: document.getElementById('skill-panel'),
+                    skillDisplay: document.getElementById('skill-display'),
+                };
+
+                function startGame() {
+                    if (gameInterval) clearInterval(gameInterval);
+                    if (autoSaveInterval) clearInterval(autoSaveInterval);
+
+                    gameState.isRunning = true;
+                    if (!gameState.currentMonster) spawnMonster();
+
+                    updateAllUIs();
+                    gameInterval = setInterval(gameLoop, 1000);
+                    autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
+                }
+
+                function autoSaveToLocalStorage() {
+                    if (!gameState.player || !gameState.isRunning) return;
+                    try {
+                        // Create a clean copy for saving, excluding transient data
+                        const stateToSave = { ...gameState };
+                        delete stateToSave.playerTemp; // Do not save temporary data
+
+                        const gameStateString = JSON.stringify(stateToSave);
+                        localStorage.setItem(SAVE_KEY, gameStateString);
+                    } catch (e) {
+                        console.error("Auto-save to localStorage failed:", e);
+                        logAction("Auto-save failed. Your browser may be blocking storage. Use Export Save as a backup.", "log-error");
+                        clearInterval(autoSaveInterval);
                     }
                 }
-            };
 
-            const UIElements = {
-                playerName: document.getElementById('player-name'), playerClass: document.getElementById('player-class'), playerLevel: document.getElementById('player-level'),
-                playerHpText: document.getElementById('player-hp-text'), playerHpFill: document.getElementById('player-hp-fill'),
-                playerXpText: document.getElementById('player-xp-text'), playerXpFill: document.getElementById('player-xp-fill'),
-                playerAtk: document.getElementById('player-atk'), playerDef: document.getElementById('player-def'), playerCritChance: document.getElementById('player-crit-chance'),
-                playerCritDmg: document.getElementById('player-crit-dmg'), playerEvasion: document.getElementById('player-evasion'),
-                playerGold: document.getElementById('player-gold'), monsterName: document.getElementById('monster-name'),
-                monsterHpText: document.getElementById('monster-hp-text'), monsterHpFill: document.getElementById('monster-hp-fill'),
-                waveCounter: document.getElementById('wave-counter'), killCounter: document.getElementById('kill-counter'), actionLog: document.getElementById('action-log'),
-                challengeBossBtn: document.getElementById('challenge-boss-btn'), trainAtkBtn: document.getElementById('train-atk-btn'),
-                trainDefBtn: document.getElementById('train-def-btn'), trainHpBtn: document.getElementById('train-hp-btn'), restBtn: document.getElementById('rest-btn'),
-                classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
-                inventoryList: document.getElementById('inventory-list'), equipmentDisplay: document.getElementById('equipment-display'),
-                newGameBtn: document.getElementById('new-game-btn'), rebirthBtn: document.getElementById('rebirth-btn'),
-                manualSaveBtn: document.getElementById('manual-save-btn'), manualLoadBtn: document.getElementById('manual-load-btn'),
-                manualSaveModal: document.getElementById('manual-save-modal'), manualSaveTextarea: document.getElementById('manual-save-textarea'),
-                closeSaveModalBtn: document.getElementById('close-save-modal-btn'),
-                sellNBtn: document.getElementById('sell-n-btn'), sellRBtn: document.getElementById('sell-r-btn'),
-                rebirthPoints: document.getElementById('rebirth-points'), rebirthAtk: document.getElementById('rebirth-atk'),
-                rebirthDef: document.getElementById('rebirth-def'), rebirthHp: document.getElementById('rebirth-hp'),
-                rebirthGold: document.getElementById('rebirth-gold'), rebirthXp: document.getElementById('rebirth-xp'),
-                globalTooltip: document.getElementById('global-tooltip'),
-                skillPanel: document.getElementById('skill-panel'),
-                skillDisplay: document.getElementById('skill-display'),
-            };
+                function loadFromLocalStorage() {
+                    try {
+                        const savedState = localStorage.getItem(SAVE_KEY);
+                        if (savedState) {
+                            const loadedState = JSON.parse(savedState);
+                            // Stronger validation
+                            if (!loadedState.player || !loadedState.player.baseStats || !loadedState.rebirth || !Array.isArray(loadedState.inventory)) {
+                                throw new Error("Invalid or corrupted save data in localStorage.");
+                            }
 
-            function startGame() {
-                if (gameInterval) clearInterval(gameInterval);
-                if (autoSaveInterval) clearInterval(autoSaveInterval);
-                
-                gameState.isRunning = true;
-                if (!gameState.currentMonster) spawnMonster();
-                
-                updateAllUIs();
-                gameInterval = setInterval(gameLoop, 1000);
-                autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
-            }
+                            // Perform the merge
+                            gameState = deepMerge(getDefaultGameState(), loadedState);
 
-            function autoSaveToLocalStorage() {
-                if (!gameState.player || !gameState.isRunning) return;
-                try {
-                    // Create a clean copy for saving, excluding transient data
-                    const stateToSave = { ...gameState };
-                    delete stateToSave.playerTemp; // Do not save temporary data
-                    
-                    const gameStateString = JSON.stringify(stateToSave);
-                    localStorage.setItem(SAVE_KEY, gameStateString);
-                } catch (e) {
-                    console.error("Auto-save to localStorage failed:", e);
-                    logAction("Auto-save failed. Your browser may be blocking storage. Use Export Save as a backup.", "log-error");
-                    clearInterval(autoSaveInterval);
-                }
-            }
+                            // ** CRITICAL FIX: Explicitly reset all transient data after loading **
+                            gameState.playerTemp = {};
+                            if (gameState.currentMonster) {
+                                gameState.currentMonster.debuffs = {};
+                            }
 
-            function loadFromLocalStorage() {
-                try {
-                    const savedState = localStorage.getItem(SAVE_KEY);
-                    if (savedState) {
-                        const loadedState = JSON.parse(savedState);
-                        // Stronger validation
-                        if (!loadedState.player || !loadedState.player.baseStats || !loadedState.rebirth || !Array.isArray(loadedState.inventory)) {
-                            throw new Error("Invalid or corrupted save data in localStorage.");
+                            logAction("Game loaded automatically from browser storage.", 'log-system');
+                            return true;
                         }
-                        
-                        // Perform the merge
+                    } catch (e) {
+                        console.error("Failed to load from localStorage:", e);
+                        logAction('Could not auto-load game. The data might be corrupted. Starting new game.', 'log-error');
+                        localStorage.removeItem(SAVE_KEY);
+                    }
+                    return false;
+                }
+
+                function manualSave() {
+                    if (!gameState.player) {
+                        logAction("No game started to export.", 'log-error');
+                        return;
+                    }
+                    try {
+                        const stateToSave = { ...gameState };
+                        delete stateToSave.playerTemp;
+                        const gameStateString = JSON.stringify(stateToSave);
+                        const encodedSave = btoa(gameStateString);
+
+                        UIElements.manualSaveTextarea.value = encodedSave;
+                        UIElements.manualSaveModal.style.display = 'flex';
+                        UIElements.manualSaveTextarea.select();
+                        logAction("Exported save state. Copy the code from the pop-up.", 'log-system');
+                    } catch (e) {
+                        console.error("Manual save export failed:", e);
+                        logAction('EXPORT FAILED: Could not encode the game state.', 'log-error');
+                    }
+                }
+
+                function manualLoad() {
+                    const encodedSave = prompt("Please paste your save code here to import it:");
+                    if (!encodedSave) {
+                        logAction("Import cancelled.", 'log-system');
+                        return;
+                    }
+                    try {
+                        const gameStateString = atob(encodedSave);
+                        const loadedState = JSON.parse(gameStateString);
+
+                        if (!loadedState.player || !loadedState.player.baseStats) {
+                            throw new Error("Invalid save file format.");
+                        }
+
+                        clearInterval(gameInterval);
+                        clearInterval(autoSaveInterval);
+
                         gameState = deepMerge(getDefaultGameState(), loadedState);
-                        
-                        // ** CRITICAL FIX: Explicitly reset all transient data after loading **
-                        gameState.playerTemp = {}; 
+                        // Also reset transient data on manual load
+                        gameState.playerTemp = {};
                         if (gameState.currentMonster) {
                             gameState.currentMonster.debuffs = {};
                         }
-                        
-                        logAction("Game loaded automatically from browser storage.", 'log-system');
-                        return true;
-                    }
-                } catch (e) {
-                    console.error("Failed to load from localStorage:", e);
-                    logAction('Could not auto-load game. The data might be corrupted. Starting new game.', 'log-error');
-                    localStorage.removeItem(SAVE_KEY);
-                }
-                return false;
-            }
 
-            function manualSave() { 
-                if (!gameState.player) {
-                    logAction("No game started to export.", 'log-error');
-                    return;
-                }
-                try {
-                    const stateToSave = { ...gameState };
-                    delete stateToSave.playerTemp;
-                    const gameStateString = JSON.stringify(stateToSave);
-                    const encodedSave = btoa(gameStateString);
-                    
-                    UIElements.manualSaveTextarea.value = encodedSave;
-                    UIElements.manualSaveModal.style.display = 'flex';
-                    UIElements.manualSaveTextarea.select();
-                    logAction("Exported save state. Copy the code from the pop-up.", 'log-system');
-                } catch (e) {
-                    console.error("Manual save export failed:", e);
-                    logAction('EXPORT FAILED: Could not encode the game state.', 'log-error');
-                }
-            }
+                        logAction("Game imported successfully from code.", 'log-system');
+                        UIElements.classSelectionModal.style.display = 'none';
+                        startGame();
 
-            function manualLoad() { 
-                const encodedSave = prompt("Please paste your save code here to import it:");
-                if (!encodedSave) {
-                    logAction("Import cancelled.", 'log-system');
-                    return;
+                    } catch (e) {
+                        console.error("Manual load import failed:", e);
+                        logAction('IMPORT FAILED: The provided save code is invalid or corrupted.', 'log-error');
+                    }
                 }
-                try {
-                    const gameStateString = atob(encodedSave);
-                    const loadedState = JSON.parse(gameStateString);
-                    
-                    if (!loadedState.player || !loadedState.player.baseStats) {
-                        throw new Error("Invalid save file format.");
-                    }
 
-                    clearInterval(gameInterval);
-                    clearInterval(autoSaveInterval);
-                    
-                    gameState = deepMerge(getDefaultGameState(), loadedState);
-                    // Also reset transient data on manual load
-                    gameState.playerTemp = {};
-                    if (gameState.currentMonster) {
-                        gameState.currentMonster.debuffs = {};
+                function initializeGame() {
+                    setupTabs();
+                    if (loadFromLocalStorage()) {
+                        UIElements.classSelectionModal.style.display = 'none';
+                        startGame();
+                    } else {
+                        logAction("Welcome to Idle RPG. Select your class to begin, or import a save.", 'log-system');
+                        UIElements.classSelectionModal.style.display = 'flex';
                     }
-                    
-                    logAction("Game imported successfully from code.", 'log-system');
+                }
+
+                function selectClass(className) {
+                    const classInfo = classes[className];
+                    gameState.player = {
+                        name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
+                        className: className,
+                        baseClassName: className,
+                        level: 1, xp: 0,
+                        xpToNextLevel: 50,
+                        ...classInfo.base, currentHp: classInfo.base.hp, baseStats: { ...classInfo.base },
+                        activeSkills: [],
+                    };
                     UIElements.classSelectionModal.style.display = 'none';
+                    logAction('You have chosen the path of the ' + className + '.', 'log-system');
                     startGame();
-
-                } catch (e) {
-                    console.error("Manual load import failed:", e);
-                    logAction('IMPORT FAILED: The provided save code is invalid or corrupted.', 'log-error');
                 }
-            }
 
-            function initializeGame() {
-                setupTabs();
-                if (loadFromLocalStorage()) {
-                    UIElements.classSelectionModal.style.display = 'none';
-                    startGame();
-                } else {
-                    logAction("Welcome to Idle RPG. Select your class to begin, or import a save.", 'log-system');
-                    UIElements.classSelectionModal.style.display = 'flex';
-                }
-            }
-            
-            function selectClass(className) {
-                const classInfo = classes[className];
-                gameState.player = {
-                    name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
-                    className: className,
-                    baseClassName: className,
-                    level: 1, xp: 0, 
-                    xpToNextLevel: 50,
-                    ...classInfo.base, currentHp: classInfo.base.hp, baseStats: { ...classInfo.base },
-                    activeSkills: [],
-                };
-                UIElements.classSelectionModal.style.display = 'none';
-                logAction('You have chosen the path of the ' + className + '.', 'log-system');
-                startGame();
-            }
-            
-            function getPlayerTotalStat(stat, tempStats) {
-                const stats = tempStats || getPlayerTotalStats();
-                if (!gameState.player) return 0;
+                function getPlayerTotalStat(stat, tempStats) {
+                    const stats = tempStats || getPlayerTotalStats();
+                    if (!gameState.player) return 0;
 
-                let total = gameState.player.baseStats[stat] || 0;
-                if (['atk', 'def', 'hp'].includes(stat)) total += gameState.rebirth.bonuses[stat] || 0;
-                
-                for (const type in gameState.equipment) {
-                    const equippedId = gameState.equipment[type];
-                    if (equippedId) {
-                        const item = gameState.inventory.find(i => i.id === equippedId);
-                        if (item) {
-                            total += item[stat] || 0;
-                            if (item.bonusStats) {
-                                for (const bonus in item.bonusStats) {
-                                    if (bonus === stat) total += item.bonusStats[bonus];
+                    let total = gameState.player.baseStats[stat] || 0;
+                    if (['atk', 'def', 'hp'].includes(stat)) total += gameState.rebirth.bonuses[stat] || 0;
+
+                    for (const type in gameState.equipment) {
+                        const equippedId = gameState.equipment[type];
+                        if (equippedId) {
+                            const item = gameState.inventory.find(i => i.id === equippedId);
+                            if (item) {
+                                total += item[stat] || 0;
+                                if (item.bonusStats) {
+                                    for (const bonus in item.bonusStats) {
+                                        if (bonus === stat) total += item.bonusStats[bonus];
+                                    }
                                 }
                             }
                         }
                     }
+
+                    if (stat === 'atk' && gameState.player.activeSkills.includes('Frenzy')) {
+                        const missingHpPercent = 1 - (gameState.player.currentHp / stats.hp);
+                        const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
+                        total *= (1 + frenzyBonus);
+                    }
+
+                    if (stat === 'def' && gameState.playerTemp.standFirm > 0) {
+                        total *= 1.30;
+                    }
+
+                    return total;
                 }
 
-                if (stat === 'atk' && gameState.player.activeSkills.includes('Frenzy')) {
-                    const missingHpPercent = 1 - (gameState.player.currentHp / stats.hp);
-                    const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
-                    total *= (1 + frenzyBonus);
+                function getPlayerTotalStats() {
+                    if (!gameState.player) return {};
+                    const stats = {};
+                    stats.hp = getPlayerTotalStat('hp', stats);
+                    stats.atk = getPlayerTotalStat('atk', stats);
+                    stats.def = getPlayerTotalStat('def', stats);
+                    stats.critChance = getPlayerTotalStat('critChance', stats);
+                    stats.critDmg = getPlayerTotalStat('critDmg', stats);
+                    stats.evasion = getPlayerTotalStat('evasion', stats);
+
+                    if (gameState.player.currentHp > stats.hp) gameState.player.currentHp = stats.hp;
+                    return stats;
                 }
 
-                if (stat === 'def' && gameState.playerTemp.standFirm > 0) {
-                    total *= 1.30;
-                }
-
-                return total;
-            }
-
-            function getPlayerTotalStats() {
-                 if (!gameState.player) return {};
-                 const stats = {};
-                 stats.hp = getPlayerTotalStat('hp', stats);
-                 stats.atk = getPlayerTotalStat('atk', stats);
-                 stats.def = getPlayerTotalStat('def', stats);
-                 stats.critChance = getPlayerTotalStat('critChance', stats);
-                 stats.critDmg = getPlayerTotalStat('critDmg', stats);
-                 stats.evasion = getPlayerTotalStat('evasion', stats);
-
-                 if (gameState.player.currentHp > stats.hp) gameState.player.currentHp = stats.hp;
-                 return stats;
-            }
-
-            function handleDebuffs() {
-                const monster = gameState.currentMonster;
-                if (monster.debuffs) {
-                    if (monster.debuffs.bleed && monster.debuffs.bleed.duration > 0) {
-                        const bleed = monster.debuffs.bleed;
-                        let bleedDamage = bleed.damage;
-                        if (gameState.player.activeSkills.includes('Exsanguinate') && Math.random() < getPlayerTotalStats().critChance) {
-                           bleedDamage = Math.round(bleedDamage * getPlayerTotalStats().critDmg);
-                           logAction(`Your bleed critically strikes for ${bleedDamage} damage!`, 'log-skill');
-                        } else {
-                           logAction(`${monster.name} bleeds for ${bleedDamage} damage.`, 'log-skill');
+                function handleDebuffs() {
+                    const monster = gameState.currentMonster;
+                    if (monster.debuffs) {
+                        if (monster.debuffs.bleed && monster.debuffs.bleed.duration > 0) {
+                            const bleed = monster.debuffs.bleed;
+                            let bleedDamage = bleed.damage;
+                            if (gameState.player.activeSkills.includes('Exsanguinate') && Math.random() < getPlayerTotalStats().critChance) {
+                                bleedDamage = Math.round(bleedDamage * getPlayerTotalStats().critDmg);
+                                logAction(`Your bleed critically strikes for ${bleedDamage} damage!`, 'log-skill');
+                            } else {
+                                logAction(`${monster.name} bleeds for ${bleedDamage} damage.`, 'log-skill');
+                            }
+                            monster.hp -= bleedDamage;
+                            bleed.duration--;
                         }
-                        monster.hp -= bleedDamage;
-                        bleed.duration--;
-                    }
-                    if (monster.debuffs.burn && monster.debuffs.burn.duration > 0) {
-                        const burn = monster.debuffs.burn;
-                        monster.hp -= burn.damage;
-                        logAction(`${monster.name} burns for ${burn.damage} damage.`, 'log-skill');
-                        burn.duration--;
-                    }
-                    if (monster.debuffs.sunder && monster.debuffs.sunder.duration > 0) {
-                        monster.debuffs.sunder.duration--;
-                    }
-                }
-            }
-
-            function handlePlayerBuffs() {
-                if (gameState.playerTemp.standFirm > 0) gameState.playerTemp.standFirm--;
-                if (gameState.playerTemp.battleRush > 0) gameState.playerTemp.battleRush--;
-            }
-
-            function gameLoop() {
-                if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
-                
-                handlePlayerBuffs();
-                handleDebuffs();
-                if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
-
-                // Player's turn
-                const playerStats = getPlayerTotalStats();
-                let playerDamage = calculateDamage(playerStats, gameState.currentMonster);
-                
-                let isGuaranteedCrit = false;
-
-                if (gameState.player.activeSkills.includes('Focus')) {
-                    gameState.playerTemp.focusCounter = (gameState.playerTemp.focusCounter || 0) + 1;
-                    if (gameState.playerTemp.focusCounter >= 5) {
-                        isGuaranteedCrit = true;
-                        gameState.playerTemp.focusCounter = 0;
-                    }
-                }
-                if (gameState.player.activeSkills.includes('Shadow Step') && Math.random() < 0.10) {
-                    isGuaranteedCrit = true;
-                    if (gameState.player.activeSkills.includes('Invisibility')) {
-                        gameState.playerTemp.invisible = true;
+                        if (monster.debuffs.burn && monster.debuffs.burn.duration > 0) {
+                            const burn = monster.debuffs.burn;
+                            monster.hp -= burn.damage;
+                            logAction(`${monster.name} burns for ${burn.damage} damage.`, 'log-skill');
+                            burn.duration--;
+                        }
+                        if (monster.debuffs.sunder && monster.debuffs.sunder.duration > 0) {
+                            monster.debuffs.sunder.duration--;
+                        }
                     }
                 }
 
-                const finalDamage = applyPlayerAttackSkills(playerDamage, playerStats, isGuaranteedCrit);
-                gameState.currentMonster.hp -= finalDamage;
-                if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
+                function handlePlayerBuffs() {
+                    if (gameState.playerTemp.standFirm > 0) gameState.playerTemp.standFirm--;
+                    if (gameState.playerTemp.battleRush > 0) gameState.playerTemp.battleRush--;
+                }
 
-                if (gameState.player.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
-                    const secondShotStats = {...playerStats, atk: playerStats.atk * 0.6};
-                    const secondShotDamage = calculateDamage(secondShotStats, gameState.currentMonster);
-                    const finalSecondShotDamage = applyPlayerAttackSkills(secondShotDamage, secondShotStats, false);
-                    gameState.currentMonster.hp -= finalSecondShotDamage;
-                    logAction(`Double Shot triggers, firing again!`, 'log-skill');
+                function gameLoop() {
+                    if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
+
+                    handlePlayerBuffs();
+                    handleDebuffs();
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
-                }
 
-                // Monster's turn
-                if (gameState.currentMonster.hp > 0) {
-                    if (gameState.playerTemp.monsterMiss > 0) {
-                        logAction(`${gameState.currentMonster.name} is dazed and misses its attack!`, 'log-skill');
-                        gameState.playerTemp.monsterMiss--;
-                    } else {
-                        let monsterDamage = calculateDamage(gameState.currentMonster, playerStats);
-                        gameState.player.currentHp -= monsterDamage.damage;
-                        logAction(`${gameState.currentMonster.name} hits you for ${monsterDamage.damage} damage.`, 'log-monster');
-                    }
-                }
+                    // Player's turn
+                    const playerStats = getPlayerTotalStats();
+                    let playerDamage = calculateDamage(playerStats, gameState.currentMonster);
 
-                if (gameState.player.currentHp <= 0) playerDefeated();
-                updateAllUIs();
-            }
+                    let isGuaranteedCrit = false;
 
-            let campInterval = null;
-
-            function startCamping() {
-                if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
-                if (gameState.currentMonster.isBoss) {
-                    logAction("You cannot camp during a boss battle!", "log-error");
-                    return;
-                }
-            
-                clearInterval(gameInterval);
-                clearInterval(autoSaveInterval);
-                gameState.isRunning = false;
-            
-                UIElements.campBtn.style.display = 'none';
-                UIElements.continueBtn.style.display = 'inline-block';
-            
-                logAction("You set up camp. Restoring HP gradually...", "log-system");
-            
-                campInterval = setInterval(() => {
-                    if (!gameState.player) return;
-                    const totalStats = getPlayerTotalStats();
-                    const regenAmount = Math.max(1, Math.floor(totalStats.hp * 0.02)); // 2% max HP per second
-                    gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + regenAmount);
-                    updateUI();
-            
-                    if (gameState.player.currentHp >= totalStats.hp) {
-                        logAction("You are fully rested. Click Continue to resume your adventure.", "log-system");
-                        clearInterval(campInterval);
-                    }
-                }, 1000);
-            }
-            
-            function continueAdventure() {
-                if (campInterval) {
-                    clearInterval(campInterval);
-                    campInterval = null;
-                }
-                UIElements.campBtn.style.display = 'inline-block';
-                UIElements.continueBtn.style.display = 'none';
-            
-                spawnMonster();
-                startGame();
-            }
-
-            function applyPlayerAttackSkills(damageInfo, stats, isGuaranteedCrit) {
-                let finalDamage = damageInfo.damage;
-                let isCrit = damageInfo.isCrit || isGuaranteedCrit;
-                
-                if (isGuaranteedCrit) {
-                    const critMultiplier = stats.critDmg + (gameState.player.activeSkills.includes('Lethal Precision') ? 0.5 : 0);
-                    finalDamage = Math.round(stats.atk * critMultiplier * (1 - (gameState.currentMonster.def / (gameState.currentMonster.def + 100))));
-                    logAction(`A focused attack lands a critical hit!`, 'log-skill');
-                }
-
-                const hpPercent = gameState.currentMonster.hp / gameState.currentMonster.maxHp;
-                if (gameState.player.activeSkills.includes('Execute') && hpPercent < 0.2) {
-                    finalDamage = Math.round(finalDamage * 1.5);
-                }
-                if (gameState.player.activeSkills.includes('Cull the Weak') && hpPercent < 0.3) {
-                    finalDamage = Math.round(finalDamage * 2.0);
-                }
-                
-                const arcaneProcChance = gameState.player.activeSkills.includes('High Voltage') ? 0.15 : 0.10;
-                if (gameState.player.activeSkills.includes('Arcane Power') && Math.random() < arcaneProcChance) {
-                    let arcaneDamage = stats.atk * (gameState.player.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
-                    if (gameState.player.activeSkills.includes('Chain Lightning')) {
-                        arcaneDamage += stats.atk * 1.5;
-                    }
-                    arcaneDamage = Math.round(arcaneDamage);
-                    finalDamage += arcaneDamage;
-                    logAction(`Arcane Power unleashes a spell for ${arcaneDamage} bonus damage!`, 'log-skill');
-
-                    if (gameState.player.activeSkills.includes('Combustion')) {
-                        const burnDamage = Math.round(stats.atk * (gameState.player.activeSkills.includes('Apocalypse') ? 1.0 : 0.5));
-                        gameState.currentMonster.debuffs.burn = { damage: burnDamage, duration: 3 };
-                        logAction(`The target is set ablaze!`, 'log-skill');
-                        if (gameState.player.activeSkills.includes('Apocalypse')) {
-                           gameState.currentMonster.debuffs.sunder = { stacks: 1, amount: 0.15, duration: 5 };
+                    if (gameState.player.activeSkills.includes('Focus')) {
+                        gameState.playerTemp.focusCounter = (gameState.playerTemp.focusCounter || 0) + 1;
+                        if (gameState.playerTemp.focusCounter >= 5) {
+                            isGuaranteedCrit = true;
+                            gameState.playerTemp.focusCounter = 0;
                         }
                     }
-                }
-
-                const soulDrainProcChance = gameState.player.activeSkills.includes('Devour Soul') ? 0.08 : 0.05;
-                if (gameState.player.activeSkills.includes('Soul Drain') && Math.random() < soulDrainProcChance) {
-                    let bonusDamage = finalDamage * 0.5;
-                    if (gameState.player.activeSkills.includes('Annihilate')) {
-                        bonusDamage += gameState.currentMonster.maxHp * 0.05;
-                    }
-                    bonusDamage = Math.round(bonusDamage);
-                    finalDamage += bonusDamage;
-                    
-                    const healAmount = Math.round(finalDamage * (gameState.player.activeSkills.includes('Devour Soul') ? 0.75 : 0.5));
-                    gameState.player.currentHp = Math.min(stats.hp, gameState.player.currentHp + healAmount);
-                    logAction(`Soul Drain activates, dealing ${bonusDamage} bonus damage and healing for ${healAmount} HP!`, 'log-skill');
-                    
-                    if (gameState.player.activeSkills.includes('Time Warp')) {
-                        if (gameState.player.activeSkills.includes('Paradox') || Math.random() < 0.5) {
-                            gameState.playerTemp.monsterMiss = (gameState.playerTemp.monsterMiss || 0) + 1;
+                    if (gameState.player.activeSkills.includes('Shadow Step') && Math.random() < 0.10) {
+                        isGuaranteedCrit = true;
+                        if (gameState.player.activeSkills.includes('Invisibility')) {
+                            gameState.playerTemp.invisible = true;
                         }
                     }
-                }
 
-                logAction(`You hit ${gameState.currentMonster.name} for ${finalDamage} damage.${isCrit ? ' (CRIT!)' : ''}`, 'log-player');
+                    const finalDamage = applyPlayerAttackSkills(playerDamage, playerStats, isGuaranteedCrit);
+                    gameState.currentMonster.hp -= finalDamage;
+                    if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
 
-                if (isCrit && gameState.player.activeSkills.includes('Bleed')) {
-                    const maxStacks = gameState.player.activeSkills.includes('Hemorrhage') ? 3 : 1;
-                    if (!gameState.currentMonster.debuffs.bleed || (gameState.currentMonster.debuffs.bleed.stacks || 1) < maxStacks) {
-                        const bleedDamage = Math.round(stats.atk * 0.3);
-                        if (gameState.currentMonster.debuffs.bleed) {
-                           gameState.currentMonster.debuffs.bleed.stacks++;
-                           gameState.currentMonster.debuffs.bleed.damage += bleedDamage;
-                           gameState.currentMonster.debuffs.bleed.duration = 3;
+                    if (gameState.player.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
+                        const secondShotStats = { ...playerStats, atk: playerStats.atk * 0.6 };
+                        const secondShotDamage = calculateDamage(secondShotStats, gameState.currentMonster);
+                        const finalSecondShotDamage = applyPlayerAttackSkills(secondShotDamage, secondShotStats, false);
+                        gameState.currentMonster.hp -= finalSecondShotDamage;
+                        logAction(`Double Shot triggers, firing again!`, 'log-skill');
+                        if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
+                    }
+
+                    // Monster's turn
+                    if (gameState.currentMonster.hp > 0) {
+                        if (gameState.playerTemp.monsterMiss > 0) {
+                            logAction(`${gameState.currentMonster.name} is dazed and misses its attack!`, 'log-skill');
+                            gameState.playerTemp.monsterMiss--;
                         } else {
-                           gameState.currentMonster.debuffs.bleed = { damage: bleedDamage, duration: 3, stacks: 1 };
+                            let monsterDamage = calculateDamage(gameState.currentMonster, playerStats);
+                            gameState.player.currentHp -= monsterDamage.damage;
+                            logAction(`${gameState.currentMonster.name} hits you for ${monsterDamage.damage} damage.`, 'log-monster');
                         }
-                        logAction(`Your critical hit causes the ${gameState.currentMonster.name} to bleed!`, 'log-skill');
                     }
-                }
-                
-                return finalDamage;
-            }
 
-            function calculateDamage(attacker, defenderStats) {
-                let defenderEvasion = defenderStats.evasion;
-                if (gameState.playerTemp.invisible) {
-                    defenderEvasion = 1; 
-                    gameState.playerTemp.invisible = false;
+                    if (gameState.player.currentHp <= 0) playerDefeated();
+                    updateAllUIs();
                 }
 
-                if (Math.random() < defenderEvasion) {
-                    logAction(`${attacker.name}'s attack was evaded!`, 'log-system');
-                    return { damage: 0, isCrit: false };
+                let campInterval = null;
+
+                function startCamping() {
+                    if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
+                    if (gameState.currentMonster.isBoss) {
+                        logAction("You cannot camp during a boss battle!", "log-error");
+                        return;
+                    }
+
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    gameState.isRunning = false;
+
+                    UIElements.campBtn.style.display = 'none';
+                    UIElements.continueBtn.style.display = 'inline-block';
+
+                    logAction("You set up camp. Restoring HP gradually...", "log-system");
+
+                    campInterval = setInterval(() => {
+                        if (!gameState.player) return;
+                        const totalStats = getPlayerTotalStats();
+                        const regenAmount = Math.max(1, Math.floor(totalStats.hp * 0.02)); // 2% max HP per second
+                        gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + regenAmount);
+                        updateUI();
+
+                        if (gameState.player.currentHp >= totalStats.hp) {
+                            logAction("You are fully rested. Click Continue to resume your adventure.", "log-system");
+                            clearInterval(campInterval);
+                        }
+                    }, 1000);
                 }
 
-                if (gameState.player.activeSkills.includes('Aegis Block') && attacker === gameState.currentMonster) {
-                    if (Math.random() < 0.15) {
-                        logAction(`Your Aegis Block skill activates, negating all damage!`, 'log-skill');
-                        if (gameState.player.activeSkills.includes('Holy Shield')) {
-                            const healAmount = Math.round(defenderStats.hp * 0.05);
-                            gameState.player.currentHp = Math.min(defenderStats.hp, gameState.player.currentHp + healAmount);
-                            logAction(`Holy Shield heals you for ${healAmount} HP.`, 'log-skill');
+                function continueAdventure() {
+                    if (campInterval) {
+                        clearInterval(campInterval);
+                        campInterval = null;
+                    }
+                    UIElements.campBtn.style.display = 'inline-block';
+                    UIElements.continueBtn.style.display = 'none';
+
+                    spawnMonster();
+                    startGame();
+                }
+
+                function applyPlayerAttackSkills(damageInfo, stats, isGuaranteedCrit) {
+                    let finalDamage = damageInfo.damage;
+                    let isCrit = damageInfo.isCrit || isGuaranteedCrit;
+
+                    if (isGuaranteedCrit) {
+                        const critMultiplier = stats.critDmg + (gameState.player.activeSkills.includes('Lethal Precision') ? 0.5 : 0);
+                        finalDamage = Math.round(stats.atk * critMultiplier * (1 - (gameState.currentMonster.def / (gameState.currentMonster.def + 100))));
+                        logAction(`A focused attack lands a critical hit!`, 'log-skill');
+                    }
+
+                    const hpPercent = gameState.currentMonster.hp / gameState.currentMonster.maxHp;
+                    if (gameState.player.activeSkills.includes('Execute') && hpPercent < 0.2) {
+                        finalDamage = Math.round(finalDamage * 1.5);
+                    }
+                    if (gameState.player.activeSkills.includes('Cull the Weak') && hpPercent < 0.3) {
+                        finalDamage = Math.round(finalDamage * 2.0);
+                    }
+
+                    const arcaneProcChance = gameState.player.activeSkills.includes('High Voltage') ? 0.15 : 0.10;
+                    if (gameState.player.activeSkills.includes('Arcane Power') && Math.random() < arcaneProcChance) {
+                        let arcaneDamage = stats.atk * (gameState.player.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
+                        if (gameState.player.activeSkills.includes('Chain Lightning')) {
+                            arcaneDamage += stats.atk * 1.5;
                         }
-                        if (gameState.player.activeSkills.includes('Divine Retribution')) {
-                            const retaliateDamage = Math.round(defenderStats.def);
-                            gameState.currentMonster.hp -= retaliateDamage;
-                            logAction(`Divine Retribution strikes back for ${retaliateDamage} damage!`, 'log-skill');
+                        arcaneDamage = Math.round(arcaneDamage);
+                        finalDamage += arcaneDamage;
+                        logAction(`Arcane Power unleashes a spell for ${arcaneDamage} bonus damage!`, 'log-skill');
+
+                        if (gameState.player.activeSkills.includes('Combustion')) {
+                            const burnDamage = Math.round(stats.atk * (gameState.player.activeSkills.includes('Apocalypse') ? 1.0 : 0.5));
+                            gameState.currentMonster.debuffs.burn = { damage: burnDamage, duration: 3 };
+                            logAction(`The target is set ablaze!`, 'log-skill');
+                            if (gameState.player.activeSkills.includes('Apocalypse')) {
+                                gameState.currentMonster.debuffs.sunder = { stacks: 1, amount: 0.15, duration: 5 };
+                            }
                         }
-                        if (gameState.player.activeSkills.includes('Stand Firm')) {
-                            gameState.playerTemp.standFirm = 3;
-                            logAction(`Stand Firm activates, boosting your DEF!`, 'log-skill');
+                    }
+
+                    const soulDrainProcChance = gameState.player.activeSkills.includes('Devour Soul') ? 0.08 : 0.05;
+                    if (gameState.player.activeSkills.includes('Soul Drain') && Math.random() < soulDrainProcChance) {
+                        let bonusDamage = finalDamage * 0.5;
+                        if (gameState.player.activeSkills.includes('Annihilate')) {
+                            bonusDamage += gameState.currentMonster.maxHp * 0.05;
                         }
-                        if (gameState.player.activeSkills.includes('Thornmail')) {
-                             const reflectDamage = Math.round(attacker.atk * 0.2);
-                             gameState.currentMonster.hp -= reflectDamage;
-                             logAction(`Thornmail reflects ${reflectDamage} damage!`, 'log-skill');
+                        bonusDamage = Math.round(bonusDamage);
+                        finalDamage += bonusDamage;
+
+                        const healAmount = Math.round(finalDamage * (gameState.player.activeSkills.includes('Devour Soul') ? 0.75 : 0.5));
+                        gameState.player.currentHp = Math.min(stats.hp, gameState.player.currentHp + healAmount);
+                        logAction(`Soul Drain activates, dealing ${bonusDamage} bonus damage and healing for ${healAmount} HP!`, 'log-skill');
+
+                        if (gameState.player.activeSkills.includes('Time Warp')) {
+                            if (gameState.player.activeSkills.includes('Paradox') || Math.random() < 0.5) {
+                                gameState.playerTemp.monsterMiss = (gameState.playerTemp.monsterMiss || 0) + 1;
+                            }
                         }
+                    }
+
+                    logAction(`You hit ${gameState.currentMonster.name} for ${finalDamage} damage.${isCrit ? ' (CRIT!)' : ''}`, 'log-player');
+
+                    if (isCrit && gameState.player.activeSkills.includes('Bleed')) {
+                        const maxStacks = gameState.player.activeSkills.includes('Hemorrhage') ? 3 : 1;
+                        if (!gameState.currentMonster.debuffs.bleed || (gameState.currentMonster.debuffs.bleed.stacks || 1) < maxStacks) {
+                            const bleedDamage = Math.round(stats.atk * 0.3);
+                            if (gameState.currentMonster.debuffs.bleed) {
+                                gameState.currentMonster.debuffs.bleed.stacks++;
+                                gameState.currentMonster.debuffs.bleed.damage += bleedDamage;
+                                gameState.currentMonster.debuffs.bleed.duration = 3;
+                            } else {
+                                gameState.currentMonster.debuffs.bleed = { damage: bleedDamage, duration: 3, stacks: 1 };
+                            }
+                            logAction(`Your critical hit causes the ${gameState.currentMonster.name} to bleed!`, 'log-skill');
+                        }
+                    }
+
+                    return finalDamage;
+                }
+
+                function calculateDamage(attacker, defenderStats) {
+                    let defenderEvasion = defenderStats.evasion;
+                    if (gameState.playerTemp.invisible) {
+                        defenderEvasion = 1;
+                        gameState.playerTemp.invisible = false;
+                    }
+
+                    if (Math.random() < defenderEvasion) {
+                        logAction(`${attacker.name}'s attack was evaded!`, 'log-system');
                         return { damage: 0, isCrit: false };
                     }
-                }
-                
-                let isCrit = Math.random() < (attacker.critChance || 0);
-                let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
-                
-                let attackerAtk = attacker.atk;
-                if (gameState.playerTemp.battleRush > 0 && attacker === gameState.player) {
-                    attackerAtk *= 1.20;
+
+                    if (gameState.player.activeSkills.includes('Aegis Block') && attacker === gameState.currentMonster) {
+                        if (Math.random() < 0.15) {
+                            logAction(`Your Aegis Block skill activates, negating all damage!`, 'log-skill');
+                            if (gameState.player.activeSkills.includes('Holy Shield')) {
+                                const healAmount = Math.round(defenderStats.hp * 0.05);
+                                gameState.player.currentHp = Math.min(defenderStats.hp, gameState.player.currentHp + healAmount);
+                                logAction(`Holy Shield heals you for ${healAmount} HP.`, 'log-skill');
+                            }
+                            if (gameState.player.activeSkills.includes('Divine Retribution')) {
+                                const retaliateDamage = Math.round(defenderStats.def);
+                                gameState.currentMonster.hp -= retaliateDamage;
+                                logAction(`Divine Retribution strikes back for ${retaliateDamage} damage!`, 'log-skill');
+                            }
+                            if (gameState.player.activeSkills.includes('Stand Firm')) {
+                                gameState.playerTemp.standFirm = 3;
+                                logAction(`Stand Firm activates, boosting your DEF!`, 'log-skill');
+                            }
+                            if (gameState.player.activeSkills.includes('Thornmail')) {
+                                const reflectDamage = Math.round(attacker.atk * 0.2);
+                                gameState.currentMonster.hp -= reflectDamage;
+                                logAction(`Thornmail reflects ${reflectDamage} damage!`, 'log-skill');
+                            }
+                            return { damage: 0, isCrit: false };
+                        }
+                    }
+
+                    let isCrit = Math.random() < (attacker.critChance || 0);
+                    let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
+
+                    let attackerAtk = attacker.atk;
+                    if (gameState.playerTemp.battleRush > 0 && attacker === gameState.player) {
+                        attackerAtk *= 1.20;
+                    }
+
+                    let baseDamage = attackerAtk * critMultiplier;
+
+                    let defenderDef = defenderStats.def;
+                    if (gameState.currentMonster.debuffs && gameState.currentMonster.debuffs.sunder && attacker === gameState.player) {
+                        const sunderStacks = gameState.currentMonster.debuffs.sunder.stacks || 1;
+                        const sunderAmount = gameState.currentMonster.debuffs.sunder.amount || 0.10;
+                        defenderDef *= (1 - (sunderAmount * sunderStacks));
+                    }
+
+                    let damageReduction = 1 - (defenderDef / (defenderDef + 100));
+                    let finalDamage = Math.round(baseDamage * damageReduction);
+                    return { damage: Math.max(1, finalDamage), isCrit: isCrit };
                 }
 
-                let baseDamage = attackerAtk * critMultiplier;
-                
-                let defenderDef = defenderStats.def;
-                if (gameState.currentMonster.debuffs && gameState.currentMonster.debuffs.sunder && attacker === gameState.player) {
-                    const sunderStacks = gameState.currentMonster.debuffs.sunder.stacks || 1;
-                    const sunderAmount = gameState.currentMonster.debuffs.sunder.amount || 0.10;
-                    defenderDef *= (1 - (sunderAmount * sunderStacks));
-                }
-
-                let damageReduction = 1 - (defenderDef / (defenderDef + 100));
-                let finalDamage = Math.round(baseDamage * damageReduction);
-                return { damage: Math.max(1, finalDamage), isCrit: isCrit };
-            }
-
-            function monsterDefeated() {
+                function monsterDefeated() {
                     logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
-                    
+
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
-                
-                    // Increase base multipliers here (e.g., 2.5x instead of 1x)
-                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 2.5);
-                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 2.5);
-                
+                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
                     logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
-                
+
                     if (Math.random() < gameState.currentMonster.dropChance) {
                         generateItemDrop(gameState.currentMonster);
                     }
-                    
+
                     gameState.kills++;
                     if (gameState.currentMonster.isBoss) {
                         gameState.wave++;
@@ -1030,613 +1205,613 @@
                         UIElements.challengeBossBtn.disabled = true;
                         UIElements.challengeBossBtn.textContent = 'Challenge Boss';
                     }
-                
+
                     if (gameState.kills >= 10 && !gameState.currentMonster.isBoss) UIElements.challengeBossBtn.disabled = false;
                     if (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
-                    
+
                     spawnMonster();
                 }
-            
-            function playerDefeated() {
-                gameState.player.currentHp = 0;
 
-                if (gameState.currentMonster && gameState.currentMonster.isBoss) {
-                    logAction('The boss\'s power overwhelms you, sending you back to safety!', 'log-error');
-                    const totalStats = getPlayerTotalStats();
-                    gameState.player.currentHp = totalStats.hp * 0.5;
-                    logAction(`You are revived with 50% health.`, 'log-system');
-                    UIElements.challengeBossBtn.disabled = true;
-                    UIElements.challengeBossBtn.textContent = 'Challenge Boss';
-                    spawnMonster(); 
-                } else {
-                    logAction('You have been defeated by a monster!', 'log-monster');
-                    const xpPenalty = Math.round(gameState.player.xpToNextLevel * 0.10);
-                    gameState.player.xp -= xpPenalty;
-                    if (gameState.player.xp < 0) gameState.player.xp = 0;
-                    logAction(`As a penalty, you lose ${xpPenalty} XP.`, 'log-error');
-                    const totalStats = getPlayerTotalStats();
-                    gameState.player.currentHp = totalStats.hp * 0.25;
-                    logAction(`You are automatically revived with 25% health.`, 'log-system');
-                    spawnMonster();
-                }
-            }
+                function playerDefeated() {
+                    gameState.player.currentHp = 0;
 
-            function generateItemName(type, theme) {
-                const prefixList = itemData.names.prefixes[theme];
-                const prefix = prefixList[Math.floor(Math.random() * prefixList.length)];
-                const baseList = itemData.names[type];
-                const base = baseList[Math.floor(Math.random() * baseList.length)];
-                return `${prefix} ${base}`;
-            }
+                    if (gameState.currentMonster && gameState.currentMonster.isBoss) {
+                        logAction('The boss\'s power overwhelms you, sending you back to safety!', 'log-error');
+                        const totalStats = getPlayerTotalStats();
+                        gameState.player.currentHp = totalStats.hp * 0.5;
+                        logAction(`You are revived with 50% health.`, 'log-system');
+                        UIElements.challengeBossBtn.disabled = true;
+                        UIElements.challengeBossBtn.textContent = 'Challenge Boss';
+                        spawnMonster();
+                    } else {
+                        logAction('You have been defeated by a monster!', 'log-monster');
+                        const xpPenalty = Math.round(gameState.player.xpToNextLevel * 0.10);
+                        gameState.player.xp -= xpPenalty;
+                        if (gameState.player.xp < 0) gameState.player.xp = 0;
+                        logAction(`As a penalty, you lose ${xpPenalty} XP.`, 'log-error');
+                        const totalStats = getPlayerTotalStats();
+                        gameState.player.currentHp = totalStats.hp * 0.25;
+                        logAction(`You are automatically revived with 25% health.`, 'log-system');
+                        spawnMonster();
+                    }
+                }
 
-            function getRarityProbabilities(wave) {
-                // Base probabilities
-                let baseProbs;
-                if (wave <= 10) baseProbs = { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
-                else if (wave <= 30) baseProbs = { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
-                else if (wave <= 50) baseProbs = { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
-                else baseProbs = { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
-            
-                // Increase chances for better rarities gradually after wave 50
-                if (wave > 50) {
-                    const extra = Math.min((wave - 50) * 0.002, 0.1); // max +10% boost
-                    baseProbs.SR = Math.min(baseProbs.SR + extra, 0.6);
-                    baseProbs.SSR = Math.min(baseProbs.SSR + extra, 0.25);
-                    baseProbs.UR = Math.min(baseProbs.UR + extra, 0.1);
-                    // Adjust N and R down accordingly
-                    const reduce = extra * 3;
-                    baseProbs.N = Math.max(baseProbs.N - reduce, 0);
-                    baseProbs.R = Math.max(baseProbs.R - reduce, 0);
+                function generateItemName(type, theme) {
+                    const prefixList = itemData.names.prefixes[theme];
+                    const prefix = prefixList[Math.floor(Math.random() * prefixList.length)];
+                    const baseList = itemData.names[type];
+                    const base = baseList[Math.floor(Math.random() * baseList.length)];
+                    return `${prefix} ${base}`;
                 }
-            
-                // Normalize to sum 1
-                const total = Object.values(baseProbs).reduce((a,b) => a+b, 0);
-                for (const key in baseProbs) {
-                    baseProbs[key] /= total;
-                }
-            
-                return baseProbs;
-            }
 
-            function generateItemDrop(monster) {
-            if (gameState.inventory.length >= gameState.maxInventorySize) {
-                logAction('Inventory is full! Cannot pick up new item.', 'log-system');
-                return;
-            }
-            const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
-            let rarityKey;
-            const probs = getRarityProbabilities(gameState.wave);
-            const rarityRand = Math.random();
-            let cumulativeProb = 0;
-            if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
-            else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
-            else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
-            else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
-            else rarityKey = 'UR';
-            const urBonusRand = Math.random();
-            if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
-            else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
-        
-            const rarityInfo = itemData.rarities[rarityKey];
-            const baseStatMultiplier = rarityInfo.statMod;
-        
-            const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-            const baseStatCountByRarity = {
-                'N': 1,
-                'R': 2,
-                'SR': 3,
-                'SSR': 4,
-                'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
-            };
-            const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
-            const shuffledStats = allPossibleBaseStats.sort(() => 0.5 - Math.random());
-            const selectedBaseStats = shuffledStats.slice(0, baseStatsToAssignCount);
-        
-            // Default base values if not defined for item type
-            const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
-        
-            const newItem = {
-                id: Date.now() + Math.random(),
-                type: itemType,
-                rarity: rarityKey,
-                name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
-                bonusStats: {}
-            };
-        
-            // Assign base stats randomly selected, scaled by rarity
-            for (const stat of selectedBaseStats) {
-                let baseValue = defaultBaseValues[stat];
-                if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
-                    baseValue = itemData.baseStats[itemType][stat];
-                }
-                newItem[stat] = Math.round(baseValue * baseStatMultiplier);
-            }
-        
-            // Bonus stats assignment
-            const numBonusStats = rarityInfo.bonusStats;
-            const bonusMultiplier = rarityInfo.bonusMultiplier;
-        
-            // Determine theme for bonus stats
-            const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
-            let availableBonusStats = [];
-            if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
-            else {
-                const pools = itemData.bonusStatPools[theme];
-                availableBonusStats = [...pools.primary, ...pools.secondary];
-            }
-        
-            for (let i = 0; i < numBonusStats; i++) {
-                if (availableBonusStats.length === 0) break;
-                let bonusStatType;
-                if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
-                    const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
-                    if(primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
-                    else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
-        
-                let bonusValue;
-                if (['critChance', 'evasion'].includes(bonusStatType)) {
-                    const baseMin = 0.002, baseMax = 0.005;
-                    const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                    bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
-                } else if (bonusStatType === 'critDmg') {
-                    const baseMin = 0.02, baseMax = 0.05;
-                    const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                    bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
-                } else {
-                    const baseMin = 2, baseMax = 5;
-                    const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                    bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
-                    if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
-                }
-        
-                newItem.bonusStats[bonusStatType] = bonusValue;
-            }
-        
-            gameState.inventory.push(newItem);
-            logAction(`You found a [${rarityKey}] ${newItem.name}!`, 'log-drop');
-            updateInventoryUI();
-            }
-            
-            function spawnMonster(isBoss = false) {
-                gameState.isRunning = true;
-                let monsterTemplate;
-                if (isBoss) {
-                    const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
-                    monsterTemplate = monsters.bosses[bossIndex];
-                } else {
-                    const canSpawnElite = gameState.wave > 1;
-                    const rand = Math.random();
-                    if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
-                    else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
-                }
-                const scale = 1 + (gameState.wave - 1) * 0.12;
-                gameState.currentMonster = {
-                    ...monsterTemplate,
-                    hp: Math.round(monsterTemplate.baseHp * scale),
-                    maxHp: Math.round(monsterTemplate.baseHp * scale),
-                    atk: Math.round(monsterTemplate.baseAtk * scale),
-                    def: Math.round(monsterTemplate.baseDef * scale),
-                    gold: Math.round(monsterTemplate.gold * scale),
-                    xp: Math.round(monsterTemplate.xp * Math.pow(1.05, gameState.wave - 1)), // exponential XP scaling
-                    isBoss: isBoss,
-                    debuffs: {},
-                };
-                logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
-                updateUI();
-            }
+                function getRarityProbabilities(wave) {
+                    // Base probabilities
+                    let baseProbs;
+                    if (wave <= 10) baseProbs = { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
+                    else if (wave <= 30) baseProbs = { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
+                    else if (wave <= 50) baseProbs = { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
+                    else baseProbs = { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
 
-            function levelUp() {
-                gameState.player.level++; gameState.player.xp = 0;
-                const currentLevel = gameState.player.level;
-                let xpMultiplier = 1.35;
-                if (currentLevel < 20) xpMultiplier = 1.25;
-                gameState.player.xpToNextLevel = Math.round(gameState.player.xpToNextLevel * xpMultiplier);
-                gameState.player.baseStats.hp += 5; gameState.player.baseStats.atk += 1;
-                if (gameState.player.level % 2 === 0) gameState.player.baseStats.def += 1;
-                gameState.player.currentHp = getPlayerTotalStats().hp;
-                logAction(`LEVEL UP! You are now level ${gameState.player.level}.`, 'log-system');
-                logAction('You feel invigorated, your health fully restored!', 'log-system');
-                if (gameState.player.level >= 70) UIElements.rebirthBtn.style.display = 'block';
-                
-                const promotions = classes[gameState.player.baseClassName]?.promotions;
-                if (promotions && promotions[gameState.player.level]) {
-                    const choiceList = Array.isArray(promotions[gameState.player.level]) ? promotions[gameState.player.level] : promotions[gameState.player.level][gameState.player.className];
-                    if (choiceList) showPromotionModal(choiceList);
+                    // Increase chances for better rarities gradually after wave 50
+                    if (wave > 50) {
+                        const extra = Math.min((wave - 50) * 0.002, 0.1); // max +10% boost
+                        baseProbs.SR = Math.min(baseProbs.SR + extra, 0.6);
+                        baseProbs.SSR = Math.min(baseProbs.SSR + extra, 0.25);
+                        baseProbs.UR = Math.min(baseProbs.UR + extra, 0.1);
+                        // Adjust N and R down accordingly
+                        const reduce = extra * 3;
+                        baseProbs.N = Math.max(baseProbs.N - reduce, 0);
+                        baseProbs.R = Math.max(baseProbs.R - reduce, 0);
+                    }
+
+                    // Normalize to sum 1
+                    const total = Object.values(baseProbs).reduce((a, b) => a + b, 0);
+                    for (const key in baseProbs) {
+                        baseProbs[key] /= total;
+                    }
+
+                    return baseProbs;
                 }
-                updateUI();
-            }
-            
-            function showPromotionModal(choices) {
-                gameState.isRunning = false;
-                const promotionChoices = document.getElementById('promotion-choices');
-                promotionChoices.innerHTML = '';
-                choices.forEach(choice => {
-                    const btn = document.createElement('button');
-                    btn.textContent = choice;
-                    btn.onclick = () => {
-                        gameState.player.className = choice;
-                        const skill = promotionSkills[choice];
-                        if (skill) {
-                            gameState.player.activeSkills.push(skill.name);
-                            logAction(`You have learned the skill: ${skill.name}!`, 'log-skill');
-                        }
-                        
-                        logAction(`You have been promoted to ${choice}!`, 'log-system');
-                        gameState.player.currentHp = getPlayerTotalStats().hp;
-                        
-                        UIElements.promotionModal.style.display = 'none';
-                        gameState.isRunning = true;
-                        updateAllUIs();
+
+                function generateItemDrop(monster) {
+                    if (gameState.inventory.length >= gameState.maxInventorySize) {
+                        logAction('Inventory is full! Cannot pick up new item.', 'log-system');
+                        return;
+                    }
+                    const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
+                    let rarityKey;
+                    const probs = getRarityProbabilities(gameState.wave);
+                    const rarityRand = Math.random();
+                    let cumulativeProb = 0;
+                    if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
+                    else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
+                    else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
+                    else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
+                    else rarityKey = 'UR';
+                    const urBonusRand = Math.random();
+                    if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
+                    else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
+
+                    const rarityInfo = itemData.rarities[rarityKey];
+                    const baseStatMultiplier = rarityInfo.statMod;
+
+                    const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                    const baseStatCountByRarity = {
+                        'N': 1,
+                        'R': 2,
+                        'SR': 3,
+                        'SSR': 4,
+                        'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
                     };
-                    promotionChoices.appendChild(btn);
-                });
-                UIElements.promotionModal.style.display = 'flex';
-            }
+                    const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
+                    const shuffledStats = allPossibleBaseStats.sort(() => 0.5 - Math.random());
+                    const selectedBaseStats = shuffledStats.slice(0, baseStatsToAssignCount);
 
-            function updateUI() {
-                if (!gameState.player) return;
-                const totalStats = getPlayerTotalStats();
-                UIElements.playerName.textContent = gameState.player.name; UIElements.playerClass.textContent = gameState.player.className;
-                UIElements.playerLevel.textContent = gameState.player.level; UIElements.playerHpText.textContent = `${Math.ceil(gameState.player.currentHp)} / ${totalStats.hp}`;
-                UIElements.playerHpFill.style.width = `${(gameState.player.currentHp / totalStats.hp) * 100}%`;
-                UIElements.playerXpText.textContent = `${gameState.player.xp} / ${gameState.player.xpToNextLevel}`;
-                UIElements.playerXpFill.style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
-                UIElements.playerAtk.textContent = Math.round(totalStats.atk); UIElements.playerDef.textContent = Math.round(totalStats.def);
-                UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
-                UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
-                UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
-                UIElements.playerGold.textContent = gameState.gold;
-                if (gameState.currentMonster) {
-                    UIElements.monsterName.textContent = gameState.currentMonster.name;
-                    UIElements.monsterHpText.textContent = `${Math.ceil(gameState.currentMonster.hp)} / ${gameState.currentMonster.maxHp}`;
-                    UIElements.monsterHpFill.style.width = `${(gameState.currentMonster.hp / gameState.currentMonster.maxHp) * 100}%`;
-                }
-                UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
-                UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`;
-UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
-UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
-                UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
-                UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
-                UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
-                UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
-                UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
-                UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
-                UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
-                UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
+                    // Default base values if not defined for item type
+                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
 
-                if (gameState.player.activeSkills.length > 0) {
-                    UIElements.skillDisplay.innerHTML = '';
-                    gameState.player.activeSkills.forEach(skillName => {
-                        const skillKey = Object.keys(promotionSkills).find(key => promotionSkills[key].name === skillName);
-                        const skillData = promotionSkills[skillKey];
-                        if (skillData) {
-                            const skillEntry = document.createElement('div');
-                            skillEntry.className = 'skill-entry';
-                            skillEntry.innerHTML = `<strong>${skillData.name}</strong><p>${skillData.description}</p>`;
-                            UIElements.skillDisplay.appendChild(skillEntry);
+                    const newItem = {
+                        id: Date.now() + Math.random(),
+                        type: itemType,
+                        rarity: rarityKey,
+                        name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
+                        bonusStats: {}
+                    };
+
+                    // Assign base stats randomly selected, scaled by rarity
+                    for (const stat of selectedBaseStats) {
+                        let baseValue = defaultBaseValues[stat];
+                        if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
+                            baseValue = itemData.baseStats[itemType][stat];
                         }
+                        newItem[stat] = Math.round(baseValue * baseStatMultiplier);
+                    }
+
+                    // Bonus stats assignment
+                    const numBonusStats = rarityInfo.bonusStats;
+                    const bonusMultiplier = rarityInfo.bonusMultiplier;
+
+                    // Determine theme for bonus stats
+                    const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
+                    let availableBonusStats = [];
+                    if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
+                    else {
+                        const pools = itemData.bonusStatPools[theme];
+                        availableBonusStats = [...pools.primary, ...pools.secondary];
+                    }
+
+                    for (let i = 0; i < numBonusStats; i++) {
+                        if (availableBonusStats.length === 0) break;
+                        let bonusStatType;
+                        if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
+                            const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
+                            if (primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
+                            else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                        } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                        availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
+
+                        let bonusValue;
+                        if (['critChance', 'evasion'].includes(bonusStatType)) {
+                            const baseMin = 0.002, baseMax = 0.005;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                        } else if (bonusStatType === 'critDmg') {
+                            const baseMin = 0.02, baseMax = 0.05;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                        } else {
+                            const baseMin = 2, baseMax = 5;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
+                            if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
+                        }
+
+                        newItem.bonusStats[bonusStatType] = bonusValue;
+                    }
+
+                    gameState.inventory.push(newItem);
+                    logAction(`You found a [${rarityKey}] ${newItem.name}!`, 'log-drop');
+                    updateInventoryUI();
+                }
+
+                function spawnMonster(isBoss = false) {
+                    gameState.isRunning = true;
+                    let monsterTemplate;
+                    if (isBoss) {
+                        const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
+                        monsterTemplate = monsters.bosses[bossIndex];
+                    } else {
+                        const canSpawnElite = gameState.wave > 1;
+                        const rand = Math.random();
+                        if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
+                        else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
+                    }
+                    const scale = 1 + (gameState.wave - 1) * 0.12;
+                    gameState.currentMonster = {
+                        ...monsterTemplate,
+                        hp: Math.round(monsterTemplate.baseHp * scale),
+                        maxHp: Math.round(monsterTemplate.baseHp * scale),
+                        atk: Math.round(monsterTemplate.baseAtk * scale),
+                        def: Math.round(monsterTemplate.baseDef * scale),
+                        gold: Math.round(monsterTemplate.gold * scale),
+                        xp: Math.round(monsterTemplate.xp * Math.pow(1.05, gameState.wave - 1)), // exponential XP scaling
+                        isBoss: isBoss,
+                        debuffs: {},
+                    };
+                    logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
+                    updateUI();
+                }
+
+                function levelUp() {
+                    gameState.player.level++; gameState.player.xp = 0;
+                    const currentLevel = gameState.player.level;
+                    let xpMultiplier = 1.35;
+                    if (currentLevel < 20) xpMultiplier = 1.25;
+                    gameState.player.xpToNextLevel = Math.round(gameState.player.xpToNextLevel * xpMultiplier);
+                    gameState.player.baseStats.hp += 5; gameState.player.baseStats.atk += 1;
+                    if (gameState.player.level % 2 === 0) gameState.player.baseStats.def += 1;
+                    gameState.player.currentHp = getPlayerTotalStats().hp;
+                    logAction(`LEVEL UP! You are now level ${gameState.player.level}.`, 'log-system');
+                    logAction('You feel invigorated, your health fully restored!', 'log-system');
+                    if (gameState.player.level >= 70) UIElements.rebirthBtn.style.display = 'block';
+
+                    const promotions = classes[gameState.player.baseClassName]?.promotions;
+                    if (promotions && promotions[gameState.player.level]) {
+                        const choiceList = Array.isArray(promotions[gameState.player.level]) ? promotions[gameState.player.level] : promotions[gameState.player.level][gameState.player.className];
+                        if (choiceList) showPromotionModal(choiceList);
+                    }
+                    updateUI();
+                }
+
+                function showPromotionModal(choices) {
+                    gameState.isRunning = false;
+                    const promotionChoices = document.getElementById('promotion-choices');
+                    promotionChoices.innerHTML = '';
+                    choices.forEach(choice => {
+                        const btn = document.createElement('button');
+                        btn.textContent = choice;
+                        btn.onclick = () => {
+                            gameState.player.className = choice;
+                            const skill = promotionSkills[choice];
+                            if (skill) {
+                                gameState.player.activeSkills.push(skill.name);
+                                logAction(`You have learned the skill: ${skill.name}!`, 'log-skill');
+                            }
+
+                            logAction(`You have been promoted to ${choice}!`, 'log-system');
+                            gameState.player.currentHp = getPlayerTotalStats().hp;
+
+                            UIElements.promotionModal.style.display = 'none';
+                            gameState.isRunning = true;
+                            updateAllUIs();
+                        };
+                        promotionChoices.appendChild(btn);
                     });
-                    UIElements.skillPanel.style.display = 'flex';
-                } else {
-                    UIElements.skillPanel.style.display = 'none';
+                    UIElements.promotionModal.style.display = 'flex';
                 }
-            }
 
-            function updateInventoryUI() {
-                const list = UIElements.inventoryList;
-                list.innerHTML = '';
-                const equippedIds = Object.values(gameState.equipment);
-                gameState.inventory.forEach(item => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'inventory-item';
-                    const isEquipped = equippedIds.includes(item.id);
-                    const rarityColor = itemData.rarities[item.rarity].color;
-                    let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
-                    let itemHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
-                    if (isEquipped) itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
-                    itemDiv.innerHTML = itemHTML;
-                    itemDiv.addEventListener('mouseover', (event) => showTooltip(event, item, isEquipped));
-                    itemDiv.addEventListener('mouseout', hideTooltip);
-                    itemDiv.onclick = () => {
-                        if (isEquipped) unequipItem(item.type);
-                        else equipItem(item);
-                    };
-                    list.appendChild(itemDiv);
-                });
-            }
-            
-            function updateEquipmentUI() {
-                const display = UIElements.equipmentDisplay;
-                display.innerHTML = '';
-                ['weapon', 'armor', 'boots'].forEach(type => {
-                    const equippedId = gameState.equipment[type];
-                    const item = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
-                    const itemSlot = document.createElement('div');
-                    itemSlot.className = 'equipment-slot-display';
-                    let nameHTML = '---';
-                    if (item) {
+                function updateUI() {
+                    if (!gameState.player) return;
+                    const totalStats = getPlayerTotalStats();
+                    UIElements.playerName.textContent = gameState.player.name; UIElements.playerClass.textContent = gameState.player.className;
+                    UIElements.playerLevel.textContent = gameState.player.level; UIElements.playerHpText.textContent = `${Math.ceil(gameState.player.currentHp)} / ${totalStats.hp}`;
+                    UIElements.playerHpFill.style.width = `${(gameState.player.currentHp / totalStats.hp) * 100}%`;
+                    UIElements.playerXpText.textContent = `${gameState.player.xp} / ${gameState.player.xpToNextLevel}`;
+                    UIElements.playerXpFill.style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
+                    UIElements.playerAtk.textContent = Math.round(totalStats.atk); UIElements.playerDef.textContent = Math.round(totalStats.def);
+                    UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
+                    UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
+                    UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
+                    UIElements.playerGold.textContent = gameState.gold;
+                    if (gameState.currentMonster) {
+                        UIElements.monsterName.textContent = gameState.currentMonster.name;
+                        UIElements.monsterHpText.textContent = `${Math.ceil(gameState.currentMonster.hp)} / ${gameState.currentMonster.maxHp}`;
+                        UIElements.monsterHpFill.style.width = `${(gameState.currentMonster.hp / gameState.currentMonster.maxHp) * 100}%`;
+                    }
+                    UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
+                    UIElements.trainAtkBtn.textContent = `Train ATK (${gameState.trainingCosts.atk}G)`; UIElements.trainDefBtn.textContent = `Train DEF (${gameState.trainingCosts.def}G)`;
+                    UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
+                    UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
+                    UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
+                    UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
+                    UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
+                    UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
+                    UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
+                    UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
+                    UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
+
+                    if (gameState.player.activeSkills.length > 0) {
+                        UIElements.skillDisplay.innerHTML = '';
+                        gameState.player.activeSkills.forEach(skillName => {
+                            const skillKey = Object.keys(promotionSkills).find(key => promotionSkills[key].name === skillName);
+                            const skillData = promotionSkills[skillKey];
+                            if (skillData) {
+                                const skillEntry = document.createElement('div');
+                                skillEntry.className = 'skill-entry';
+                                skillEntry.innerHTML = `<strong>${skillData.name}</strong><p>${skillData.description}</p>`;
+                                UIElements.skillDisplay.appendChild(skillEntry);
+                            }
+                        });
+                        UIElements.skillPanel.style.display = 'flex';
+                    } else {
+                        UIElements.skillPanel.style.display = 'none';
+                    }
+                }
+
+                function updateInventoryUI() {
+                    const list = UIElements.inventoryList;
+                    list.innerHTML = '';
+                    const equippedIds = Object.values(gameState.equipment);
+                    gameState.inventory.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'inventory-item';
+                        const isEquipped = equippedIds.includes(item.id);
                         const rarityColor = itemData.rarities[item.rarity].color;
                         let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
-                        nameHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
-                        itemSlot.onclick = () => unequipItem(type);
-                        itemSlot.addEventListener('mouseover', (event) => showTooltip(event, item, true));
-                        itemSlot.addEventListener('mouseout', hideTooltip);
-                    }
-                    itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
-                    display.appendChild(itemSlot);
-                });
-            }
+                        let itemHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
+                        if (isEquipped) itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
+                        itemDiv.innerHTML = itemHTML;
+                        itemDiv.addEventListener('mouseover', (event) => showTooltip(event, item, isEquipped));
+                        itemDiv.addEventListener('mouseout', hideTooltip);
+                        itemDiv.onclick = () => {
+                            if (isEquipped) unequipItem(item.type);
+                            else equipItem(item);
+                        };
+                        list.appendChild(itemDiv);
+                    });
+                }
 
-            function showTooltip(event, item, isEquipped) {
-                clearTimeout(tooltipHideTimer);
-                const tooltip = UIElements.globalTooltip;
-                tooltip.innerHTML = ''; 
+                function updateEquipmentUI() {
+                    const display = UIElements.equipmentDisplay;
+                    display.innerHTML = '';
+                    ['weapon', 'armor', 'boots'].forEach(type => {
+                        const equippedId = gameState.equipment[type];
+                        const item = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
+                        const itemSlot = document.createElement('div');
+                        itemSlot.className = 'equipment-slot-display';
+                        let nameHTML = '---';
+                        if (item) {
+                            const rarityColor = itemData.rarities[item.rarity].color;
+                            let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                            nameHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
+                            itemSlot.onclick = () => unequipItem(type);
+                            itemSlot.addEventListener('mouseover', (event) => showTooltip(event, item, true));
+                            itemSlot.addEventListener('mouseout', hideTooltip);
+                        }
+                        itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
+                        display.appendChild(itemSlot);
+                    });
+                }
 
-                const rarityColor = itemData.rarities[item.rarity].color;
-                let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                function showTooltip(event, item, isEquipped) {
+                    clearTimeout(tooltipHideTimer);
+                    const tooltip = UIElements.globalTooltip;
+                    tooltip.innerHTML = '';
 
-                const nameEl = document.createElement('strong');
-                nameEl.style.color = rarityColor;
-                nameEl.style.fontWeight = fontWeight;
-                nameEl.textContent = `${item.name} (${item.type})`;
-                tooltip.appendChild(nameEl);
+                    const rarityColor = itemData.rarities[item.rarity].color;
+                    let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
 
-                const addLine = (text) => { tooltip.appendChild(document.createElement('br')); tooltip.appendChild(document.createTextNode(text)); };
-                
-                addLine(`Rarity: ${item.rarity}`);
-                addLine(`--------`);
-                if(item.atk) addLine(`ATK: ${item.atk}`);
-                if(item.def) addLine(`DEF: ${item.def}`);
-                if(item.hp) addLine(`HP: ${item.hp}`);
-                
-                if (Object.keys(item.bonusStats).length > 0) {
+                    const nameEl = document.createElement('strong');
+                    nameEl.style.color = rarityColor;
+                    nameEl.style.fontWeight = fontWeight;
+                    nameEl.textContent = `${item.name} (${item.type})`;
+                    tooltip.appendChild(nameEl);
+
+                    const addLine = (text) => { tooltip.appendChild(document.createElement('br')); tooltip.appendChild(document.createTextNode(text)); };
+
+                    addLine(`Rarity: ${item.rarity}`);
                     addLine(`--------`);
-                    for(const [stat, value] of Object.entries(item.bonusStats)) {
-                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
-                        else addLine(`${statName}: +${Math.round(value)}`);
+                    if (item.atk) addLine(`ATK: ${item.atk}`);
+                    if (item.def) addLine(`DEF: ${item.def}`);
+                    if (item.hp) addLine(`HP: ${item.hp}`);
+
+                    if (Object.keys(item.bonusStats).length > 0) {
+                        addLine(`--------`);
+                        for (const [stat, value] of Object.entries(item.bonusStats)) {
+                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
+                            else addLine(`${statName}: +${Math.round(value)}`);
+                        }
                     }
+
+                    const sellValue = itemData.rarities[item.rarity].value;
+                    tooltip.appendChild(document.createElement('br'));
+                    addLine(`Sell Value: ${sellValue}G`);
+
+                    const actionText = document.createElement('span');
+                    actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
+                    actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
+                    tooltip.appendChild(actionText);
+
+                    if (!isEquipped) {
+                        const sellButton = document.createElement('button');
+                        sellButton.textContent = `Sell for ${sellValue}G`;
+                        sellButton.className = 'button button-secondary tooltip-button';
+                        sellButton.onclick = (e) => {
+                            e.stopPropagation();
+                            sellItem(item.id);
+                        };
+                        tooltip.appendChild(sellButton);
+                    }
+
+                    tooltip.style.display = 'block';
+                    const targetRect = event.currentTarget.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    let top = targetRect.top - tooltipRect.height - 5;
+                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+                    if (top < 0) top = targetRect.bottom + 5;
+                    if (left < 0) left = 5;
+                    if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
+                    tooltip.style.top = `${top}px`;
+                    tooltip.style.left = `${left}px`;
                 }
-                
-                const sellValue = itemData.rarities[item.rarity].value;
-                tooltip.appendChild(document.createElement('br'));
-                addLine(`Sell Value: ${sellValue}G`);
-                
-                const actionText = document.createElement('span');
-                actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
-                actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
-                tooltip.appendChild(actionText);
 
-                if (!isEquipped) {
-                    const sellButton = document.createElement('button');
-                    sellButton.textContent = `Sell for ${sellValue}G`;
-                    sellButton.className = 'button button-secondary tooltip-button';
-                    sellButton.onclick = (e) => {
-                        e.stopPropagation(); 
-                        sellItem(item.id);
-                    };
-                    tooltip.appendChild(sellButton);
+                function hideTooltip() {
+                    clearTimeout(tooltipHideTimer);
+                    tooltipHideTimer = setTimeout(() => {
+                        UIElements.globalTooltip.style.display = 'none';
+                    }, 200);
                 }
-                
-                tooltip.style.display = 'block';
-                const targetRect = event.currentTarget.getBoundingClientRect();
-                const tooltipRect = tooltip.getBoundingClientRect();
-                let top = targetRect.top - tooltipRect.height - 5;
-                let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-                if (top < 0) top = targetRect.bottom + 5;
-                if (left < 0) left = 5;
-                if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
-                tooltip.style.top = `${top}px`;
-                tooltip.style.left = `${left}px`;
-            }
 
-            function hideTooltip() {
-                clearTimeout(tooltipHideTimer);
-                tooltipHideTimer = setTimeout(() => {
-                    UIElements.globalTooltip.style.display = 'none';
-                }, 200);
-            }
-
-            function equipItem(itemToEquip) {
-                gameState.equipment[itemToEquip.type] = itemToEquip.id;
-                logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
-                updateAllUIs();
-            }
-
-            function unequipItem(itemType) {
-                const equippedId = gameState.equipment[itemType];
-                if (!equippedId) return;
-                const itemToUnequip = gameState.inventory.find(item => item.id === equippedId);
-                gameState.equipment[itemType] = null;
-                if (itemToUnequip) logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
-                updateAllUIs();
-            }
-
-            function sellItem(itemId) {
-                const itemIndex = gameState.inventory.findIndex(i => i.id === itemId);
-                if (itemIndex === -1) return;
-                const item = gameState.inventory[itemIndex];
-                const equippedIds = Object.values(gameState.equipment);
-                if (equippedIds.includes(item.id)) {
-                    logAction("Cannot sell an equipped item. Please unequip it first.", 'log-error');
-                    return;
+                function equipItem(itemToEquip) {
+                    gameState.equipment[itemToEquip.type] = itemToEquip.id;
+                    logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
+                    updateAllUIs();
                 }
-                const sellValue = itemData.rarities[item.rarity].value;
-                gameState.gold += sellValue;
-                gameState.inventory.splice(itemIndex, 1);
-                logAction(`Sold [${item.rarity}] ${item.name} for ${sellValue}G.`, 'log-system');
-                hideTooltip();
-                updateAllUIs();
-            }
 
-            function logAction(message, typeClass) {
-                const p = document.createElement('p');
-                p.textContent = message;
-                if (typeClass) p.classList.add(typeClass);
-                UIElements.actionLog.appendChild(p);
-                UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
-            }
-            
-            function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); }
-            
-            function handleNewGame() {
-                clearInterval(gameInterval);
-                clearInterval(autoSaveInterval);
-                try {
-                    localStorage.removeItem(SAVE_KEY);
-                } catch(e) { console.error("Could not clear localStorage on new game.", e); }
+                function unequipItem(itemType) {
+                    const equippedId = gameState.equipment[itemType];
+                    if (!equippedId) return;
+                    const itemToUnequip = gameState.inventory.find(item => item.id === equippedId);
+                    gameState.equipment[itemType] = null;
+                    if (itemToUnequip) logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
+                    updateAllUIs();
+                }
 
-                const rebirthData = gameState.rebirth;
-                gameState = getDefaultGameState();
-                gameState.rebirth = rebirthData;
-                UIElements.actionLog.innerHTML = '';
-                logAction('The world fades and is born anew. Choose your class.', 'log-system');
-                UIElements.rebirthBtn.style.display = 'none';
-                UIElements.classSelectionModal.style.display = 'flex';
-                updateAllUIs();
-            }
+                function sellItem(itemId) {
+                    const itemIndex = gameState.inventory.findIndex(i => i.id === itemId);
+                    if (itemIndex === -1) return;
+                    const item = gameState.inventory[itemIndex];
+                    const equippedIds = Object.values(gameState.equipment);
+                    if (equippedIds.includes(item.id)) {
+                        logAction("Cannot sell an equipped item. Please unequip it first.", 'log-error');
+                        return;
+                    }
+                    const sellValue = itemData.rarities[item.rarity].value;
+                    gameState.gold += sellValue;
+                    gameState.inventory.splice(itemIndex, 1);
+                    logAction(`Sold [${item.rarity}] ${item.name} for ${sellValue}G.`, 'log-system');
+                    hideTooltip();
+                    updateAllUIs();
+                }
 
-            function handleRebirth() {
-                if (!gameState.player || gameState.player.level < 70) return;
-                if (confirm('Are you sure you want to rebirth? Your current progress will be reset for permanent bonuses.')) {
-                    const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
+                function logAction(message, typeClass) {
+                    const p = document.createElement('p');
+                    p.textContent = message;
+                    if (typeClass) p.classList.add(typeClass);
+                    UIElements.actionLog.appendChild(p);
+                    UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
+                }
+
+                function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); }
+
+                function handleNewGame() {
                     clearInterval(gameInterval);
                     clearInterval(autoSaveInterval);
                     try {
                         localStorage.removeItem(SAVE_KEY);
-                    } catch(e) { console.error("Could not clear localStorage on rebirth.", e); }
-                    
+                    } catch (e) { console.error("Could not clear localStorage on new game.", e); }
+
                     const rebirthData = gameState.rebirth;
-                    rebirthData.points += pointsGained;
                     gameState = getDefaultGameState();
                     gameState.rebirth = rebirthData;
-                    logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system');
+                    UIElements.actionLog.innerHTML = '';
+                    logAction('The world fades and is born anew. Choose your class.', 'log-system');
                     UIElements.rebirthBtn.style.display = 'none';
                     UIElements.classSelectionModal.style.display = 'flex';
                     updateAllUIs();
                 }
-            }
 
-            function investPoint(stat) {
-                if (gameState.rebirth.points > 0) {
-                    gameState.rebirth.points--;
-                    if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 1;
-                    else gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : 1);
-                    updateAllUIs();
-                }
-            }
+                function handleRebirth() {
+                    if (!gameState.player || gameState.player.level < 70) return;
+                    if (confirm('Are you sure you want to rebirth? Your current progress will be reset for permanent bonuses.')) {
+                        const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
+                        clearInterval(gameInterval);
+                        clearInterval(autoSaveInterval);
+                        try {
+                            localStorage.removeItem(SAVE_KEY);
+                        } catch (e) { console.error("Could not clear localStorage on rebirth.", e); }
 
-            function sellItemsByRarity(rarity) {
-                let soldCount = 0;
-                let goldEarned = 0;
-                const equippedIds = Object.values(gameState.equipment);
-                const itemsToKeep = gameState.inventory.filter(item => {
-                    if (item.rarity === rarity && !equippedIds.includes(item.id)) {
-                        goldEarned += itemData.rarities[item.rarity].value;
-                        soldCount++;
-                        return false;
+                        const rebirthData = gameState.rebirth;
+                        rebirthData.points += pointsGained;
+                        gameState = getDefaultGameState();
+                        gameState.rebirth = rebirthData;
+                        logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system');
+                        UIElements.rebirthBtn.style.display = 'none';
+                        UIElements.classSelectionModal.style.display = 'flex';
+                        updateAllUIs();
                     }
-                    return true;
-                });
-                if (soldCount > 0) {
-                    gameState.inventory = itemsToKeep;
-                    gameState.gold += goldEarned;
-                    logAction(`Sold ${soldCount} [${rarity}] item(s) for ${goldEarned}G.`, 'log-system');
-                    updateAllUIs();
-                } else {
-                    logAction(`No unequipped [${rarity}] items to sell.`, 'log-system');
                 }
-            }
-            
-            function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
 
-            function deepMerge(target, source) {
-                let output = Object.assign({}, target);
-                if (isObject(target) && isObject(source)) {
-                    Object.keys(source).forEach(key => {
-                        if (isObject(source[key]) && key in target && isObject(target[key])) {
-                            output[key] = deepMerge(target[key], source[key]);
-                        } else {
-                            Object.assign(output, { [key]: source[key] });
+                function investPoint(stat) {
+                    if (gameState.rebirth.points > 0) {
+                        gameState.rebirth.points--;
+                        if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 1;
+                        else gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : 1);
+                        updateAllUIs();
+                    }
+                }
+
+                function sellItemsByRarity(rarity) {
+                    let soldCount = 0;
+                    let goldEarned = 0;
+                    const equippedIds = Object.values(gameState.equipment);
+                    const itemsToKeep = gameState.inventory.filter(item => {
+                        if (item.rarity === rarity && !equippedIds.includes(item.id)) {
+                            goldEarned += itemData.rarities[item.rarity].value;
+                            soldCount++;
+                            return false;
                         }
+                        return true;
                     });
+                    if (soldCount > 0) {
+                        gameState.inventory = itemsToKeep;
+                        gameState.gold += goldEarned;
+                        logAction(`Sold ${soldCount} [${rarity}] item(s) for ${goldEarned}G.`, 'log-system');
+                        updateAllUIs();
+                    } else {
+                        logAction(`No unequipped [${rarity}] items to sell.`, 'log-system');
+                    }
                 }
-                return output;
-            }
 
-            function setupTabs() {
-                const tabButtons = document.querySelectorAll('.tab-button');
-                const tabContents = document.querySelectorAll('.tab-content');
-                tabButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        tabButtons.forEach(btn => btn.classList.remove('active'));
-                        button.classList.add('active');
-                        const tabId = button.getAttribute('data-tab');
-                        tabContents.forEach(content => {
-                            content.classList.remove('active');
-                            if (content.id === `tab-content-${tabId}`) content.classList.add('active');
+                function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
+
+                function deepMerge(target, source) {
+                    let output = Object.assign({}, target);
+                    if (isObject(target) && isObject(source)) {
+                        Object.keys(source).forEach(key => {
+                            if (isObject(source[key]) && key in target && isObject(target[key])) {
+                                output[key] = deepMerge(target[key], source[key]);
+                            } else {
+                                Object.assign(output, { [key]: source[key] });
+                            }
+                        });
+                    }
+                    return output;
+                }
+
+                function setupTabs() {
+                    const tabButtons = document.querySelectorAll('.tab-button');
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            tabButtons.forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+                            const tabId = button.getAttribute('data-tab');
+                            tabContents.forEach(content => {
+                                content.classList.remove('active');
+                                if (content.id === `tab-content-${tabId}`) content.classList.add('active');
+                            });
                         });
                     });
+                }
+
+                function trainStat(stat) {
+                    const cost = gameState.trainingCosts[stat];
+                    if (gameState.gold >= cost) {
+                        gameState.gold -= cost;
+                        gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
+                        gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                        logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
+                        if (stat === 'hp') gameState.player.currentHp += 5;
+                        updateUI();
+                    }
+                }
+
+                // --- EVENT LISTENERS ---
+                document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
+                document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
+                document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
+                UIElements.campBtn = document.getElementById('camp-btn');
+                UIElements.continueBtn = document.getElementById('continue-btn');
+
+                UIElements.campBtn.addEventListener('click', startCamping);
+                UIElements.continueBtn.addEventListener('click', continueAdventure);
+                UIElements.manualSaveBtn.addEventListener('click', manualSave);
+                UIElements.manualLoadBtn.addEventListener('click', manualLoad);
+                UIElements.closeSaveModalBtn.addEventListener('click', () => { UIElements.manualSaveModal.style.display = 'none'; });
+                UIElements.newGameBtn.addEventListener('click', handleNewGame);
+                UIElements.rebirthBtn.addEventListener('click', handleRebirth);
+                UIElements.challengeBossBtn.addEventListener('click', () => { spawnMonster(true); UIElements.challengeBossBtn.disabled = true; });
+                UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
+                UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
+                UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
+                UIElements.restBtn.addEventListener('click', () => {
+                    const cost = gameState.restCost;
+                    const totalStats = getPlayerTotalStats();
+                    if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
+                        gameState.gold -= cost;
+                        gameState.player.currentHp = totalStats.hp;
+                        gameState.restCost = Math.round(cost * 1.15);
+                        logAction(`You rest and restore your health to full.`, 'log-system');
+                        updateUI();
+                    }
                 });
-            }
+                document.getElementById('invest-atk-btn').onclick = () => investPoint('atk');
+                document.getElementById('invest-def-btn').onclick = () => investPoint('def');
+                document.getElementById('invest-hp-btn').onclick = () => investPoint('hp');
+                document.getElementById('invest-gold-btn').onclick = () => investPoint('gold');
+                document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
+                UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
+                UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
 
-            function trainStat(stat) {
-                const cost = gameState.trainingCosts[stat];
-                if (gameState.gold >= cost) {
-                    gameState.gold -= cost;
-                    gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                    gameState.trainingCosts[stat] = Math.round(cost * 1.16);
-                    logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
-                    if (stat === 'hp') gameState.player.currentHp += 5;
-                    updateUI();
-                }
-            }
+                UIElements.globalTooltip.addEventListener('mouseover', () => clearTimeout(tooltipHideTimer));
+                UIElements.globalTooltip.addEventListener('mouseout', hideTooltip);
 
-            // --- EVENT LISTENERS ---
-            document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
-            document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
-            document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
-            UIElements.campBtn = document.getElementById('camp-btn');
-            UIElements.continueBtn = document.getElementById('continue-btn');
-            
-            UIElements.campBtn.addEventListener('click', startCamping);
-            UIElements.continueBtn.addEventListener('click', continueAdventure);
-            UIElements.manualSaveBtn.addEventListener('click', manualSave);
-            UIElements.manualLoadBtn.addEventListener('click', manualLoad);
-            UIElements.closeSaveModalBtn.addEventListener('click', () => { UIElements.manualSaveModal.style.display = 'none'; });
-            UIElements.newGameBtn.addEventListener('click', handleNewGame);
-            UIElements.rebirthBtn.addEventListener('click', handleRebirth);
-            UIElements.challengeBossBtn.addEventListener('click', () => { spawnMonster(true); UIElements.challengeBossBtn.disabled = true; });
-            UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
-            UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
-            UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
-            UIElements.restBtn.addEventListener('click', () => {
-                const cost = gameState.restCost;
-                const totalStats = getPlayerTotalStats();
-                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
-                    gameState.gold -= cost;
-                    gameState.player.currentHp = totalStats.hp;
-                    gameState.restCost = Math.round(cost * 1.15);
-                    logAction(`You rest and restore your health to full.`, 'log-system');
-                    updateUI();
-                }
+                // --- KICK OFF THE GAME ---
+                initializeGame();
             });
-            document.getElementById('invest-atk-btn').onclick = () => investPoint('atk');
-            document.getElementById('invest-def-btn').onclick = () => investPoint('def');
-            document.getElementById('invest-hp-btn').onclick = () => investPoint('hp');
-            document.getElementById('invest-gold-btn').onclick = () => investPoint('gold');
-            document.getElementById('invest-xp-btn').onclick = () => investPoint('xp');
-            UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
-            UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
-            
-            UIElements.globalTooltip.addEventListener('mouseover', () => clearTimeout(tooltipHideTimer));
-            UIElements.globalTooltip.addEventListener('mouseout', hideTooltip);
-
-            // --- KICK OFF THE GAME ---
-            initializeGame();
-        });
-    </script>
+        </script>
 </body>
+
 </html>
