@@ -671,11 +671,11 @@
                 const itemData = {
                     types: ['weapon', 'armor', 'boots'],
                     rarities: {
-                        N: { color: '#888888', statMod: 1.0, value: 2, bonusStats: 0, bonusMultiplier: 0 },
-                        R: { color: '#aaaaaa', statMod: 1.2, value: 8, bonusStats: 1, bonusMultiplier: 1.0 },
-                        SR: { color: '#cccccc', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
-                        SSR: { color: '#e0e0e0', statMod: 2.0, value: 200, bonusStats: 3, bonusMultiplier: 2.2 },
-                        UR: { color: '#ffffff', statMod: 2.8, value: 1000, bonusStats: 4, bonusMultiplier: 3.0 },
+                        N: { color: '#FFFFFF', statMod: 1.0, value: 2, bonusStats: 0, bonusMultiplier: 0 },
+                        R: { color: '#12FF00', statMod: 1.2, value: 8, bonusStats: 1, bonusMultiplier: 1.0 },
+                        SR: { color: '#0037FF', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
+                        SSR: { color: '#9900FF', statMod: 2.0, value: 200, bonusStats: 3, bonusMultiplier: 2.2 },
+                        UR: { color: '#FFB300', statMod: 2.8, value: 1000, bonusStats: 4, bonusMultiplier: 3.0 },
                     },
                     baseStats: { weapon: { atk: 5 }, armor: { def: 4, hp: 10 }, boots: { def: 2, evasion: 0.01 } },
                     bonusStatPools: {
@@ -1370,7 +1370,8 @@
                     }
 
                     gameState.inventory.push(newItem);
-                    logAction(`You found a [${rarityKey}] ${newItem.name}!`, 'log-drop');
+                    const color = itemData.rarities[rarityKey].color;
+                    logAction(`You found a [<span style="color:${color}">${rarityKey}</span>] <span style="color:${color}">${newItem.name}</span>!`, 'log-drop');
                     updateInventoryUI();
                 }
 
