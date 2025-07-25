@@ -589,6 +589,8 @@
             
             // THIS IS THE MODIFIED FUNCTION
             function playerDefeated() {
+                gameState.player.currentHp = 0; // Set HP to 0 before doing anything else.
+
                 // Check if the defeat was by a boss monster
                 if (gameState.currentMonster && gameState.currentMonster.isBoss) {
                     logAction('The boss\'s power overwhelms you, sending you back to safety!', 'log-error');
@@ -596,21 +598,33 @@
                     // Restore player to 50% HP
                     const totalStats = getPlayerTotalStats();
                     gameState.player.currentHp = totalStats.hp * 0.5;
-                    logAction(`You are revived with partial health.`, 'log-system');
+                    logAction(`You are revived with 50% health.`, 'log-system');
 
                     // Reset the boss button
                     UIElements.challengeBossBtn.disabled = true;
                     UIElements.challengeBossBtn.textContent = 'Challenge Boss';
 
                     // Spawn a new regular monster to continue the fight.
-                    // spawnMonster() handles setting isRunning to true and updating the UI.
                     spawnMonster(); 
                 } else {
-                    // This is the original logic for being defeated by a regular monster.
-                    logAction('You have been defeated!', 'log-monster');
-                    gameState.isRunning = false;
-                    gameState.player.currentHp = 0;
-                    updateUI(); // Manually update UI since the game loop is stopped.
+                    // Logic for being defeated by a regular monster.
+                    logAction('You have been defeated by a monster!', 'log-monster');
+                    
+                    // Calculate and apply XP penalty (10% of XP to next level)
+                    const xpPenalty = Math.round(gameState.player.xpToNextLevel * 0.10);
+                    gameState.player.xp -= xpPenalty;
+                    if (gameState.player.xp < 0) {
+                        gameState.player.xp = 0;
+                    }
+                    logAction(`As a penalty, you lose ${xpPenalty} XP.`, 'log-error');
+
+                    // Auto-revive with 50% health
+                    const totalStats = getPlayerTotalStats();
+                    gameState.player.currentHp = totalStats.hp * 0.5;
+                    logAction(`You are automatically revived with 25% health.`, 'log-system');
+
+                    // Restart combat with a new monster
+                    spawnMonster();
                 }
             }
 
@@ -832,7 +846,8 @@
                 UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
                 UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
                 UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
-                UIElements.restBtn.disabled = gameState.gold < gameState.restCost;
+                // THIS IS THE CORRECTED LOGIC FOR THE REST BUTTON
+                UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
 
                 UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
                 UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
@@ -1155,10 +1170,6 @@
             UIElements.rebirthBtn.addEventListener('click', handleRebirth);
 
             UIElements.challengeBossBtn.addEventListener('click', () => {
-                if (gameState.player.currentHp <= 0) {
-                    gameState.player.currentHp = getPlayerTotalStats().hp * 0.5;
-                    logAction('You gather your will and stand up again!', 'log-system');
-                }
                 spawnMonster(true);
                 UIElements.challengeBossBtn.disabled = true;
             });
@@ -1167,14 +1178,12 @@
             UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
             UIElements.restBtn.addEventListener('click', () => {
                 const cost = gameState.restCost;
-                if (gameState.gold >= cost) {
+                const totalStats = getPlayerTotalStats();
+                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
                     gameState.gold -= cost;
-                    gameState.player.currentHp = getPlayerTotalStats().hp;
+                    gameState.player.currentHp = totalStats.hp;
                     gameState.restCost = Math.round(cost * 1.15);
                     logAction(`You rest and restore your health to full.`, 'log-system');
-                    if (!gameState.isRunning && gameState.player.currentHp > 0) {
-                        spawnMonster();
-                    }
                     updateUI();
                 }
             });
