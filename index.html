@@ -339,7 +339,11 @@
                         <button id="train-def-btn">Train DEF (5G)</button>
                         <button id="train-hp-btn">Train HP (5G)</button>
                         <hr style="border-color: var(--border-color);">
-                        <button id="rest-btn">Rest (5G)</button>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button id="rest-btn" style="flex: 1;">Rest (5G)</button>
+                            <button id="camp-btn" style="flex: 1;">Camp</button>
+                            <button id="continue-btn" style="flex: 1; display: none;">Continue</button>
+                        </div>
                     </div>
                     <div id="tab-content-inventory" class="tab-content">
                         <div id="inventory-list"></div>
@@ -817,6 +821,50 @@
 
                 if (gameState.player.currentHp <= 0) playerDefeated();
                 updateAllUIs();
+            }
+
+            let campInterval = null;
+
+            function startCamping() {
+                if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
+                if (gameState.currentMonster.isBoss) {
+                    logAction("You cannot camp during a boss battle!", "log-error");
+                    return;
+                }
+            
+                clearInterval(gameInterval);
+                clearInterval(autoSaveInterval);
+                gameState.isRunning = false;
+            
+                UIElements.campBtn.style.display = 'none';
+                UIElements.continueBtn.style.display = 'inline-block';
+            
+                logAction("You set up camp. Restoring HP gradually...", "log-system");
+            
+                campInterval = setInterval(() => {
+                    if (!gameState.player) return;
+                    const totalStats = getPlayerTotalStats();
+                    const regenAmount = Math.max(1, Math.floor(totalStats.hp * 0.02)); // 2% max HP per second
+                    gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + regenAmount);
+                    updateUI();
+            
+                    if (gameState.player.currentHp >= totalStats.hp) {
+                        logAction("You are fully rested. Click Continue to resume your adventure.", "log-system");
+                        clearInterval(campInterval);
+                    }
+                }, 1000);
+            }
+            
+            function continueAdventure() {
+                if (campInterval) {
+                    clearInterval(campInterval);
+                    campInterval = null;
+                }
+                UIElements.campBtn.style.display = 'inline-block';
+                UIElements.continueBtn.style.display = 'none';
+            
+                spawnMonster();
+                startGame();
             }
 
             function applyPlayerAttackSkills(damageInfo, stats, isGuaranteedCrit) {
@@ -1546,6 +1594,11 @@
             document.getElementById('select-warrior').onclick = () => selectClass('Warrior');
             document.getElementById('select-rogue').onclick = () => selectClass('Rogue');
             document.getElementById('select-wizard').onclick = () => selectClass('Wizard');
+            UIElements.campBtn = document.getElementById('camp-btn');
+            UIElements.continueBtn = document.getElementById('continue-btn');
+            
+            UIElements.campBtn.addEventListener('click', startCamping);
+            UIElements.continueBtn.addEventListener('click', continueAdventure);
             UIElements.manualSaveBtn.addEventListener('click', manualSave);
             UIElements.manualLoadBtn.addEventListener('click', manualLoad);
             UIElements.closeSaveModalBtn.addEventListener('click', () => { UIElements.manualSaveModal.style.display = 'none'; });
