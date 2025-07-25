@@ -1587,7 +1587,7 @@ UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`;
                 if (gameState.gold >= cost) {
                     gameState.gold -= cost;
                     gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                    gameState.trainingCosts[stat] = Math.round(cost * 1.06);
+                    gameState.trainingCosts[stat] = Math.round(cost * 1.16);
                     logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                     if (stat === 'hp') gameState.player.currentHp += 5;
                     updateUI();
@@ -1618,7 +1618,7 @@ UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`;
                 if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
                     gameState.gold -= cost;
                     gameState.player.currentHp = totalStats.hp;
-                    gameState.restCost = Math.round(cost * 1.05);
+                    gameState.restCost = Math.round(cost * 1.15);
                     logAction(`You rest and restore your health to full.`, 'log-system');
                     updateUI();
                 }
