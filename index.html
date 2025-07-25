@@ -1583,11 +1583,12 @@
 
             function trainStat(stat) {
                 const cost = gameState.trainingCosts[stat];
+                console.log(`Before training ${stat}: cost = ${cost}`);
                 if (gameState.gold >= cost) {
                     gameState.gold -= cost;
                     gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
                     gameState.trainingCosts[stat] = Math.round(cost * 1.06);
-                    console.log(`Training ${stat}: new cost = ${gameState.trainingCosts[stat]}`);
+                    console.log(`After training ${stat}: new cost = ${gameState.trainingCosts[stat]}`);
                     logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
                     if (stat === 'hp') gameState.player.currentHp += 5;
                     updateUI();
