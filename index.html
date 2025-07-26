@@ -1249,13 +1249,13 @@
                 
                   if (monster.isBoss) {
                     // Boss: more R/SR, less SSR/R, least UR
-                    baseProbs = { N: 0.0, R: 0.5, SR: 0.4, SSR: 0.08, UR: 0.02 };
+                    baseProbs = { N: 0.1, R: 0.4, SR: 0.4, SSR: 0.09, UR: 0.01 };
                   } else if (monster.isElite) {
                     // Elite: more N/R/SR, less SSR, very very least UR
-                    baseProbs = { N: 0.3, R: 0.4, SR: 0.2, SSR: 0.09, UR: 0.01 };
+                    baseProbs = { N: 0.3, R: 0.5, SR: 0.1, SSR: 0.095, UR: 0.005 };
                   } else {
                     // Normal: more N/R, less SR, very least SSR, no UR
-                    baseProbs = { N: 0.6, R: 0.3, SR: 0.08, SSR: 0.02, UR: 0.0 };
+                    baseProbs = { N: 0.7, R: 0.2, SR: 0.08, SSR: 0.02, UR: 0.0 };
                   }
                 
                   // Normalize to sum 1
@@ -1340,9 +1340,6 @@
                         }
                     }
                 
-                    // Debug: Confirm base stat count
-                    // console.log(`Assigning base stats (${selectedBaseStats.length}):`, selectedBaseStats);
-                
                     const newItem = {
                         id: Date.now() + Math.random(),
                         type: itemType,
@@ -1362,6 +1359,9 @@
                 
                     const numBonusStats = rarityInfo.bonusStats;
                     const bonusMultiplier = rarityInfo.bonusMultiplier;
+                
+                    // Wave scaling factor: increases bonus stats by 10% per wave after wave 1
+                    const waveScale = 1 + (gameState.wave - 1) * 0.1;
                 
                     // Determine theme for bonus stats
                     const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
@@ -1387,14 +1387,16 @@
                             const baseMin = 0.002, baseMax = 0.005;
                             const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
                             bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                            bonusValue = bonusValue * waveScale;
                         } else if (bonusStatType === 'critDmg') {
                             const baseMin = 0.02, baseMax = 0.05;
                             const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
                             bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                            bonusValue = bonusValue * waveScale;
                         } else {
                             const baseMin = 2, baseMax = 5;
                             const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                            bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
+                            bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey] * waveScale);
                             if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
                         }
                 
