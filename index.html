@@ -503,21 +503,9 @@
                 <div class="panel-body">
                     <div id="tab-content-actions" class="tab-content active">
                         <div class="gold-display">Gold: <span id="player-gold">0</span>G</div>
-                        <div>
-                          <button id="trainAtk1">Train ATK x1</button>
-                          <button id="trainAtk10">Train ATK x10</button>
-                          <button id="trainAtk100">Train ATK x100</button>
-                        </div>
-                        <div>
-                          <button id="trainDef1">Train DEF x1</button>
-                          <button id="trainDef10">Train DEF x10</button>
-                          <button id="trainDef100">Train DEF x100</button>
-                        </div>
-                        <div>
-                          <button id="trainHp1">Train HP x1</button>
-                          <button id="trainHp10">Train HP x10</button>
-                          <button id="trainHp100">Train HP x100</button>
-                        </div>
+                        <button id="trainAtkBtn">Train ATK</button>
+                        <button id="trainDefBtn">Train DEF</button>
+                        <button id="trainHpBtn">Train HP</button>
                         <hr style="border-color: var(--border-color);">
                         <div style="display: flex; gap: 10px; margin-top: 10px;">
                             <button id="rest-btn" style="flex: 1;">Rest (5G)</button>
@@ -1760,16 +1748,24 @@
                 }
 
                 function trainStat(stat, times = 1) {
+                  if (!gameState.player) return; // safety check
+                
                   for (let i = 0; i < times; i++) {
-                    // Your existing training logic here
-                    // Example:
                     if (gameState.trainingPoints > 0) {
-                      gameState.player[stat] = (gameState.player[stat] || 0) + 1;
-                      gameState.trainingPoints--;
+                      // Increase the chosen stat by 1
+                      if (stat === 'atk' || stat === 'def' || stat === 'hp') {
+                        gameState.player[stat] = (gameState.player[stat] || 0) + 1;
+                        gameState.trainingPoints--;
+                      } else {
+                        console.warn(`Unknown stat: ${stat}`);
+                        break;
+                      }
                     } else {
-                      break; // no more training points
+                      // No more training points left
+                      break;
                     }
                   }
+                
                   updateUI();
                 }
 
@@ -1797,17 +1793,9 @@
                     UIElements.challengeBossBtn.disabled = true;
                     updateUI();
                 });
-                document.getElementById('trainAtk1').addEventListener('click', () => trainStat('atk', 1));
-                document.getElementById('trainAtk10').addEventListener('click', () => trainStat('atk', 10));
-                document.getElementById('trainAtk100').addEventListener('click', () => trainStat('atk', 100));
-                
-                document.getElementById('trainDef1').addEventListener('click', () => trainStat('def', 1));
-                document.getElementById('trainDef10').addEventListener('click', () => trainStat('def', 10));
-                document.getElementById('trainDef100').addEventListener('click', () => trainStat('def', 100));
-                
-                document.getElementById('trainHp1').addEventListener('click', () => trainStat('hp', 1));
-                document.getElementById('trainHp10').addEventListener('click', () => trainStat('hp', 10));
-                document.getElementById('trainHp100').addEventListener('click', () => trainStat('hp', 100));
+                UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk', 1));
+                UIElements.trainDefBtn.addEventListener('click', () => trainStat('def', 1));
+                UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp', 1));
                 UIElements.restBtn.addEventListener('click', () => {
                     const cost = gameState.restCost;
                     const totalStats = getPlayerTotalStats();
