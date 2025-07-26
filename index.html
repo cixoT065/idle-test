@@ -1325,8 +1325,11 @@
                     // Shuffle remaining stats
                     let shuffledRemainingStats = shuffleArray(remainingStatsPool);
                 
-                    // Fill the rest of base stats up to the required count, ensuring count is met
-                    while (selectedBaseStats.length < baseStatCountByRarity[rarityKey]) {
+                    // Calculate how many more stats to add to reach exact count
+                    const neededCount = baseStatCountByRarity[rarityKey] - selectedBaseStats.length;
+                
+                    // Add exactly neededCount stats
+                    for (let i = 0; i < neededCount; i++) {
                         if (shuffledRemainingStats.length === 0) {
                             // Refill pool excluding already selected stats
                             shuffledRemainingStats = shuffleArray(allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat)));
@@ -1334,6 +1337,8 @@
                         const nextStat = shuffledRemainingStats.shift();
                         if (!selectedBaseStats.includes(nextStat)) {
                             selectedBaseStats.push(nextStat);
+                        } else {
+                            i--; // retry if duplicate
                         }
                     }
                 
@@ -1363,8 +1368,8 @@
                     const numBonusStats = rarityInfo.bonusStats;
                     const bonusMultiplier = rarityInfo.bonusMultiplier;
                 
-                    // Trimmed wave scaling curve for bonus stats
-                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.05;
+                    // Trimmed wave scaling curve for bonus stats (even gentler)
+                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
                 
                     // Determine theme for bonus stats
                     const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
