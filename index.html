@@ -1747,26 +1747,16 @@
                     });
                 }
 
-                function trainStat(stat, times = 1) {
-                  if (!gameState.player) return; // safety check
-                
-                  for (let i = 0; i < times; i++) {
-                    if (gameState.trainingPoints > 0) {
-                      // Increase the chosen stat by 1
-                      if (stat === 'atk' || stat === 'def' || stat === 'hp') {
-                        gameState.player[stat] = (gameState.player[stat] || 0) + 1;
-                        gameState.trainingPoints--;
-                      } else {
-                        console.warn(`Unknown stat: ${stat}`);
-                        break;
-                      }
-                    } else {
-                      // No more training points left
-                      break;
+                function trainStat(stat) {
+                    const cost = gameState.trainingCosts[stat];
+                    if (gameState.gold >= cost) {
+                        gameState.gold -= cost;
+                        gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
+                        gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                        logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
+                        if (stat === 'hp') gameState.player.currentHp += 5;
+                        updateUI();
                     }
-                  }
-                
-                  updateUI();
                 }
 
                 // --- EVENT LISTENERS ---
@@ -1793,9 +1783,9 @@
                     UIElements.challengeBossBtn.disabled = true;
                     updateUI();
                 });
-                UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk', 1));
-                UIElements.trainDefBtn.addEventListener('click', () => trainStat('def', 1));
-                UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp', 1));
+                UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
+                UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
+                UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
                 UIElements.restBtn.addEventListener('click', () => {
                     const cost = gameState.restCost;
                     const totalStats = getPlayerTotalStats();
