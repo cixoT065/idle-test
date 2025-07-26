@@ -1638,7 +1638,7 @@
 
                 function logAction(message, typeClass) {
                     const p = document.createElement('p');
-                    p.innerHTML = message;
+                    p.textContent = message;
                     if (typeClass) p.classList.add(typeClass);
                     UIElements.actionLog.appendChild(p);
                     UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
