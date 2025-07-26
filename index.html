@@ -1189,7 +1189,7 @@
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
                     //const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
                 
-                    const goldGained = Math.round(gameState.currentMonster.gold * 1.25 * goldBonus);
+                    const goldGained = Math.round(gameState.currentMonster.gold * 2 * goldBonus);
                     const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
                 
                     gameState.gold += goldGained;
