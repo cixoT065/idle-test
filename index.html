@@ -1345,7 +1345,7 @@
                     baseStats = baseStats.concat(remainingStatsPool.slice(0, neededCount));
                 
                     // Bonus stats come from remaining stats not in baseStats
-                    let bonusStatsPool = allStatsPool.filter(stat => !baseStats.includes(stat));
+                    let bonusStatsPool = ['atk', 'def', 'hp', 'critChance', 'critDmg'];
                     bonusStatsPool = shuffleArray(bonusStatsPool);
                 
                     // Wave scaling for bonus stats
