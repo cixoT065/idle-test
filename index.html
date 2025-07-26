@@ -1021,7 +1021,7 @@
                     campInterval = setInterval(() => {
                         if (!gameState.player) return;
                         const totalStats = getPlayerTotalStats();
-                        const regenAmount = Math.max(1, Math.floor(totalStats.hp * 0.02)); // 2% max HP per second
+                        const regenAmount = Math.max(1, Math.floor(totalStats.hp * 0.03)); // 3% max HP per second
                         gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + regenAmount);
                         updateUI();
 
@@ -1829,9 +1829,11 @@
                   if (gameState.gold >= cost) {
                     gameState.gold -= cost;
                 
-                    // Calculate gain scaling with cost (logarithmic scaling example)
                     const baseGain = (stat === 'hp' ? 5 : 1);
-                    const gain = Math.max(baseGain, Math.floor(baseGain * Math.log10(cost + 2)));
+                    const gain = Math.max(
+                      baseGain,
+                      Math.floor(baseGain * Math.log10(cost + 1) * Math.sqrt(cost / 100))
+                    );
                 
                     gameState.player.baseStats[stat] += gain;
                     gameState.trainingCosts[stat] = Math.round(cost * 1.12);
