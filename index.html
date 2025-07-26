@@ -1277,24 +1277,24 @@
                 
                 function generateItemDrop(monster) {
                     if (gameState.inventory.length >= gameState.maxInventorySize) {
-                    logAction('Inventory is full! Cannot pick up new item.', 'log-system');
-                    return;
-                      }
-                      const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
-                      let rarityKey;
-                      const probs = getRarityProbabilities(monster);
-                      const rarityRand = Math.random();
-                      let cumulativeProb = 0;
-                      if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
-                      else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
-                      else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
-                      else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
-                      else rarityKey = 'UR';
-                    
-                      // UR bonus chance for bosses and elites remains
-                      const urBonusRand = Math.random();
-                      if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
-                      else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
+                        logAction('Inventory is full! Cannot pick up new item.', 'log-system');
+                        return;
+                    }
+                    const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
+                    let rarityKey;
+                    const probs = getRarityProbabilities(monster);
+                    const rarityRand = Math.random();
+                    let cumulativeProb = 0;
+                    if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
+                    else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
+                    else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
+                    else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
+                    else rarityKey = 'UR';
+                
+                    // UR bonus chance for bosses and elites remains
+                    const urBonusRand = Math.random();
+                    if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
+                    else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
                 
                     const rarityInfo = itemData.rarities[rarityKey];
                     const baseStatMultiplier = rarityInfo.statMod;
@@ -1318,20 +1318,23 @@
                     else if (itemType === 'boots') mandatoryStat = 'hp';
                     else mandatoryStat = null;
                 
-                    // Start with mandatory stat included
+                    // Start with mandatory stat included if any
                     let selectedBaseStats = [];
                     if (mandatoryStat) selectedBaseStats.push(mandatoryStat);
                 
                     // Prepare the pool excluding the mandatory stat
-                    const remainingStatsPool = allPossibleBaseStats.filter(stat => stat !== mandatoryStat);
+                    let remainingStatsPool = allPossibleBaseStats.filter(stat => stat !== mandatoryStat);
                 
                     // Shuffle remaining stats
-                    const shuffledRemainingStats = shuffleArray(remainingStatsPool);
+                    let shuffledRemainingStats = shuffleArray(remainingStatsPool);
                 
-                    // Fill the rest of base stats up to the required count
-                    const remainingCount = baseStatsToAssignCount - selectedBaseStats.length;
-                    if (remainingCount > 0) {
-                        selectedBaseStats = selectedBaseStats.concat(shuffledRemainingStats.slice(0, remainingCount));
+                    // Fill the rest of base stats up to the required count, ensuring count is met
+                    while (selectedBaseStats.length < baseStatsToAssignCount) {
+                        if (shuffledRemainingStats.length === 0) {
+                            // Refill pool excluding already selected stats
+                            shuffledRemainingStats = shuffleArray(allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat)));
+                        }
+                        selectedBaseStats.push(shuffledRemainingStats.shift());
                     }
                 
                     const newItem = {
@@ -1353,7 +1356,7 @@
                 
                     const numBonusStats = rarityInfo.bonusStats;
                     const bonusMultiplier = rarityInfo.bonusMultiplier;
-
+                
                     // Determine theme for bonus stats
                     const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
                     let availableBonusStats = [];
@@ -1362,7 +1365,7 @@
                         const pools = itemData.bonusStatPools[theme];
                         availableBonusStats = [...pools.primary, ...pools.secondary];
                     }
-
+                
                     for (let i = 0; i < numBonusStats; i++) {
                         if (availableBonusStats.length === 0) break;
                         let bonusStatType;
@@ -1372,7 +1375,7 @@
                             else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
                         } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
                         availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
-
+                
                         let bonusValue;
                         if (['critChance', 'evasion'].includes(bonusStatType)) {
                             const baseMin = 0.002, baseMax = 0.005;
@@ -1388,7 +1391,7 @@
                             bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
                             if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
                         }
-
+                
                         newItem.bonusStats[bonusStatType] = bonusValue;
                     }
                 
