@@ -1748,15 +1748,20 @@
                 }
 
                 function trainStat(stat) {
-                    const cost = gameState.trainingCosts[stat];
-                    if (gameState.gold >= cost) {
-                        gameState.gold -= cost;
-                        gameState.player.baseStats[stat] += (stat === 'hp' ? 5 : 1);
-                        gameState.trainingCosts[stat] = Math.round(cost * 1.12);
-                        logAction(`You trained ${stat.toUpperCase()}, increasing it permanently.`, 'log-system');
-                        if (stat === 'hp') gameState.player.currentHp += 5;
-                        updateUI();
-                    }
+                  const cost = gameState.trainingCosts[stat];
+                  if (gameState.gold >= cost) {
+                    gameState.gold -= cost;
+                
+                    // Calculate gain scaling with cost (logarithmic scaling example)
+                    const baseGain = (stat === 'hp' ? 5 : 1);
+                    const gain = Math.max(baseGain, Math.floor(baseGain * Math.log10(cost + 1)));
+                
+                    gameState.player.baseStats[stat] += gain;
+                    gameState.trainingCosts[stat] = Math.round(cost * 1.12);
+                    logAction(`You trained ${stat.toUpperCase()}, increasing it permanently by ${gain}.`, 'log-system');
+                    if (stat === 'hp') gameState.player.currentHp += gain;
+                    updateUI();
+                  }
                 }
 
                 // --- EVENT LISTENERS ---
