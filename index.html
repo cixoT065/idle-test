@@ -1500,6 +1500,7 @@
                     UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
                     UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
                     UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
+                    UIElements.campBtn.disabled = gameState.currentMonster && gameState.currentMonster.isBoss;
                     UIElements.restBtn.disabled = gameState.gold < gameState.restCost 
                         || gameState.player.currentHp >= totalStats.hp 
                         || (gameState.currentMonster && gameState.currentMonster.isBoss);
