@@ -1462,7 +1462,9 @@
                     UIElements.trainHpBtn.textContent = `Train HP (${gameState.trainingCosts.hp}G)`; UIElements.restBtn.textContent = `Rest (${gameState.restCost}G)`;
                     UIElements.trainAtkBtn.disabled = gameState.gold < gameState.trainingCosts.atk; UIElements.trainDefBtn.disabled = gameState.gold < gameState.trainingCosts.def;
                     UIElements.trainHpBtn.disabled = gameState.gold < gameState.trainingCosts.hp;
-                    UIElements.restBtn.disabled = gameState.gold < gameState.restCost || gameState.player.currentHp >= totalStats.hp;
+                    UIElements.restBtn.disabled = gameState.gold < gameState.restCost 
+                        || gameState.player.currentHp >= totalStats.hp 
+                        || (gameState.currentMonster && gameState.currentMonster.isBoss);
                     UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
                     UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
                     UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
@@ -1771,7 +1773,16 @@
                 UIElements.closeSaveModalBtn.addEventListener('click', () => { UIElements.manualSaveModal.style.display = 'none'; });
                 UIElements.newGameBtn.addEventListener('click', handleNewGame);
                 UIElements.rebirthBtn.addEventListener('click', handleRebirth);
-                UIElements.challengeBossBtn.addEventListener('click', () => { spawnMonster(true); UIElements.challengeBossBtn.disabled = true; });
+               UIElements.challengeBossBtn.addEventListener('click', () => {
+                    spawnMonster(true);
+                    // Restore player HP to full on boss battle start
+                    if (gameState.player) {
+                        const totalStats = getPlayerTotalStats();
+                        gameState.player.currentHp = totalStats.hp;
+                    }
+                    UIElements.challengeBossBtn.disabled = true;
+                    updateUI();
+                });});
                 UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
                 UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
                 UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
