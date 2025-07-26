@@ -671,11 +671,11 @@
                 const itemData = {
                     types: ['weapon', 'armor', 'boots'],
                     rarities: {
-                        N: { color: '#FFFFFF', statMod: 1.0, value: 2, bonusStats: 0, bonusMultiplier: 0 },
-                        R: { color: '#12FF00', statMod: 1.2, value: 8, bonusStats: 1, bonusMultiplier: 1.0 },
-                        SR: { color: '#0037FF', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
-                        SSR: { color: '#9900FF', statMod: 2.0, value: 200, bonusStats: 3, bonusMultiplier: 2.2 },
-                        UR: { color: '#FFB300', statMod: 2.8, value: 1000, bonusStats: 4, bonusMultiplier: 3.0 },
+                        N: { color: '#DEDEDE', statMod: 1.0, value: 2, bonusStats: 0, bonusMultiplier: 0 },
+                        R: { color: '#63C270', statMod: 1.2, value: 8, bonusStats: 1, bonusMultiplier: 1.0 },
+                        SR: { color: '#6386C2', statMod: 1.5, value: 40, bonusStats: 2, bonusMultiplier: 1.5 },
+                        SSR: { color: '#9663C2', statMod: 2.0, value: 200, bonusStats: 3, bonusMultiplier: 2.2 },
+                        UR: { color: '#C29463', statMod: 2.8, value: 1000, bonusStats: 4, bonusMultiplier: 3.0 },
                     },
                     baseStats: { weapon: { atk: 5 }, armor: { def: 4, hp: 10 }, boots: { def: 2, evasion: 0.01 } },
                     bonusStatPools: {
@@ -1638,7 +1638,7 @@
 
                 function logAction(message, typeClass) {
                     const p = document.createElement('p');
-                    p.textContent = message;
+                    p.innerHTML = message;
                     if (typeClass) p.classList.add(typeClass);
                     UIElements.actionLog.appendChild(p);
                     UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
