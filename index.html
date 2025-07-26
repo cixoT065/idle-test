@@ -1302,7 +1302,6 @@
                   const rarityInfo = itemData.rarities[rarityKey];
                   const baseStatMultiplier = rarityInfo.statMod;
                 
-                  const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                   const baseStatCountByRarity = {
                     'N': 1,
                     'R': 2,
@@ -1327,12 +1326,21 @@
                 
                   // Add other base stats defined for the item type, excluding the required one
                   const baseStatsKeys = Object.keys(itemData.baseStats[itemType] || {}).filter(stat => stat !== requiredBaseStatByType[itemType]);
+                  selectedBaseStats = selectedBaseStats.concat(baseStatsKeys);
                 
-                  // If more stats needed, add random stats from allPossibleBaseStats excluding already selected
-                  if (selectedBaseStats.length < baseStatsToAssignCount) {
-                    const remainingStats = allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat));
-                    const shuffledRemaining = shuffleArray(remainingStats);
-                    selectedBaseStats = selectedBaseStats.concat(shuffledRemaining.slice(0, baseStatsToAssignCount - selectedBaseStats.length));
+                  // Add random stats until we reach the required count
+                  const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                  const remainingStats = allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat));
+                  const shuffledRemaining = shuffleArray(remainingStats);
+                
+                  while (selectedBaseStats.length < baseStatsToAssignCount) {
+                    if (shuffledRemaining.length === 0) break; // no more stats to add
+                    selectedBaseStats.push(shuffledRemaining.pop());
+                  }
+                
+                  // Edge case: if still less than required, fill with fallback stat 'atk'
+                  while (selectedBaseStats.length < baseStatsToAssignCount) {
+                    selectedBaseStats.push('atk');
                   }
                 
                   // Create new item object
@@ -1380,14 +1388,20 @@
                 
                     let bonusValue;
                     if (['critChance', 'evasion'].includes(bonusStatType)) {
+                      // These are fractional stats, add small decimal values correctly
                       const baseMin = 0.002, baseMax = 0.005;
                       const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
                       bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                      // Round to 4 decimals for precision
+                      bonusValue = Math.round(bonusValue * 10000) / 10000;
                     } else if (bonusStatType === 'critDmg') {
+                      // critDmg is also fractional but larger scale
                       const baseMin = 0.02, baseMax = 0.05;
                       const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
                       bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                      bonusValue = Math.round(bonusValue * 10000) / 10000;
                     } else {
+                      // Integer stats
                       const baseMin = 2, baseMax = 5;
                       const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
                       bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
