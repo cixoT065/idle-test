@@ -1243,33 +1243,28 @@
                     return `${prefix} ${base}`;
                 }
 
-                function getRarityProbabilities(wave) {
-                    // Base probabilities
-                    let baseProbs;
-                    if (wave <= 10) baseProbs = { N: 0.75, R: 0.24, SR: 0.01, SSR: 0, UR: 0 };
-                    else if (wave <= 30) baseProbs = { N: 0.40, R: 0.45, SR: 0.13, SSR: 0.02, UR: 0 };
-                    else if (wave <= 50) baseProbs = { N: 0.10, R: 0.40, SR: 0.40, SSR: 0.09, UR: 0.01 };
-                    else baseProbs = { N: 0.05, R: 0.30, SR: 0.45, SSR: 0.15, UR: 0.05 };
-
-                    // Increase chances for better rarities gradually after wave 50
-                    if (wave > 50) {
-                        const extra = Math.min((wave - 50) * 0.002, 0.1); // max +10% boost
-                        baseProbs.SR = Math.min(baseProbs.SR + extra, 0.6);
-                        baseProbs.SSR = Math.min(baseProbs.SSR + extra, 0.25);
-                        baseProbs.UR = Math.min(baseProbs.UR + extra, 0.1);
-                        // Adjust N and R down accordingly
-                        const reduce = extra * 3;
-                        baseProbs.N = Math.max(baseProbs.N - reduce, 0);
-                        baseProbs.R = Math.max(baseProbs.R - reduce, 0);
-                    }
-
-                    // Normalize to sum 1
-                    const total = Object.values(baseProbs).reduce((a, b) => a + b, 0);
-                    for (const key in baseProbs) {
-                        baseProbs[key] /= total;
-                    }
-
-                    return baseProbs;
+                function getRarityProbabilities(monster) {
+                  // Default base probabilities
+                  let baseProbs;
+                
+                  if (monster.isBoss) {
+                    // Boss: more R/SR, less SSR/R, least UR
+                    baseProbs = { N: 0.0, R: 0.5, SR: 0.4, SSR: 0.08, UR: 0.02 };
+                  } else if (monster.isElite) {
+                    // Elite: more N/R/SR, less SSR, very very least UR
+                    baseProbs = { N: 0.3, R: 0.4, SR: 0.2, SSR: 0.09, UR: 0.01 };
+                  } else {
+                    // Normal: more N/R, less SR, very least SSR, no UR
+                    baseProbs = { N: 0.6, R: 0.3, SR: 0.08, SSR: 0.02, UR: 0.0 };
+                  }
+                
+                  // Normalize to sum 1
+                  const total = Object.values(baseProbs).reduce((a, b) => a + b, 0);
+                  for (const key in baseProbs) {
+                    baseProbs[key] /= total;
+                  }
+                
+                  return baseProbs;
                 }
 
                 function shuffleArray(array) {
@@ -1282,22 +1277,24 @@
                 
                 function generateItemDrop(monster) {
                     if (gameState.inventory.length >= gameState.maxInventorySize) {
-                        logAction('Inventory is full! Cannot pick up new item.', 'log-system');
-                        return;
-                    }
-                    const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
-                    let rarityKey;
-                    const probs = getRarityProbabilities(gameState.wave);
-                    const rarityRand = Math.random();
-                    let cumulativeProb = 0;
-                    if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
-                    else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
-                    else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
-                    else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
-                    else rarityKey = 'UR';
-                    const urBonusRand = Math.random();
-                    if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
-                    else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
+                    logAction('Inventory is full! Cannot pick up new item.', 'log-system');
+                    return;
+                      }
+                      const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
+                      let rarityKey;
+                      const probs = getRarityProbabilities(monster);
+                      const rarityRand = Math.random();
+                      let cumulativeProb = 0;
+                      if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
+                      else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
+                      else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
+                      else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
+                      else rarityKey = 'UR';
+                    
+                      // UR bonus chance for bosses and elites remains
+                      const urBonusRand = Math.random();
+                      if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
+                      else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
                 
                     const rarityInfo = itemData.rarities[rarityKey];
                     const baseStatMultiplier = rarityInfo.statMod;
@@ -1402,31 +1399,31 @@
                 }
 
                 function spawnMonster(isBoss = false) {
-                    gameState.isRunning = true;
-                    let monsterTemplate;
-                    if (isBoss) {
-                        const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
-                        monsterTemplate = monsters.bosses[bossIndex];
-                    } else {
-                        const canSpawnElite = gameState.wave > 1;
-                        const rand = Math.random();
-                        if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
-                        else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
-                    }
-                    const scale = 1 + (gameState.wave - 1) * 0.12;
-                    gameState.currentMonster = {
-                        ...monsterTemplate,
-                        hp: Math.round(monsterTemplate.baseHp * scale),
-                        maxHp: Math.round(monsterTemplate.baseHp * scale),
-                        atk: Math.round(monsterTemplate.baseAtk * scale),
-                        def: Math.round(monsterTemplate.baseDef * scale),
-                        gold: Math.round(monsterTemplate.gold * scale),
-                        xp: Math.round(monsterTemplate.xp * Math.pow(1.05, gameState.wave - 1)), // exponential XP scaling
-                        isBoss: isBoss,
-                        debuffs: {},
-                    };
-                    logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
-                    updateUI();
+                  gameState.isRunning = true;
+                  let monsterTemplate;
+                  if (isBoss) {
+                    const bossIndex = (gameState.wave - 1) % monsters.bosses.length;
+                    monsterTemplate = monsters.bosses[bossIndex];
+                  } else {
+                    const canSpawnElite = gameState.wave > 1;
+                    const rand = Math.random();
+                    if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
+                    else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
+                  }
+                  const scale = 1 + (gameState.wave - 1) * 0.12; // scaling factor per wave
+                  gameState.currentMonster = {
+                    ...monsterTemplate,
+                    hp: Math.round(monsterTemplate.baseHp * scale),
+                    maxHp: Math.round(monsterTemplate.baseHp * scale),
+                    atk: Math.round(monsterTemplate.baseAtk * scale),
+                    def: Math.round(monsterTemplate.baseDef * scale),
+                    gold: Math.round(monsterTemplate.gold * scale),
+                    xp: Math.round(monsterTemplate.xp * Math.pow(1.05, gameState.wave - 1)), // exponential XP scaling
+                    isBoss: isBoss,
+                    debuffs: {},
+                  };
+                  logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
+                  updateUI();
                 }
 
                 function levelUp() {
