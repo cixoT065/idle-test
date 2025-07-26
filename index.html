@@ -1106,16 +1106,22 @@
 
                     if (isCrit && gameState.player.activeSkills.includes('Bleed')) {
                         const maxStacks = gameState.player.activeSkills.includes('Hemorrhage') ? 3 : 1;
-                        if (!gameState.currentMonster.debuffs.bleed || (gameState.currentMonster.debuffs.bleed.stacks || 1) < maxStacks) {
-                            const bleedDamage = Math.round(stats.atk * 0.3);
-                            if (gameState.currentMonster.debuffs.bleed) {
+                        const bleedDamage = Math.round(stats.atk * 0.3);
+                    
+                        if (!gameState.currentMonster.debuffs.bleed) {
+                            gameState.currentMonster.debuffs.bleed = { damage: bleedDamage, duration: 3, stacks: 1 };
+                            logAction(`Your critical hit causes the ${gameState.currentMonster.name} to bleed!`, 'log-skill');
+                        } else {
+                            // Refresh duration every crit
+                            gameState.currentMonster.debuffs.bleed.duration = 3;
+                    
+                            if ((gameState.currentMonster.debuffs.bleed.stacks || 1) < maxStacks) {
                                 gameState.currentMonster.debuffs.bleed.stacks++;
                                 gameState.currentMonster.debuffs.bleed.damage += bleedDamage;
-                                gameState.currentMonster.debuffs.bleed.duration = 3;
+                                logAction(`Your critical hit intensifies the bleed on ${gameState.currentMonster.name}!`, 'log-skill');
                             } else {
-                                gameState.currentMonster.debuffs.bleed = { damage: bleedDamage, duration: 3, stacks: 1 };
+                                logAction(`Your critical hit refreshes the bleed on ${gameState.currentMonster.name}!`, 'log-skill');
                             }
-                            logAction(`Your critical hit causes the ${gameState.currentMonster.name} to bleed!`, 'log-skill');
                         }
                     }
 
