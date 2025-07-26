@@ -1184,11 +1184,14 @@
 
                 function monsterDefeated() {
                     logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
-
+                
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
-                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 1.75);
-                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 1.75);
+                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
+                
+                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 1.75 * waveScale);
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 1.75 * waveScale);
+                
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
                     logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
@@ -1299,7 +1302,7 @@
                     const rarityInfo = itemData.rarities[rarityKey];
                     const baseStatMultiplier = rarityInfo.statMod;
                 
-                    const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                    const allStatsPool = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                     const baseStatCountByRarity = {
                         'N': 1,
                         'R': 2,
@@ -1315,32 +1318,32 @@
                     else if (itemType === 'boots') mandatoryStat = 'hp';
                     else mandatoryStat = null;
                 
-                    // Start with mandatory stat included if any
-                    let selectedBaseStats = [];
-                    if (mandatoryStat) selectedBaseStats.push(mandatoryStat);
+                    // Select base stats
+                    let baseStats = [];
+                    if (mandatoryStat) baseStats.push(mandatoryStat);
                 
-                    // Prepare the pool excluding the mandatory stat
-                    let remainingStatsPool = allPossibleBaseStats.filter(stat => stat !== mandatoryStat);
+                    // Pool excluding mandatory stat
+                    let remainingStatsForBase = allStatsPool.filter(stat => stat !== mandatoryStat);
+                    remainingStatsForBase = shuffleArray(remainingStatsForBase);
                 
-                    // Shuffle remaining stats
-                    let shuffledRemainingStats = shuffleArray(remainingStatsPool);
-                
-                    // Calculate how many more stats to add to reach exact count
-                    const neededCount = baseStatCountByRarity[rarityKey] - selectedBaseStats.length;
-                
-                    // Add exactly neededCount stats
-                    for (let i = 0; i < neededCount; i++) {
-                        if (shuffledRemainingStats.length === 0) {
-                            // Refill pool excluding already selected stats
-                            shuffledRemainingStats = shuffleArray(allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat)));
+                    // Add base stats until count reached
+                    while (baseStats.length < baseStatCountByRarity[rarityKey]) {
+                        if (remainingStatsForBase.length === 0) {
+                            remainingStatsForBase = shuffleArray(allStatsPool.filter(stat => !baseStats.includes(stat)));
                         }
-                        const nextStat = shuffledRemainingStats.shift();
-                        if (!selectedBaseStats.includes(nextStat)) {
-                            selectedBaseStats.push(nextStat);
-                        } else {
-                            i--; // retry if duplicate
-                        }
+                        const nextStat = remainingStatsForBase.shift();
+                        if (!baseStats.includes(nextStat)) baseStats.push(nextStat);
                     }
+                
+                    // Bonus stats come from remaining stats not in baseStats
+                    let bonusStatsPool = allStatsPool.filter(stat => !baseStats.includes(stat));
+                    bonusStatsPool = shuffleArray(bonusStatsPool);
+                
+                    const numBonusStats = rarityInfo.bonusStats;
+                    const bonusMultiplier = rarityInfo.bonusMultiplier;
+                
+                    // Trimmed wave scaling curve for bonus stats
+                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
                 
                     const newItem = {
                         id: Date.now() + Math.random(),
@@ -1353,42 +1356,22 @@
                     const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
                 
                     // Assign base stats with proper rounding for fractional stats
-                    for (const stat of selectedBaseStats) {
+                    for (const stat of baseStats) {
                         let baseValue = defaultBaseValues[stat];
                         if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
                             baseValue = itemData.baseStats[itemType][stat];
                         }
                         if (stat === 'critChance' || stat === 'critDmg' || stat === 'evasion') {
-                            newItem[stat] = +(baseValue * baseStatMultiplier).toFixed(3); // keep decimals
+                            newItem[stat] = +(baseValue * baseStatMultiplier).toFixed(3);
                         } else {
                             newItem[stat] = Math.round(baseValue * baseStatMultiplier);
                         }
                     }
                 
-                    const numBonusStats = rarityInfo.bonusStats;
-                    const bonusMultiplier = rarityInfo.bonusMultiplier;
-                
-                    // Trimmed wave scaling curve for bonus stats (even gentler)
-                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
-                
-                    // Determine theme for bonus stats
-                    const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
-                    let availableBonusStats = [];
-                    if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
-                    else {
-                        const pools = itemData.bonusStatPools[theme];
-                        availableBonusStats = [...pools.primary, ...pools.secondary];
-                    }
-                
+                    // Assign bonus stats
                     for (let i = 0; i < numBonusStats; i++) {
-                        if (availableBonusStats.length === 0) break;
-                        let bonusStatType;
-                        if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
-                            const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
-                            if (primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
-                            else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                        } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                        availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
+                        if (bonusStatsPool.length === 0) break;
+                        const bonusStatType = bonusStatsPool.shift();
                 
                         let bonusValue;
                         if (['critChance', 'evasion'].includes(bonusStatType)) {
