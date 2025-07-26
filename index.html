@@ -1312,23 +1312,21 @@
                   };
                 
                   const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
+                
                   const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
                 
-                  // Start with required base stat depending on item type
-                  let selectedBaseStats = [];
-                  if (itemType === 'weapon') {
-                    selectedBaseStats.push('atk');
-                  } else if (itemType === 'armor' || itemType === 'boots') {
-                    selectedBaseStats.push('def');
-                  }
+                  // Required base stat per item type
+                  const requiredBaseStatByType = {
+                    weapon: 'atk',
+                    armor: 'def',
+                    boots: 'hp'
+                  };
                 
-                  // Add base stats defined for the item type (if not already included)
-                  const baseStatsKeys = Object.keys(itemData.baseStats[itemType] || {});
-                  baseStatsKeys.forEach(stat => {
-                    if (!selectedBaseStats.includes(stat)) {
-                      selectedBaseStats.push(stat);
-                    }
-                  });
+                  // Start with required base stat
+                  let selectedBaseStats = [requiredBaseStatByType[itemType]];
+                
+                  // Add other base stats defined for the item type, excluding the required one
+                  const baseStatsKeys = Object.keys(itemData.baseStats[itemType] || {}).filter(stat => stat !== requiredBaseStatByType[itemType]);
                 
                   // If more stats needed, add random stats from allPossibleBaseStats excluding already selected
                   if (selectedBaseStats.length < baseStatsToAssignCount) {
@@ -1337,7 +1335,7 @@
                     selectedBaseStats = selectedBaseStats.concat(shuffledRemaining.slice(0, baseStatsToAssignCount - selectedBaseStats.length));
                   }
                 
-                  // Assign base stats values ensuring no zero values
+                  // Create new item object
                   const newItem = {
                     id: Date.now() + Math.random(),
                     type: itemType,
@@ -1346,6 +1344,7 @@
                     bonusStats: {}
                   };
                 
+                  // Assign base stats values ensuring no zero values
                   for (const stat of selectedBaseStats) {
                     let baseValue = defaultBaseValues[stat];
                     if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
@@ -1356,7 +1355,7 @@
                     newItem[stat] = statValue;
                   }
                 
-                  // Bonus stats assignment (unchanged)
+                  // Bonus stats assignment
                   const numBonusStats = rarityInfo.bonusStats;
                   const bonusMultiplier = rarityInfo.bonusMultiplier;
                 
