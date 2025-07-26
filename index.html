@@ -1334,8 +1334,14 @@
                             // Refill pool excluding already selected stats
                             shuffledRemainingStats = shuffleArray(allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat)));
                         }
-                        selectedBaseStats.push(shuffledRemainingStats.shift());
+                        const nextStat = shuffledRemainingStats.shift();
+                        if (!selectedBaseStats.includes(nextStat)) {
+                            selectedBaseStats.push(nextStat);
+                        }
                     }
+                
+                    // Debug: Confirm base stat count
+                    // console.log(`Assigning base stats (${selectedBaseStats.length}):`, selectedBaseStats);
                 
                     const newItem = {
                         id: Date.now() + Math.random(),
