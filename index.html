@@ -1598,17 +1598,17 @@
 
                     addLine(`Rarity: ${item.rarity}`);
                     addLine(`--------`);
-                    if (item.atk) addLine(`ATK: ${item.atk}`);
-                    if (item.def) addLine(`DEF: ${item.def}`);
-                    if (item.hp) addLine(`HP: ${item.hp}`);
+                    const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
 
-                    if (Object.keys(item.bonusStats).length > 0) {
-                        addLine(`--------`);
-                        for (const [stat, value] of Object.entries(item.bonusStats)) {
-                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
-                            else addLine(`${statName}: +${Math.round(value)}`);
+                    for (const stat of baseStatsToShow) {
+                      if (item[stat] !== undefined) {
+                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                          addLine(`${statName}: ${ (item[stat] * 100).toFixed(1) }%`);
+                        } else {
+                          addLine(`${statName}: ${Math.round(item[stat])}`);
                         }
+                      }
                     }
 
                     const sellValue = itemData.rarities[item.rarity].value;
