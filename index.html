@@ -1638,7 +1638,7 @@
 
                 function logAction(message, typeClass) {
                     const p = document.createElement('p');
-                    p.textContent = message;
+                    p.innerHTML = message;
                     if (typeClass) p.classList.add(typeClass);
                     UIElements.actionLog.appendChild(p);
                     UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
@@ -1782,7 +1782,7 @@
                     }
                     UIElements.challengeBossBtn.disabled = true;
                     updateUI();
-                });});
+                });
                 UIElements.trainAtkBtn.addEventListener('click', () => trainStat('atk'));
                 UIElements.trainDefBtn.addEventListener('click', () => trainStat('def'));
                 UIElements.trainHpBtn.addEventListener('click', () => trainStat('hp'));
