@@ -1189,7 +1189,7 @@
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
                     //const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
                 
-                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
+                    const goldGained = Math.round(gameState.currentMonster.gold * 1.25 * goldBonus);
                     const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
                 
                     gameState.gold += goldGained;
@@ -1831,7 +1831,7 @@
                 
                     // Calculate gain scaling with cost (logarithmic scaling example)
                     const baseGain = (stat === 'hp' ? 5 : 1);
-                    const gain = Math.max(baseGain, Math.floor(baseGain * Math.log10(cost + 1)));
+                    const gain = Math.max(baseGain, Math.floor(baseGain * Math.log10(cost + 2)));
                 
                     gameState.player.baseStats[stat] += gain;
                     gameState.trainingCosts[stat] = Math.round(cost * 1.12);
