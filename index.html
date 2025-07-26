@@ -1318,21 +1318,29 @@
                     else if (itemType === 'boots') mandatoryStat = 'hp';
                     else mandatoryStat = null;
                 
-                    // Select base stats
+                    // Start with mandatory stat included if any
                     let baseStats = [];
                     if (mandatoryStat) baseStats.push(mandatoryStat);
                 
                     // Pool excluding mandatory stat
-                    let remainingStatsForBase = allStatsPool.filter(stat => stat !== mandatoryStat);
-                    remainingStatsForBase = shuffleArray(remainingStatsForBase);
+                    let remainingStatsPool = allStatsPool.filter(stat => stat !== mandatoryStat);
+                    remainingStatsPool = shuffleArray(remainingStatsPool);
                 
-                    // Add base stats until count reached
-                    while (baseStats.length < baseStatCountByRarity[rarityKey]) {
-                        if (remainingStatsForBase.length === 0) {
-                            remainingStatsForBase = shuffleArray(allStatsPool.filter(stat => !baseStats.includes(stat)));
+                    // Calculate how many more stats to add
+                    const neededCount = baseStatCountByRarity[rarityKey] - baseStats.length;
+                
+                    // Add exactly neededCount stats
+                    for (let i = 0; i < neededCount; i++) {
+                        if (remainingStatsPool.length === 0) {
+                            // Refill pool excluding already selected stats
+                            remainingStatsPool = shuffleArray(allStatsPool.filter(stat => !baseStats.includes(stat)));
                         }
-                        const nextStat = remainingStatsForBase.shift();
-                        if (!baseStats.includes(nextStat)) baseStats.push(nextStat);
+                        const nextStat = remainingStatsPool.shift();
+                        if (!baseStats.includes(nextStat)) {
+                            baseStats.push(nextStat);
+                        } else {
+                            i--; // retry if duplicate
+                        }
                     }
                 
                     // Bonus stats come from remaining stats not in baseStats
