@@ -1281,140 +1281,108 @@
                 }
                 
                 function generateItemDrop(monster) {
-                  if (gameState.inventory.length >= gameState.maxInventorySize) {
-                    logAction('Inventory is full! Cannot pick up new item.', 'log-system');
-                    return;
-                  }
-                  const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
-                  let rarityKey;
-                  const probs = getRarityProbabilities(gameState.wave);
-                  const rarityRand = Math.random();
-                  let cumulativeProb = 0;
-                  if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
-                  else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
-                  else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
-                  else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
-                  else rarityKey = 'UR';
-                  const urBonusRand = Math.random();
-                  if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
-                  else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
-                
-                  const rarityInfo = itemData.rarities[rarityKey];
-                  const baseStatMultiplier = rarityInfo.statMod;
-                
-                  const baseStatCountByRarity = {
-                    'N': 1,
-                    'R': 2,
-                    'SR': 3,
-                    'SSR': 4,
-                    'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
-                  };
-                
-                  const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
-                
-                  const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
-                
-                  // Required base stat per item type
-                  const requiredBaseStatByType = {
-                    weapon: 'atk',
-                    armor: 'def',
-                    boots: 'hp'
-                  };
-                
-                  // Start with required base stat
-                  let selectedBaseStats = [requiredBaseStatByType[itemType]];
-                
-                  // Add other base stats defined for the item type, excluding the required one
-                  const baseStatsKeys = Object.keys(itemData.baseStats[itemType] || {}).filter(stat => stat !== requiredBaseStatByType[itemType]);
-                  selectedBaseStats = selectedBaseStats.concat(baseStatsKeys);
-                
-                  // Add random stats until we reach the required count
-                  const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-                  const remainingStats = allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat));
-                  const shuffledRemaining = shuffleArray(remainingStats);
-                
-                  while (selectedBaseStats.length < baseStatsToAssignCount) {
-                    if (shuffledRemaining.length === 0) break; // no more stats to add
-                    selectedBaseStats.push(shuffledRemaining.pop());
-                  }
-                
-                  // Edge case: if still less than required, fill with fallback stat 'atk'
-                  while (selectedBaseStats.length < baseStatsToAssignCount) {
-                    selectedBaseStats.push('atk');
-                  }
-                
-                  // Create new item object
-                  const newItem = {
-                    id: Date.now() + Math.random(),
-                    type: itemType,
-                    rarity: rarityKey,
-                    name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
-                    bonusStats: {}
-                  };
-                
-                  // Assign base stats values ensuring no zero values
-                  for (const stat of selectedBaseStats) {
-                    let baseValue = defaultBaseValues[stat];
-                    if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
-                      baseValue = itemData.baseStats[itemType][stat];
+                    if (gameState.inventory.length >= gameState.maxInventorySize) {
+                        logAction('Inventory is full! Cannot pick up new item.', 'log-system');
+                        return;
                     }
-                    let statValue = Math.round(baseValue * baseStatMultiplier);
-                    if (statValue < 1) statValue = 1; // Ensure no zero value
-                    newItem[stat] = statValue;
-                  }
+                    const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
+                    let rarityKey;
+                    const probs = getRarityProbabilities(gameState.wave);
+                    const rarityRand = Math.random();
+                    let cumulativeProb = 0;
+                    if (rarityRand < (cumulativeProb += probs.N)) rarityKey = 'N';
+                    else if (rarityRand < (cumulativeProb += probs.R)) rarityKey = 'R';
+                    else if (rarityRand < (cumulativeProb += probs.SR)) rarityKey = 'SR';
+                    else if (rarityRand < (cumulativeProb += probs.SSR)) rarityKey = 'SSR';
+                    else rarityKey = 'UR';
+                    const urBonusRand = Math.random();
+                    if (monster.isBoss && urBonusRand < 0.10) rarityKey = 'UR';
+                    else if (monster.isElite && urBonusRand < 0.02) rarityKey = 'UR';
+
+                    const rarityInfo = itemData.rarities[rarityKey];
+                    const baseStatMultiplier = rarityInfo.statMod;
+
+                    const allPossibleBaseStats = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                    const baseStatCountByRarity = {
+                        'N': 1,
+                        'R': 2,
+                        'SR': 3,
+                        'SSR': 4,
+                        'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
+                    };
                 
-                  // Bonus stats assignment
-                  const numBonusStats = rarityInfo.bonusStats;
-                  const bonusMultiplier = rarityInfo.bonusMultiplier;
+                    const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
+                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
                 
-                  // Determine theme for bonus stats
-                  const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
-                  let availableBonusStats = [];
-                  if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
-                  else {
-                    const pools = itemData.bonusStatPools[theme];
-                    availableBonusStats = [...pools.primary, ...pools.secondary];
-                  }
+                    // Shuffle a copy of the array to avoid mutating original
+                    const shuffledStats = shuffleArray([...allPossibleBaseStats]);
                 
-                  for (let i = 0; i < numBonusStats; i++) {
-                    if (availableBonusStats.length === 0) break;
-                    let bonusStatType;
-                    if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
-                      const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
-                      if (primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
-                      else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                    } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
-                    availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
+                    // Ensure we don't pick more stats than available
+                    const count = Math.min(baseStatsToAssignCount, allPossibleBaseStats.length);
+                    const selectedBaseStats = shuffledStats.slice(0, count);
                 
-                    let bonusValue;
-                    if (['critChance', 'evasion'].includes(bonusStatType)) {
-                      // These are fractional stats, add small decimal values correctly
-                      const baseMin = 0.002, baseMax = 0.005;
-                      const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                      bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
-                      // Round to 4 decimals for precision
-                      bonusValue = Math.round(bonusValue * 10000) / 10000;
-                    } else if (bonusStatType === 'critDmg') {
-                      // critDmg is also fractional but larger scale
-                      const baseMin = 0.02, baseMax = 0.05;
-                      const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                      bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
-                      bonusValue = Math.round(bonusValue * 10000) / 10000;
-                    } else {
-                      // Integer stats
-                      const baseMin = 2, baseMax = 5;
-                      const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
-                      bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
-                      if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
+                    const newItem = {
+                        id: Date.now() + Math.random(),
+                        type: itemType,
+                        rarity: rarityKey,
+                        name: generateItemName(itemType, ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)]),
+                        bonusStats: {}
+                    };
+                
+                    // Assign base stats strictly
+                    for (const stat of selectedBaseStats) {
+                        let baseValue = defaultBaseValues[stat];
+                        if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
+                            baseValue = itemData.baseStats[itemType][stat];
+                        }
+                        newItem[stat] = Math.round(baseValue * baseStatMultiplier);
                     }
-                
-                    newItem.bonusStats[bonusStatType] = bonusValue;
-                  }
-                
-                  gameState.inventory.push(newItem);
-                  const color = itemData.rarities[rarityKey].color;
-                  logAction(`You found a [<span style="color:${color}">${rarityKey}</span>] <span style="color:${color}">${newItem.name}</span>!`, 'log-drop');
-                  updateInventoryUI();
+                    // Bonus stats assignment
+                    const numBonusStats = rarityInfo.bonusStats;
+                    const bonusMultiplier = rarityInfo.bonusMultiplier;
+
+                    // Determine theme for bonus stats
+                    const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
+                    let availableBonusStats = [];
+                    if (theme === 'Balanced') availableBonusStats = [...itemData.bonusStatPools.all];
+                    else {
+                        const pools = itemData.bonusStatPools[theme];
+                        availableBonusStats = [...pools.primary, ...pools.secondary];
+                    }
+
+                    for (let i = 0; i < numBonusStats; i++) {
+                        if (availableBonusStats.length === 0) break;
+                        let bonusStatType;
+                        if (theme !== 'Balanced' && i < itemData.bonusStatPools[theme].primary.length) {
+                            const primaryPool = itemData.bonusStatPools[theme].primary.filter(s => availableBonusStats.includes(s));
+                            if (primaryPool.length > 0) bonusStatType = primaryPool[Math.floor(Math.random() * primaryPool.length)];
+                            else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                        } else bonusStatType = availableBonusStats[Math.floor(Math.random() * availableBonusStats.length)];
+                        availableBonusStats = availableBonusStats.filter(s => s !== bonusStatType);
+
+                        let bonusValue;
+                        if (['critChance', 'evasion'].includes(bonusStatType)) {
+                            const baseMin = 0.002, baseMax = 0.005;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                        } else if (bonusStatType === 'critDmg') {
+                            const baseMin = 0.02, baseMax = 0.05;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = (Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey];
+                        } else {
+                            const baseMin = 2, baseMax = 5;
+                            const rarityScale = { 'N': 1, 'R': 1.5, 'SR': 2, 'SSR': 3, 'UR': 4 };
+                            bonusValue = Math.round((Math.random() * (baseMax - baseMin) + baseMin) * bonusMultiplier * rarityScale[rarityKey]);
+                            if (bonusValue < 1 && bonusMultiplier > 0) bonusValue = 1;
+                        }
+
+                        newItem.bonusStats[bonusStatType] = bonusValue;
+                    }
+
+                    gameState.inventory.push(newItem);
+                    const color = itemData.rarities[rarityKey].color;
+                    logAction(`You found a [<span style="color:${color}">${rarityKey}</span>] <span style="color:${color}">${newItem.name}</span>!`, 'log-drop');
+                    updateInventoryUI();
                 }
 
                 function spawnMonster(isBoss = false) {
