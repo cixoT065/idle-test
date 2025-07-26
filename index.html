@@ -1217,8 +1217,8 @@
                     if (gameState.currentMonster && gameState.currentMonster.isBoss) {
                         logAction('The boss\'s power overwhelms you, sending you back to safety!', 'log-error');
                         const totalStats = getPlayerTotalStats();
-                        gameState.player.currentHp = totalStats.hp * 0.5;
-                        logAction(`You are revived with 50% health.`, 'log-system');
+                        gameState.player.currentHp = totalStats.hp;
+                        logAction(`You are revived with 100% health.`, 'log-system');
                         UIElements.challengeBossBtn.disabled = true;
                         UIElements.challengeBossBtn.textContent = 'Challenge Boss';
                         spawnMonster();
@@ -1229,8 +1229,8 @@
                         if (gameState.player.xp < 0) gameState.player.xp = 0;
                         logAction(`As a penalty, you lose ${xpPenalty} XP.`, 'log-error');
                         const totalStats = getPlayerTotalStats();
-                        gameState.player.currentHp = totalStats.hp * 0.25;
-                        logAction(`You are automatically revived with 25% health.`, 'log-system');
+                        gameState.player.currentHp = totalStats.hp * 0.5;
+                        logAction(`You are automatically revived with 50% health.`, 'log-system');
                         spawnMonster();
                     }
                 }
