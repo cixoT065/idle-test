@@ -1255,7 +1255,7 @@
                     baseProbs = { N: 0.3, R: 0.5, SR: 0.1, SSR: 0.095, UR: 0.005 };
                   } else {
                     // Normal: more N/R, less SR, very least SSR, no UR
-                    baseProbs = { N: 0.7, R: 0.2, SR: 0.08, SSR: 0.02, UR: 0.0 };
+                    baseProbs = { N: 0.79, R: 0.15, SR: 0.04, SSR: 0.02, UR: 0.0 };
                   }
                 
                   // Normalize to sum 1
@@ -1308,9 +1308,6 @@
                         'UR': 4 + Math.floor(Math.random() * 2) // 4 or 5
                     };
                 
-                    const baseStatsToAssignCount = baseStatCountByRarity[rarityKey];
-                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
-                
                     // Determine mandatory base stat based on item type
                     let mandatoryStat;
                     if (itemType === 'weapon') mandatoryStat = 'atk';
@@ -1329,7 +1326,7 @@
                     let shuffledRemainingStats = shuffleArray(remainingStatsPool);
                 
                     // Fill the rest of base stats up to the required count, ensuring count is met
-                    while (selectedBaseStats.length < baseStatsToAssignCount) {
+                    while (selectedBaseStats.length < baseStatCountByRarity[rarityKey]) {
                         if (shuffledRemainingStats.length === 0) {
                             // Refill pool excluding already selected stats
                             shuffledRemainingStats = shuffleArray(allPossibleBaseStats.filter(stat => !selectedBaseStats.includes(stat)));
@@ -1348,20 +1345,26 @@
                         bonusStats: {}
                     };
                 
-                    // Assign base stats strictly
+                    const defaultBaseValues = { atk: 5, def: 3, hp: 10, critChance: 0.01, critDmg: 0.1, evasion: 0.01 };
+                
+                    // Assign base stats with proper rounding for fractional stats
                     for (const stat of selectedBaseStats) {
                         let baseValue = defaultBaseValues[stat];
                         if (itemData.baseStats[itemType] && itemData.baseStats[itemType][stat] !== undefined) {
                             baseValue = itemData.baseStats[itemType][stat];
                         }
-                        newItem[stat] = Math.round(baseValue * baseStatMultiplier);
+                        if (stat === 'critChance' || stat === 'critDmg' || stat === 'evasion') {
+                            newItem[stat] = +(baseValue * baseStatMultiplier).toFixed(3); // keep decimals
+                        } else {
+                            newItem[stat] = Math.round(baseValue * baseStatMultiplier);
+                        }
                     }
                 
                     const numBonusStats = rarityInfo.bonusStats;
                     const bonusMultiplier = rarityInfo.bonusMultiplier;
                 
-                    // Wave scaling factor: increases bonus stats by 10% per wave after wave 1
-                    const waveScale = 1 + (gameState.wave - 1) * 0.1;
+                    // Trimmed wave scaling curve for bonus stats
+                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.05;
                 
                     // Determine theme for bonus stats
                     const theme = ['Warrior', 'Rogue', 'Wizard', 'Balanced'][Math.floor(Math.random() * 4)];
