@@ -1252,13 +1252,13 @@
                 
                   if (monster.isBoss) {
                     // Boss: more R/SR, less SSR/R, least UR
-                    baseProbs = { N: 0.1, R: 0.4, SR: 0.4, SSR: 0.09, UR: 0.01 };
+                    baseProbs = { N: 0.1, R: 0.4, SR: 0.41, SSR: 0.08, UR: 0.01 };
                   } else if (monster.isElite) {
                     // Elite: more N/R/SR, less SSR, very very least UR
-                    baseProbs = { N: 0.3, R: 0.5, SR: 0.1, SSR: 0.095, UR: 0.005 };
+                    baseProbs = { N: 0.3, R: 0.5, SR: 0.14, SSR: 0.055, UR: 0.005 };
                   } else {
                     // Normal: more N/R, less SR, very least SSR, no UR
-                    baseProbs = { N: 0.79, R: 0.15, SR: 0.04, SSR: 0.02, UR: 0.0 };
+                    baseProbs = { N: 0.8, R: 0.15, SR: 0.04, SSR: 0.01, UR: 0.0 };
                   }
                 
                   // Normalize to sum 1
