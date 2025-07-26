@@ -1187,10 +1187,10 @@
                 
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
                     const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
-                    const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
+                    //const waveScale = 1 + Math.sqrt(Math.max(0, gameState.wave - 1)) * 0.035;
                 
-                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus * 1.75 * waveScale);
-                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus * 1.75 * waveScale);
+                    const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
                 
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
@@ -1420,7 +1420,7 @@
                     if (canSpawnElite && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
                     else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
                   }
-                  const scale = 1 + (gameState.wave - 1) * 0.12; // scaling factor per wave
+                  const scale = Math.pow(1.5, gameState.wave - 1);
                   gameState.currentMonster = {
                     ...monsterTemplate,
                     hp: Math.round(monsterTemplate.baseHp * scale),
