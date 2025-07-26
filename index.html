@@ -1581,66 +1581,97 @@
                 }
 
                 function showTooltip(event, item, isEquipped) {
-                    clearTimeout(tooltipHideTimer);
-                    const tooltip = UIElements.globalTooltip;
-                    tooltip.innerHTML = '';
-
-                    const rarityColor = itemData.rarities[item.rarity].color;
-                    let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
-
-                    const nameEl = document.createElement('strong');
-                    nameEl.style.color = rarityColor;
-                    nameEl.style.fontWeight = fontWeight;
-                    nameEl.textContent = `${item.name} (${item.type})`;
-                    tooltip.appendChild(nameEl);
-
-                    const addLine = (text) => { tooltip.appendChild(document.createElement('br')); tooltip.appendChild(document.createTextNode(text)); };
-
-                    addLine(`Rarity: ${item.rarity}`);
-                    addLine(`--------`);
-                    const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-
-                    for (const stat of baseStatsToShow) {
-                      if (item[stat] !== undefined) {
-                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                          addLine(`${statName}: ${ (item[stat] * 100).toFixed(1) }%`);
-                        } else {
-                          addLine(`${statName}: ${Math.round(item[stat])}`);
-                        }
+                  clearTimeout(tooltipHideTimer);
+                  const tooltip = UIElements.globalTooltip;
+                  tooltip.innerHTML = '';
+                
+                  const rarityColor = itemData.rarities[item.rarity].color;
+                  let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                
+                  // Item name and type
+                  const nameEl = document.createElement('strong');
+                  nameEl.style.color = rarityColor;
+                  nameEl.style.fontWeight = fontWeight;
+                  nameEl.textContent = `${item.name} (${item.type})`;
+                  tooltip.appendChild(nameEl);
+                
+                  const addLine = (text) => {
+                    tooltip.appendChild(document.createElement('br'));
+                    tooltip.appendChild(document.createTextNode(text));
+                  };
+                
+                  // Rarity
+                  addLine(`Rarity: ${item.rarity}`);
+                
+                  // Separator
+                  addLine('------');
+                
+                  // Show all base stats
+                  const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                  let hasBaseStats = false;
+                  for (const stat of baseStatsToShow) {
+                    if (item[stat] !== undefined) {
+                      hasBaseStats = true;
+                      const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                      if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                        addLine(`${statName}: ${ (item[stat] * 100).toFixed(1) }%`);
+                      } else {
+                        addLine(`${statName}: ${Math.round(item[stat])}`);
                       }
                     }
-
-                    const sellValue = itemData.rarities[item.rarity].value;
-                    tooltip.appendChild(document.createElement('br'));
-                    addLine(`Sell Value: ${sellValue}G`);
-
-                    const actionText = document.createElement('span');
-                    actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
-                    actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
-                    tooltip.appendChild(actionText);
-
-                    if (!isEquipped) {
-                        const sellButton = document.createElement('button');
-                        sellButton.textContent = `Sell for ${sellValue}G`;
-                        sellButton.className = 'button button-secondary tooltip-button';
-                        sellButton.onclick = (e) => {
-                            e.stopPropagation();
-                            sellItem(item.id);
-                        };
-                        tooltip.appendChild(sellButton);
+                  }
+                
+                  // Separator only if there are bonus stats and base stats shown
+                  if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
+                    addLine('------');
+                  }
+                
+                  // Show bonus stats
+                  if (Object.keys(item.bonusStats).length > 0) {
+                    for (const [stat, value] of Object.entries(item.bonusStats)) {
+                      const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                      if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                        addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
+                      } else {
+                        addLine(`${statName}: +${Math.round(value)}`);
+                      }
                     }
-
-                    tooltip.style.display = 'block';
-                    const targetRect = event.currentTarget.getBoundingClientRect();
-                    const tooltipRect = tooltip.getBoundingClientRect();
-                    let top = targetRect.top - tooltipRect.height - 5;
-                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-                    if (top < 0) top = targetRect.bottom + 5;
-                    if (left < 0) left = 5;
-                    if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
-                    tooltip.style.top = `${top}px`;
-                    tooltip.style.left = `${left}px`;
+                  }
+                
+                  // Sell value
+                  const sellValue = itemData.rarities[item.rarity].value;
+                  tooltip.appendChild(document.createElement('br'));
+                  addLine(`Sell Value: ${sellValue}G`);
+                
+                  // Action text
+                  const actionText = document.createElement('span');
+                  actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
+                  actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
+                  tooltip.appendChild(actionText);
+                
+                  // Sell button if not equipped
+                  if (!isEquipped) {
+                    const sellButton = document.createElement('button');
+                    sellButton.textContent = `Sell for ${sellValue}G`;
+                    sellButton.className = 'button button-secondary tooltip-button';
+                    sellButton.onclick = (e) => {
+                      e.stopPropagation();
+                      sellItem(item.id);
+                    };
+                    tooltip.appendChild(sellButton);
+                  }
+                
+                  // Position tooltip
+                  tooltip.style.display = 'block';
+                  const targetRect = event.currentTarget.getBoundingClientRect();
+                  const tooltipRect = tooltip.getBoundingClientRect();
+                  let top = targetRect.top - tooltipRect.height - 5;
+                  let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+                  if (top < 0) top = targetRect.bottom + 5;
+                  if (left < 0) left = 5;
+                  if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
+                  tooltip.style.top = `${top}px`;
+                  tooltip.style.left = `${left}px`;
                 }
 
                 function hideTooltip() {
