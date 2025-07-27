@@ -1653,63 +1653,64 @@
                     // Separator
                     addLineWithSymbol('----');
                 
-                    // Find equipped item of the same type for comparison
-                    const equippedId = gameState.equipment[item.type];
-                    const equippedItem = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
+                    // Helper to get total stat (base + bonus) for an item
+                    function getTotalStat(item, stat) {
+                        const base = item[stat] || 0;
+                        const bonus = (item.bonusStats && item.bonusStats[stat]) || 0;
+                        return base + bonus;
+                    }
                 
-                    // Show all base stats with comparison symbols
+                    // Helper to get total character stat for a given stat,
+                    // optionally replacing the equipped item of a given type with newItem
+                    function getCharacterStat(stat, replacingType = null, newItem = null) {
+                        let total = 0;
+                        for (const equippedType in gameState.equipment) {
+                            let itemId = gameState.equipment[equippedType];
+                            let equippedItem = gameState.inventory.find(i => i.id === itemId);
+                            if (!equippedItem) continue;
+                
+                            // Use newItem if this is the slot being replaced
+                            if (equippedType === replacingType && newItem) {
+                                equippedItem = newItem;
+                            }
+                
+                            total += getTotalStat(equippedItem, stat);
+                        }
+                        return total;
+                    }
+                
+                    // Base stats to consider
                     const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-                    let hasBaseStats = false;
-                    for (const stat of baseStatsToShow) {
-                        if (item[stat] !== undefined) {
-                            hasBaseStats = true;
-                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                            let valueText;
-                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                                valueText = (item[stat] * 100).toFixed(1) + '%';
-                            } else {
-                                valueText = Math.round(item[stat]);
-                            }
                 
-                            // Compare with equipped item stat if available
-                            let symbolType = null;
-                            if (equippedItem && equippedItem[stat] !== undefined) {
-                                const equippedValue = equippedItem[stat];
-                                if (item[stat] > equippedValue) symbolType = 'up';
-                                else if (item[stat] < equippedValue) symbolType = 'down';
-                            }
+                    // Collect all stats from the new item (base + bonus)
+                    const allStats = new Set([
+                        ...Object.keys(item).filter(k => baseStatsToShow.includes(k)),
+                        ...Object.keys(item.bonusStats || {})
+                    ]);
                 
-                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
+                    // Show all stats with comparison based on character stats after equip swap
+                    for (const stat of allStats) {
+                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                
+                        const currentTotal = getCharacterStat(stat);
+                        const newTotal = getCharacterStat(stat, item.type, item);
+                
+                        let valueText;
+                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                            valueText = (newTotal * 100).toFixed(1) + '%';
+                        } else {
+                            valueText = Math.round(newTotal);
                         }
+                
+                        let symbolType = null;
+                        if (newTotal > currentTotal) symbolType = 'up';
+                        else if (newTotal < currentTotal) symbolType = 'down';
+                
+                        addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
                     }
                 
-                    // Separator only if there are bonus stats and base stats shown
-                    if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
-                        addLineWithSymbol('----');
-                    }
-                
-                    // Show bonus stats with comparison symbols
-                    if (Object.keys(item.bonusStats).length > 0) {
-                        for (const [stat, value] of Object.entries(item.bonusStats)) {
-                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                            let valueText;
-                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                                valueText = '+' + (value * 100).toFixed(1) + '%';
-                            } else {
-                                valueText = '+' + Math.round(value);
-                            }
-                
-                            // Compare with equipped item bonus stat if available
-                            let symbolType = null;
-                            if (equippedItem && equippedItem.bonusStats && equippedItem.bonusStats[stat] !== undefined) {
-                                const equippedValue = equippedItem.bonusStats[stat];
-                                if (value > equippedValue) symbolType = 'up';
-                                else if (value < equippedValue) symbolType = 'down';
-                            }
-                
-                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
-                        }
-                    }
+                    // Separator
+                    addLineWithSymbol('----');
                 
                     // Sell value
                     const sellValue = itemData.rarities[item.rarity].value;
