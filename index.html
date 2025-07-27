@@ -1765,6 +1765,23 @@
                     tooltip.style.top = `${top}px`;
                     tooltip.style.left = `${left}px`;
                 }
+
+                // --- Hide tooltip ---
+                function hideTooltip() {
+                    UIElements.globalTooltip.style.display = 'none';
+                    UIElements.globalTooltip._currentItemId = null;
+                }
+                
+                // --- Global click listener to hide tooltip when clicking outside ---
+                document.addEventListener('click', (event) => {
+                    const tooltip = UIElements.globalTooltip;
+                    if (tooltip.style.display === 'block' &&
+                        !tooltip.contains(event.target) &&
+                        !event.target.closest('.inventory-item') &&
+                        !event.target.closest('.equipment-slot-display')) {
+                        hideTooltip();
+                    }
+                });
                 
                 function equipItem(itemToEquip) {
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
