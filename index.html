@@ -1679,34 +1679,61 @@
                         return total;
                     }
                 
-                    // Base stats to consider
                     const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                 
-                    // Collect all stats from the new item (base + bonus)
-                    const allStats = new Set([
-                        ...Object.keys(item).filter(k => baseStatsToShow.includes(k)),
-                        ...Object.keys(item.bonusStats || {})
-                    ]);
+                    // Show base stats with comparison
+                    let hasBaseStats = false;
+                    for (const stat of baseStatsToShow) {
+                        if (item[stat] !== undefined) {
+                            hasBaseStats = true;
+                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
                 
-                    // Show all stats with comparison based on character stats after equip swap
-                    for (const stat of allStats) {
-                        const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            // Character stat totals for comparison
+                            const currentTotal = getCharacterStat(stat);
+                            const newTotal = getCharacterStat(stat, item.type, item);
                 
-                        const currentTotal = getCharacterStat(stat);
-                        const newTotal = getCharacterStat(stat, item.type, item);
+                            let valueText;
+                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                                valueText = (newTotal * 100).toFixed(1) + '%';
+                            } else {
+                                valueText = Math.round(newTotal);
+                            }
                 
-                        let valueText;
-                        if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                            valueText = (newTotal * 100).toFixed(1) + '%';
-                        } else {
-                            valueText = Math.round(newTotal);
+                            let symbolType = null;
+                            if (newTotal > currentTotal) symbolType = 'up';
+                            else if (newTotal < currentTotal) symbolType = 'down';
+                
+                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
                         }
+                    }
                 
-                        let symbolType = null;
-                        if (newTotal > currentTotal) symbolType = 'up';
-                        else if (newTotal < currentTotal) symbolType = 'down';
+                    // Separator only if bonus stats exist and base stats shown
+                    if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
+                        addLineWithSymbol('----');
+                    }
                 
-                        addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
+                    // Show bonus stats separately with comparison
+                    if (Object.keys(item.bonusStats).length > 0) {
+                        for (const [stat, value] of Object.entries(item.bonusStats)) {
+                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                
+                            // Character stat totals for comparison
+                            const currentTotal = getCharacterStat(stat);
+                            const newTotal = getCharacterStat(stat, item.type, item);
+                
+                            let valueText;
+                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                                valueText = '+' + (value * 100).toFixed(1) + '%';
+                            } else {
+                                valueText = '+' + Math.round(value);
+                            }
+                
+                            let symbolType = null;
+                            if (newTotal > currentTotal) symbolType = 'up';
+                            else if (newTotal < currentTotal) symbolType = 'down';
+                
+                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
+                        }
                     }
                 
                     // Separator
