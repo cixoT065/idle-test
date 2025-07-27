@@ -1584,12 +1584,21 @@
                         let itemHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
                         if (isEquipped) itemHTML += `<span class="equipped-tag">[Equipped]</span>`;
                         itemDiv.innerHTML = itemHTML;
-                        itemDiv.addEventListener('mouseover', (event) => showTooltip(event, item, isEquipped));
-                        itemDiv.addEventListener('mouseout', hideTooltip);
-                        itemDiv.onclick = () => {
-                            if (isEquipped) unequipItem(item.type);
-                            else equipItem(item);
+                
+                        // Click toggles tooltip and equips/unequips
+                        itemDiv.onclick = (event) => {
+                            event.stopPropagation();
+                
+                            if (UIElements.globalTooltip.style.display === 'block' && UIElements.globalTooltip._currentItemId === item.id) {
+                                hideTooltip();
+                                if (isEquipped) unequipItem(item.type);
+                                else equipItem(item);
+                            } else {
+                                showTooltip(event, item, isEquipped);
+                                UIElements.globalTooltip._currentItemId = item.id;
+                            }
                         };
+                
                         list.appendChild(itemDiv);
                     });
                 }
@@ -1607,9 +1616,18 @@
                             const rarityColor = itemData.rarities[item.rarity].color;
                             let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
                             nameHTML = `<span style="color: ${rarityColor}; font-weight: ${fontWeight};">${item.name}</span>`;
-                            itemSlot.onclick = () => unequipItem(type);
-                            itemSlot.addEventListener('mouseover', (event) => showTooltip(event, item, true));
-                            itemSlot.addEventListener('mouseout', hideTooltip);
+                
+                            itemSlot.onclick = (event) => {
+                                event.stopPropagation();
+                
+                                if (UIElements.globalTooltip.style.display === 'block' && UIElements.globalTooltip._currentItemId === item.id) {
+                                    hideTooltip();
+                                    unequipItem(type);
+                                } else {
+                                    showTooltip(event, item, true);
+                                    UIElements.globalTooltip._currentItemId = item.id;
+                                }
+                            };
                         }
                         itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
                         display.appendChild(itemSlot);
@@ -1617,105 +1635,116 @@
                 }
 
                 function showTooltip(event, item, isEquipped) {
-                  clearTimeout(tooltipHideTimer);
-                  const tooltip = UIElements.globalTooltip;
-                  tooltip.innerHTML = '';
+                    hideTooltip(); // Hide any existing tooltip immediately
                 
-                  const rarityColor = itemData.rarities[item.rarity].color;
-                  let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
+                    const tooltip = UIElements.globalTooltip;
+                    tooltip.innerHTML = '';
                 
-                  // Item name and type
-                  const nameEl = document.createElement('strong');
-                  nameEl.style.color = rarityColor;
-                  nameEl.style.fontWeight = fontWeight;
-                  nameEl.textContent = `${item.name} (${item.type})`;
-                  tooltip.appendChild(nameEl);
+                    const rarityColor = itemData.rarities[item.rarity].color;
+                    let fontWeight = (item.rarity === 'UR') ? 'bold' : 'normal';
                 
-                  const addLine = (text) => {
-                    tooltip.appendChild(document.createElement('br'));
-                    tooltip.appendChild(document.createTextNode(text));
-                  };
+                    // Item name and type
+                    const nameEl = document.createElement('strong');
+                    nameEl.style.color = rarityColor;
+                    nameEl.style.fontWeight = fontWeight;
+                    nameEl.textContent = `${item.name} (${item.type})`;
+                    tooltip.appendChild(nameEl);
                 
-                  // Rarity
-                  addLine(`Rarity: ${item.rarity}`);
-                
-                  // Separator
-                  addLine('------');
-                
-                  // Show all base stats
-                  const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
-                  let hasBaseStats = false;
-                  for (const stat of baseStatsToShow) {
-                    if (item[stat] !== undefined) {
-                      hasBaseStats = true;
-                      const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                      if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                        addLine(`${statName}: ${ (item[stat] * 100).toFixed(1) }%`);
-                      } else {
-                        addLine(`${statName}: ${Math.round(item[stat])}`);
-                      }
-                    }
-                  }
-                
-                  // Separator only if there are bonus stats and base stats shown
-                  if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
-                    addLine('------');
-                  }
-                
-                  // Show bonus stats
-                  if (Object.keys(item.bonusStats).length > 0) {
-                    for (const [stat, value] of Object.entries(item.bonusStats)) {
-                      const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
-                      if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                        addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
-                      } else {
-                        addLine(`${statName}: +${Math.round(value)}`);
-                      }
-                    }
-                  }
-                
-                  // Sell value
-                  const sellValue = itemData.rarities[item.rarity].value;
-                  tooltip.appendChild(document.createElement('br'));
-                  addLine(`Sell Value: ${sellValue}G`);
-                
-                  // Action text
-                  const actionText = document.createElement('span');
-                  actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
-                  actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
-                  tooltip.appendChild(actionText);
-                
-                  // Sell button if not equipped
-                  if (!isEquipped) {
-                    const sellButton = document.createElement('button');
-                    sellButton.textContent = `Sell for ${sellValue}G`;
-                    sellButton.className = 'button button-secondary tooltip-button';
-                    sellButton.onclick = (e) => {
-                      e.stopPropagation();
-                      sellItem(item.id);
+                    const addLine = (text) => {
+                        tooltip.appendChild(document.createElement('br'));
+                        tooltip.appendChild(document.createTextNode(text));
                     };
-                    tooltip.appendChild(sellButton);
-                  }
                 
-                  // Position tooltip
-                  tooltip.style.display = 'block';
-                  const targetRect = event.currentTarget.getBoundingClientRect();
-                  const tooltipRect = tooltip.getBoundingClientRect();
-                  let top = targetRect.top - tooltipRect.height - 5;
-                  let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-                  if (top < 0) top = targetRect.bottom + 5;
-                  if (left < 0) left = 5;
-                  if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
-                  tooltip.style.top = `${top}px`;
-                  tooltip.style.left = `${left}px`;
+                    // Rarity
+                    addLine(`Rarity: ${item.rarity}`);
+                
+                    // Separator
+                    addLine('----');
+                
+                    // Show all base stats
+                    const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
+                    let hasBaseStats = false;
+                    for (const stat of baseStatsToShow) {
+                        if (item[stat] !== undefined) {
+                            hasBaseStats = true;
+                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                                addLine(`${statName}: ${(item[stat] * 100).toFixed(1)}%`);
+                            } else {
+                                addLine(`${statName}: ${Math.round(item[stat])}`);
+                            }
+                        }
+                    }
+                
+                    // Separator only if there are bonus stats and base stats shown
+                    if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
+                        addLine('----');
+                    }
+                
+                    // Show bonus stats
+                    if (Object.keys(item.bonusStats).length > 0) {
+                        for (const [stat, value] of Object.entries(item.bonusStats)) {
+                            const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
+                                addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
+                            } else {
+                                addLine(`${statName}: +${Math.round(value)}`);
+                            }
+                        }
+                    }
+                
+                    // Sell value
+                    const sellValue = itemData.rarities[item.rarity].value;
+                    tooltip.appendChild(document.createElement('br'));
+                    addLine(`Sell Value: ${sellValue}G`);
+                
+                    // Action text
+                    const actionText = document.createElement('span');
+                    actionText.style.cssText = 'font-style: italic; font-size: 12px; display: block; margin-top: 8px;';
+                    actionText.textContent = `(Click item to ${isEquipped ? 'unequip' : 'equip'})`;
+                    tooltip.appendChild(actionText);
+                
+                    // Sell button if not equipped
+                    if (!isEquipped) {
+                        const sellButton = document.createElement('button');
+                        sellButton.textContent = `Sell for ${sellValue}G`;
+                        sellButton.className = 'button button-secondary tooltip-button';
+                        sellButton.onclick = (e) => {
+                            e.stopPropagation();
+                            sellItem(item.id);
+                        };
+                        tooltip.appendChild(sellButton);
+                    }
+                
+                    // Position tooltip
+                    tooltip.style.display = 'block';
+                    const targetRect = event.currentTarget.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    let top = targetRect.top - tooltipRect.height - 5;
+                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+                    if (top < 0) top = targetRect.bottom + 5;
+                    if (left < 0) left = 5;
+                    if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
+                    tooltip.style.top = `${top}px`;
+                    tooltip.style.left = `${left}px`;
                 }
-
+                
+                // --- Hide tooltip ---
                 function hideTooltip() {
-                    clearTimeout(tooltipHideTimer);
-                    tooltipHideTimer = setTimeout(() => {
-                        UIElements.globalTooltip.style.display = 'none';
-                    }, 200);
+                    UIElements.globalTooltip.style.display = 'none';
+                    UIElements.globalTooltip._currentItemId = null;
                 }
+                
+                // --- Global click listener to hide tooltip when clicking outside ---
+                document.addEventListener('click', (event) => {
+                    const tooltip = UIElements.globalTooltip;
+                    if (tooltip.style.display === 'block' &&
+                        !tooltip.contains(event.target) &&
+                        !event.target.closest('.inventory-item') &&
+                        !event.target.closest('.equipment-slot-display')) {
+                        hideTooltip();
+                    }
+                });
 
                 function equipItem(itemToEquip) {
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
