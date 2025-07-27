@@ -1650,53 +1650,90 @@
                     nameEl.textContent = `${item.name} (${item.type})`;
                     tooltip.appendChild(nameEl);
                 
-                    const addLine = (text) => {
+                    const addLineWithSymbol = (text, symbolType) => {
                         tooltip.appendChild(document.createElement('br'));
-                        tooltip.appendChild(document.createTextNode(text));
+                        const lineSpan = document.createElement('span');
+                        lineSpan.textContent = text;
+                        tooltip.appendChild(lineSpan);
+                
+                        if (symbolType) {
+                            const symbolSpan = document.createElement('span');
+                            symbolSpan.style.marginLeft = '6px';
+                            symbolSpan.style.fontWeight = 'bold';
+                            symbolSpan.style.color = symbolType === 'up' ? 'limegreen' : 'red';
+                            symbolSpan.textContent = symbolType === 'up' ? '▲' : '▼';
+                            tooltip.appendChild(symbolSpan);
+                        }
                     };
                 
                     // Rarity
-                    addLine(`Rarity: ${item.rarity}`);
+                    addLineWithSymbol(`Rarity: ${item.rarity}`);
                 
                     // Separator
-                    addLine('----');
+                    addLineWithSymbol('----');
                 
-                    // Show all base stats
+                    // Find equipped item of the same type for comparison
+                    const equippedId = gameState.equipment[item.type];
+                    const equippedItem = equippedId ? gameState.inventory.find(i => i.id === equippedId) : null;
+                
+                    // Show all base stats with comparison symbols
                     const baseStatsToShow = ['atk', 'def', 'hp', 'critChance', 'critDmg', 'evasion'];
                     let hasBaseStats = false;
                     for (const stat of baseStatsToShow) {
                         if (item[stat] !== undefined) {
                             hasBaseStats = true;
                             const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            let valueText;
                             if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                                addLine(`${statName}: ${(item[stat] * 100).toFixed(1)}%`);
+                                valueText = (item[stat] * 100).toFixed(1) + '%';
                             } else {
-                                addLine(`${statName}: ${Math.round(item[stat])}`);
+                                valueText = Math.round(item[stat]);
                             }
+                
+                            // Compare with equipped item stat if available
+                            let symbolType = null;
+                            if (equippedItem && equippedItem[stat] !== undefined) {
+                                const equippedValue = equippedItem[stat];
+                                if (item[stat] > equippedValue) symbolType = 'up';
+                                else if (item[stat] < equippedValue) symbolType = 'down';
+                            }
+                
+                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
                         }
                     }
                 
                     // Separator only if there are bonus stats and base stats shown
                     if (hasBaseStats && Object.keys(item.bonusStats).length > 0) {
-                        addLine('----');
+                        addLineWithSymbol('----');
                     }
                 
-                    // Show bonus stats
+                    // Show bonus stats with comparison symbols
                     if (Object.keys(item.bonusStats).length > 0) {
                         for (const [stat, value] of Object.entries(item.bonusStats)) {
                             const statName = stat.charAt(0).toUpperCase() + stat.slice(1).replace('Dmg', ' DMG');
+                            let valueText;
                             if (['critChance', 'evasion', 'critDmg'].includes(stat)) {
-                                addLine(`${statName}: +${(value * 100).toFixed(1)}%`);
+                                valueText = '+' + (value * 100).toFixed(1) + '%';
                             } else {
-                                addLine(`${statName}: +${Math.round(value)}`);
+                                valueText = '+' + Math.round(value);
                             }
+                
+                            // Compare with equipped item bonus stat if available
+                            let symbolType = null;
+                            if (equippedItem && equippedItem.bonusStats && equippedItem.bonusStats[stat] !== undefined) {
+                                const equippedValue = equippedItem.bonusStats[stat];
+                                if (value > equippedValue) symbolType = 'up';
+                                else if (value < equippedValue) symbolType = 'down';
+                            }
+                
+                            addLineWithSymbol(`${statName}: ${valueText}`, symbolType);
                         }
                     }
                 
                     // Sell value
                     const sellValue = itemData.rarities[item.rarity].value;
                     tooltip.appendChild(document.createElement('br'));
-                    addLine(`Sell Value: ${sellValue}G`);
+                    addLineWithSymbol(`Sell Value: ${sellValue}G`);
                 
                     // Action text
                     const actionText = document.createElement('span');
@@ -1729,23 +1766,6 @@
                     tooltip.style.left = `${left}px`;
                 }
                 
-                // --- Hide tooltip ---
-                function hideTooltip() {
-                    UIElements.globalTooltip.style.display = 'none';
-                    UIElements.globalTooltip._currentItemId = null;
-                }
-                
-                // --- Global click listener to hide tooltip when clicking outside ---
-                document.addEventListener('click', (event) => {
-                    const tooltip = UIElements.globalTooltip;
-                    if (tooltip.style.display === 'block' &&
-                        !tooltip.contains(event.target) &&
-                        !event.target.closest('.inventory-item') &&
-                        !event.target.closest('.equipment-slot-display')) {
-                        hideTooltip();
-                    }
-                });
-
                 function equipItem(itemToEquip) {
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
                     logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
