@@ -1732,7 +1732,6 @@
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
                     logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
                     updateAllUIs();
-                    hideTooltip();
                 }
 
                 function unequipItem(itemType) {
@@ -1742,7 +1741,6 @@
                     gameState.equipment[itemType] = null;
                     if (itemToUnequip) logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
                     updateAllUIs();
-                    hideTooltip();
                 }
 
                 function sellItem(itemId) {
