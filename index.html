@@ -1731,8 +1731,8 @@
                 function equipItem(itemToEquip) {
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
                     logAction(`Equipped [${itemToEquip.rarity}] ${itemToEquip.name}.`, 'log-system');
-                    hideTooltip();
                     updateAllUIs();
+                    hideTooltip();
                 }
 
                 function unequipItem(itemType) {
@@ -1741,8 +1741,8 @@
                     const itemToUnequip = gameState.inventory.find(item => item.id === equippedId);
                     gameState.equipment[itemType] = null;
                     if (itemToUnequip) logAction(`Unequipped [${itemToUnequip.rarity}] ${itemToUnequip.name}.`, 'log-system');
-                    hideTooltip();
                     updateAllUIs();
+                    hideTooltip();
                 }
 
                 function sellItem(itemId) {
