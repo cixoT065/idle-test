@@ -1127,54 +1127,61 @@
                     return baseValue * (1 + enhancementBonus);
                 }
 
-                // REFACTORED AND FIXED
+                // COMPLETELY REWRITTEN AND FIXED
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
-                    
-                    // 1. Start with a clean slate for raw stats
                     const rawStats = {};
+
+                    // Step 1: Initialize rawStats with all stats from STAT_NAMES set to 0.
                     for (const statName in STAT_NAMES) {
                         rawStats[statName] = 0;
                     }
 
-                    // 2. Add player base and invested stats
-                    for (const stat in p.baseStats) {
-                        rawStats[stat] += p.baseStats[stat] || 0;
-                    }
-                    for (const stat in p.investedStats) {
-                        if (stat === 'critChance') rawStats[stat] += p.investedStats[stat] * 0.002;
-                        else if (stat === 'critDmg') rawStats[stat] += p.investedStats[stat] * 0.005;
-                        else rawStats[stat] += p.investedStats[stat];
+                    // Step 2: Add player's base stats and invested points. This is a safe way to do it.
+                    for (const statName in rawStats) {
+                        rawStats[statName] += p.baseStats[statName] || 0;
+                        if (p.investedStats[statName]) {
+                            if (statName === 'critChance') rawStats[statName] += p.investedStats[statName] * 0.002;
+                            else if (statName === 'critDmg') rawStats[statName] += p.investedStats[statName] * 0.005;
+                            else rawStats[statName] += p.investedStats[statName];
+                        }
                     }
 
-                    // 3. Add stats from equipment
+                    // Step 3: Add stats from equipment.
                     const equippedSets = {};
                     const effectiveEquipment = { ...gameState.equipment };
                     if (hypotheticalItem) {
-                        effectiveEquipment[hypotheticalItem.type] = hypotheticalItem.id;
+                        effectiveEquipment[hypotheticalItem.type] = hypotheticalItem; // Use the object directly
                     }
 
                     for (const type in effectiveEquipment) {
-                        const item = gameState.inventory.find(i => i.id === effectiveEquipment[type]);
+                        let item = effectiveEquipment[type];
+                        // If it's not a hypothetical item, it's an ID, so we need to find the item object.
+                        if (typeof item === 'number') {
+                            item = gameState.inventory.find(i => i.id === item);
+                        }
+
                         if (item) {
                             if (item.setName) {
                                 equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             }
-                            // Add enhanced base stats
+                            // Add enhanced base stats from the item.
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                                     rawStats[stat] += getEnhancedStat(item, stat);
                                 }
                             }
-                            // Add bonus stats (not enhanced)
+                            // Add bonus stats from the item.
                             for (const stat in item.bonusStats) {
-                                rawStats[stat] += item.bonusStats[stat];
+                                if (rawStats[stat] !== undefined) {
+                                    rawStats[stat] += item.bonusStats[stat];
+                                }
                             }
                         }
                     }
-                    
-                    // 4. Add set bonuses
+
+                    // Step 4: Add set bonuses.
                     let hpPercentBonus = 0;
                     for (const setName in equippedSets) {
                         const setInfo = itemSets[setName];
@@ -1185,16 +1192,16 @@
                                     if (bonusStat === 'description') continue;
                                     if (bonusStat === 'hpPercent') {
                                         hpPercentBonus += setInfo.bonuses[i][bonusStat];
-                                    } else {
+                                    } else if (rawStats[bonusStat] !== undefined) {
                                         rawStats[bonusStat] += setInfo.bonuses[i][bonusStat];
                                     }
                                 }
                             }
                         }
                     }
-
-                    // 5. Calculate final combat stats from the fully computed raw stats
-                    const finalStats = { ...rawStats }; // Copy all raw stats over first
+                    
+                    // Step 5: Calculate final combat stats from the fully computed raw stats.
+                    const finalStats = { ...rawStats };
                     const primaryStat = classes[p.baseClassName].primaryStat;
 
                     finalStats.atk = Math.pow(rawStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
@@ -1202,13 +1209,13 @@
                     finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
                     finalStats.accuracy = (rawStats.dex || 0) * 0.002;
                     finalStats.evasion = (rawStats.agl || 0) * 0.001;
-                    
-                    // Apply percentage bonuses
+
+                    // Apply percentage bonuses after base calculation.
                     if (hpPercentBonus > 0) {
                         finalStats.hp *= (1 + hpPercentBonus);
                     }
 
-                    // Apply active skill buffs
+                    // Apply temporary skill buffs.
                     if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
                         const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
                         const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
@@ -1217,8 +1224,11 @@
                     if (gameState.playerTemp.standFirm > 0 && !hypotheticalItem) {
                         finalStats.def *= 1.30;
                     }
+
+                    if (p.currentHp > finalStats.hp && !hypotheticalItem) {
+                        p.currentHp = finalStats.hp;
+                    }
                     
-                    if (p.currentHp > finalStats.hp && !hypotheticalItem) p.currentHp = finalStats.hp;
                     return finalStats;
                 }
 
