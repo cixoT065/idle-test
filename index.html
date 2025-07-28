@@ -581,28 +581,28 @@
         </div>
 
         <div class="main-content">
+            <!-- Combat Area - Always Visible -->
+            <div class="panel monster-area">
+                <div class="panel-body">
+                    <h2 id="monster-name">Monster</h2>
+                    <div>HP: <span id="monster-hp-text">50 / 50</span></div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" id="monster-hp-fill"></div>
+                    </div>
+                    <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
+                    <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+                </div>
+            </div>
+
+            <!-- Tabs and Log Area -->
             <div class="panel">
                 <div class="tab-buttons">
-                    <button class="tab-button active" data-tab="combat">Combat</button>
-                    <button class="tab-button" data-tab="shop">Shop</button>
+                    <button class="tab-button active" data-tab="shop">Shop</button>
                     <button class="tab-button" data-tab="inventory">Inventory</button>
                     <button class="tab-button" data-tab="rebirth">Rebirth</button>
                 </div>
                 <div class="panel-body">
-                    <div id="tab-content-combat" class="tab-content active">
-                        <div class="panel monster-area" style="margin: 0; border: none; box-shadow: none;">
-                            <div class="panel-body">
-                                <h2 id="monster-name">Monster</h2>
-                                <div>HP: <span id="monster-hp-text">50 / 50</span></div>
-                                <div class="stat-bar">
-                                    <div class="stat-bar-fill" id="monster-hp-fill"></div>
-                                </div>
-                                <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
-                                <button id="challenge-boss-btn" disabled>Challenge Boss</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="tab-content-shop" class="tab-content">
+                    <div id="tab-content-shop" class="tab-content active">
                         <div class="shop-grid">
                             <div class="shop-item">
                                 <strong>Minor Potion</strong>
@@ -644,10 +644,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel" style="flex-grow: 1; margin-top: 15px;">
-                    <div class="panel-header">Action Log</div>
-                    <div class="panel-body activity-log-container" id="action-log">
-                    </div>
+            </div>
+            <div class="panel" style="flex-grow: 1;">
+                <div class="panel-header">Action Log</div>
+                <div class="panel-body activity-log-container" id="action-log">
                 </div>
             </div>
         </div>
@@ -1323,7 +1323,7 @@
                     const hpScale = Math.pow(1.20, gameState.wave - 1);
                     const statScale = Math.pow(1.12, gameState.wave - 1);
                     const goldScale = Math.pow(1.15, gameState.wave - 1);
-                    const xpScale = Math.pow(1.09, gameState.wave - 1); // ADJUSTED XP CURVE
+                    const xpScale = Math.pow(1.09, gameState.wave - 1);
 
                     gameState.currentMonster = {
                         ...monsterTemplate,
@@ -1346,7 +1346,7 @@
                     const p = gameState.player;
                     p.level++;
                     p.xp = 0;
-                    p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45)); // ADJUSTED XP CURVE
+                    p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45));
                     const pointsGained = Math.floor(Math.random() * 3) + 5;
                     p.statPoints += pointsGained;
 
