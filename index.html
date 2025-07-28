@@ -2459,7 +2459,7 @@
                     if (!item) return 0;
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.42, (item.enhancementLevel || 0));
+                    const levelMod = Math.pow(1.3, (item.enhancementLevel || 0));
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2478,69 +2478,80 @@
 
                     const cost = getEnhancementCost(item);
                     const currentLevel = item.enhancementLevel || 0;
-                    
-                    const gainMultiplier = Math.floor(currentLevel / 5) + 1;
-                    const integerGain = 1 * gainMultiplier;
-                    const percentGain = 0.002 * gainMultiplier;
+                    const MAX_ENHANCEMENT = 10;
 
-                    let statPreview = '';
-                    for (const stat in STAT_NAMES) {
-                         if (item[stat] && typeof item[stat] === 'number') {
-                            const isPercentStat = ['critChance', 'critDmg'].includes(stat);
-                            const currentBonus = item.enhancementBonusStats[stat] || 0;
-                            const currentValue = (item[stat] || 0) + currentBonus;
-                            const nextValue = currentValue + (isPercentStat ? percentGain : integerGain);
-
-                            if (isPercentStat) {
-                                statPreview += `<p>${STAT_NAMES[stat]}: ${(currentValue * 100).toFixed(2)}% -> ${(nextValue * 100).toFixed(2)}%</p>`;
-                            } else {
-                                statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
-                            }
-                         }
-                    }
-
-                    infoDiv.innerHTML = `
+                    let infoHTML = `
                         <p><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                        <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel + 1}</strong></p>
+                        <p>Enhancement: <strong>+${currentLevel} / +${MAX_ENHANCEMENT}</strong></p>
                         <hr style="border-color: var(--border-color);">
-                        ${statPreview || '<p>No enhanceable stats on this item.</p>'}
-                        <hr style="border-color: var(--border-color);">
-                        <p>Cost: <span style="color: var(--gold-color);">${cost}G</span></p>
                     `;
+
+                    if (currentLevel >= MAX_ENHANCEMENT) {
+                        infoHTML += `<p>Max Level Reached</p>`;
+                        btn.disabled = true;
+                    } else {
+                        infoHTML += `
+                            <p>Enhances one random stat on the item.</p>
+                            <p>Cost: <span style="color: var(--gold-color);">${cost}G</span></p>
+                        `;
+                        btn.disabled = gameState.gold < cost;
+                    }
                     
-                    btn.disabled = gameState.gold < cost;
+                    infoDiv.innerHTML = infoHTML;
                 }
 
                 function enhanceSelectedItem() {
                     const selectedType = gameState.playerTemp.blacksmithSelection;
                     const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
                     if (!item) return;
-                    
-                    const cost = getEnhancementCost(item);
 
-                    if (gameState.gold >= cost) {
-                        gameState.gold -= cost;
-                        
-                        const currentLevel = item.enhancementLevel || 0;
-                        const gainMultiplier = Math.floor(currentLevel / 5) + 1;
-                        const integerGain = 1 * gainMultiplier;
-                        const percentGain = 0.002 * gainMultiplier;
-
-                        item.enhancementLevel = currentLevel + 1;
-
-                        for (const stat in STAT_NAMES) {
-                            if (item[stat] && typeof item[stat] === 'number') {
-                                const isPercentStat = ['critChance', 'critDmg'].includes(stat);
-                                const increase = isPercentStat ? percentGain : integerGain;
-                                item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + increase;
-                            }
-                        }
-
-                        logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> to +${item.enhancementLevel}!`, 'log-system');
-                        updateAllUIs();
-                    } else {
-                        logAction('Not enough gold to enhance.', 'log-error');
+                    const currentLevel = item.enhancementLevel || 0;
+                    const MAX_ENHANCEMENT = 10;
+                    if (currentLevel >= MAX_ENHANCEMENT) {
+                        logAction("This item is already at max enhancement level.", "log-error");
+                        return;
                     }
+
+                    const cost = getEnhancementCost(item);
+                    if (gameState.gold < cost) {
+                        logAction('Not enough gold to enhance.', 'log-error');
+                        return;
+                    }
+                    
+                    const statPool = [];
+                    for (const stat in STAT_NAMES) {
+                        if (item[stat] || (item.bonusStats && item.bonusStats[stat])) {
+                            statPool.push(stat);
+                        }
+                    }
+
+                    if (statPool.length === 0) {
+                        logAction("This item has no stats to enhance.", "log-error");
+                        return;
+                    }
+
+                    gameState.gold -= cost;
+                    const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
+                    let increase = 0;
+                    let isPercent = false;
+
+                    if (statToEnhance === 'critChance') {
+                        increase = 0.003; // +0.3%
+                        isPercent = true;
+                    } else if (statToEnhance === 'critDmg') {
+                        increase = 0.01; // +1.0%
+                        isPercent = true;
+                    } else {
+                        const baseValue = item[statToEnhance] || item.bonusStats[statToEnhance];
+                        increase = 1 + Math.round(baseValue * 0.10);
+                    }
+                    
+                    item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
+                    item.enhancementLevel = currentLevel + 1;
+
+                    const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
+                    logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${displayIncrease}.`, 'log-system');
+                    updateAllUIs();
                 }
 
 
