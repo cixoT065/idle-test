@@ -790,6 +790,7 @@
                     itemId: null
                 };
                 const SAVE_KEY = 'idleRpgSaveData_v13_itemStructure';
+
                 const PRIMARY_STAT_POWER_CURVE = 1.08;
                 const ENHANCEMENT_BONUS_PER_LEVEL = 0.02; // 2% bonus per level
 
@@ -1323,7 +1324,8 @@
 
                 function gameLoop() {
                     if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
-
+                    const player = gameState.player;
+                    
                     handleBuffsAndDebuffs();
 
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
@@ -1346,7 +1348,6 @@
                     } else {
                         let monsterDamage = calculateDamage(gameState.currentMonster, playerStats, false);
                         
-                        // Aegis Block / Guardian skills
                         let wasBlocked = false;
                         if(player.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
                             wasBlocked = true;
@@ -1421,7 +1422,7 @@
                     
                     let defenderDef = isPlayerAttacker ? (monster.def || 0) : (defender.def || 0);
                     if (isPlayerAttacker && monster.debuffs['Sunder']) {
-                        defenderDef *= (1 - monster.debuffs['Sunder'].value);
+                        defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
                     }
                      if (isPlayerAttacker && monster.debuffs['Apocalypse']) {
                         defenderDef *= (1 - 0.15);
@@ -1478,26 +1479,32 @@
                     // Debuff applications
                     if (playerDamage.isCrit && p.activeSkills.includes('Bleed')) {
                         const maxStacks = p.activeSkills.includes('Hemorrhage') ? 3 : 1;
-                        if (!monster.debuffs['Bleed'] || monster.debuffs['Bleed'].stacks < maxStacks) {
-                            if (!monster.debuffs['Bleed']) {
-                                monster.debuffs['Bleed'] = { damage: Math.round(playerStats.atk * 0.3), duration: 3, stacks: 1 };
-                            } else {
+                        let logMsg = 'Your critical hit refreshes Bleed!';
+                        
+                        if (!monster.debuffs['Bleed']) {
+                            monster.debuffs['Bleed'] = { damage: Math.round(playerStats.atk * 0.3), duration: 3, stacks: 1 };
+                            logMsg = 'Your critical hit causes the enemy to Bleed!';
+                        } else {
+                            monster.debuffs['Bleed'].duration = 3; // Refresh duration
+                            if (monster.debuffs['Bleed'].stacks < maxStacks) {
                                 monster.debuffs['Bleed'].stacks++;
-                                monster.debuffs['Bleed'].duration = 3;
+                                logMsg = 'Your critical hit adds a stack and refreshes Bleed!';
                             }
-                            logAction('Your critical hit causes the enemy to Bleed!', 'log-skill');
                         }
+                        logAction(logMsg, 'log-skill');
                     }
+
                     if (p.activeSkills.includes('Sunder') && Math.random() < 0.25) {
                         const maxStacks = p.activeSkills.includes('Armor Shatter') ? 3 : 1;
-                        if (!monster.debuffs['Sunder'] || monster.debuffs['Sunder'].stacks < maxStacks) {
-                             if (!monster.debuffs['Sunder']) {
-                                monster.debuffs['Sunder'] = { value: 0.1, duration: 5, stacks: 1 };
-                            } else {
-                                monster.debuffs['Sunder'].stacks++;
-                                monster.debuffs['Sunder'].duration = 5;
-                            }
+                        if (!monster.debuffs['Sunder']) {
+                            monster.debuffs['Sunder'] = { duration: 5, stacks: 1 };
                             logAction('You Sunder the enemy\'s armor!', 'log-skill');
+                        } else if (monster.debuffs['Sunder'].stacks < maxStacks) {
+                            monster.debuffs['Sunder'].stacks++;
+                            monster.debuffs['Sunder'].duration = 5;
+                            logAction('You apply another stack of Sunder!', 'log-skill');
+                        } else {
+                            monster.debuffs['Sunder'].duration = 5; // Refresh
                         }
                     }
 
@@ -2143,17 +2150,17 @@
                     }
 
                     panel.style.display = 'flex';
-                    gameState.player.activeSkills.forEach(skillName => {
-                        const skillData = Object.values(promotionSkills).find(s => s.name === skillName);
-                        if (skillData) {
-                            const skillDiv = document.createElement('div');
-                            skillDiv.className = 'skill-entry';
-                            skillDiv.innerHTML = `
-                                <strong>${skillData.name}</strong>
-                                <p>${skillData.description}</p>
-                            `;
-                            display.appendChild(skillDiv);
-                        }
+                    // Find the skill data for all active skills
+                    const activeSkillData = Object.values(promotionSkills).filter(skill => gameState.player.activeSkills.includes(skill.name));
+                    
+                    activeSkillData.forEach(skillData => {
+                        const skillDiv = document.createElement('div');
+                        skillDiv.className = 'skill-entry';
+                        skillDiv.innerHTML = `
+                            <strong>${skillData.name}</strong>
+                            <p>${skillData.description}</p>
+                        `;
+                        display.appendChild(skillDiv);
                     });
                 }
 
