@@ -1038,12 +1038,51 @@
                     }
                 }
 
+                function migrateSaveData(loadedState) {
+                    // Migrate items in inventory
+                    if (loadedState.inventory && Array.isArray(loadedState.inventory)) {
+                        loadedState.inventory.forEach(item => {
+                            if (item) {
+                                if (item.enhancementLevel === undefined) item.enhancementLevel = 0;
+                                if (item.bonusStats === undefined) item.bonusStats = {};
+                                if (item.enhancementBonusStats === undefined) item.enhancementBonusStats = {};
+                                if (item.enhancementProgress === undefined) item.enhancementProgress = {};
+                                
+                                for (const statName in STAT_NAMES) {
+                                    if (item.enhancementBonusStats[statName] === undefined) {
+                                        item.enhancementBonusStats[statName] = 0;
+                                    }
+                                    if (item.enhancementProgress[statName] === undefined) {
+                                        item.enhancementProgress[statName] = 0.0;
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // Migrate player object for promotion state
+                    if (loadedState.player) {
+                        if (loadedState.player.promotionPending === undefined) {
+                            loadedState.player.promotionPending = false;
+                        }
+                        if (loadedState.player.promotionPending && loadedState.player.pendingPromotionChoices === undefined) {
+                            // Can't recover choices, so reset flag to prevent lock
+                            loadedState.player.promotionPending = false;
+                        }
+                    }
+                    
+                    return loadedState;
+                }
+
                 function loadFromLocalStorage() {
                     try {
                         const savedState = localStorage.getItem(SAVE_KEY);
                         if (savedState) {
-                            const loadedState = JSON.parse(savedState);
+                            let loadedState = JSON.parse(savedState);
                             if (!loadedState.player || !loadedState.player.baseStats) throw new Error("Invalid save.");
+                            
+                            loadedState = migrateSaveData(loadedState);
+
                             gameState = deepMerge(getDefaultGameState(), loadedState);
                             resetTransientData();
                             logAction("Game loaded automatically.", 'log-system');
@@ -1077,8 +1116,11 @@
                     const encodedSave = prompt("Please paste your save code:");
                     if (!encodedSave) return;
                     try {
-                        const loadedState = JSON.parse(atob(encodedSave));
+                        let loadedState = JSON.parse(atob(encodedSave));
                         if (!loadedState.player || !loadedState.player.baseStats) throw new Error("Invalid save.");
+
+                        loadedState = migrateSaveData(loadedState);
+
                         clearInterval(gameInterval); clearInterval(autoSaveInterval);
                         gameState = deepMerge(getDefaultGameState(), loadedState);
                         resetTransientData();
@@ -1106,17 +1148,9 @@
                 }
 
                 function checkForPendingActions() {
-                    if (gameState.player && gameState.player.promotionPending) {
-                        const promotions = classes[gameState.player.baseClassName]?.promotions;
-                        if (promotions) {
-                            const levelTier = Object.keys(promotions).find(lvl => gameState.player.level >= lvl && !Object.values(promotionInfo).some(p => p.className === gameState.player.className));
-                            if(levelTier){
-                                const choiceList = Array.isArray(promotions[levelTier]) ? promotions[levelTier] : promotions[levelTier][gameState.player.className];
-                                if (choiceList) {
-                                    showPromotionModal(choiceList);
-                                }
-                            }
-                        }
+                    if (gameState.player && gameState.player.promotionPending && gameState.player.pendingPromotionChoices) {
+                        logAction("Promotion choice is pending. Please select your new class.", "log-system");
+                        showPromotionModal(gameState.player.pendingPromotionChoices);
                     }
                 }
 
@@ -1130,7 +1164,8 @@
                         baseStats: { ...classInfo.base },
                         investedStats: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                         currentHp: classInfo.base.hp, activeSkills: [],
-                        promotionPending: false, // Initialize the flag
+                        promotionPending: false,
+                        pendingPromotionChoices: null,
                     };
                     resetTransientData();
                     UIElements.classSelectionModal.style.display = 'none';
@@ -1172,22 +1207,19 @@
                             if (item.setName) {
                                 equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             }
-                            // Add base, bonus, and new enhancement bonus stats
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                                     rawStats[stat] += item[stat];
                                 }
                             }
-                            for (const stat in item.bonusStats) {
+                            for (const stat in (item.bonusStats || {})) {
                                 if (rawStats[stat] !== undefined) {
                                     rawStats[stat] += item.bonusStats[stat];
                                 }
                             }
-                            if(item.enhancementBonusStats){
-                                for (const stat in item.enhancementBonusStats) {
-                                    if (rawStats[stat] !== undefined) {
-                                        rawStats[stat] += item.enhancementBonusStats[stat];
-                                    }
+                            for (const stat in (item.enhancementBonusStats || {})) {
+                                if (rawStats[stat] !== undefined) {
+                                    rawStats[stat] += item.enhancementBonusStats[stat];
                                 }
                             }
                         }
@@ -1528,6 +1560,7 @@
                         const choiceList = Array.isArray(promotions[p.level]) ? promotions[p.level] : promotions[p.level][p.className];
                         if (choiceList) {
                             p.promotionPending = true;
+                            p.pendingPromotionChoices = choiceList;
                             showPromotionModal(choiceList);
                         }
                     }
@@ -1559,7 +1592,8 @@
                     UIElements.confirmPromotionBtn.onclick = () => {
                         if (gameState.playerTemp.promotionSelection) {
                             gameState.player.className = gameState.playerTemp.promotionSelection;
-                            gameState.player.promotionPending = false; // Clear the flag
+                            gameState.player.promotionPending = false;
+                            gameState.player.pendingPromotionChoices = null;
                             logAction(`You have been promoted to ${gameState.player.className}!`, 'log-system');
                             gameState.player.currentHp = getPlayerTotalStats().hp;
                             UIElements.promotionModal.style.display = 'none';
@@ -1599,7 +1633,6 @@
                     UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
                     UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
 
-                    // Update XP Boost UI
                     const xpBoost = gameState.activeBoosts.xp;
                     if (xpBoost && xpBoost.fightsRemaining > 0) {
                         UIElements.xpBoostStatus.textContent = `XP BOOST: x${xpBoost.multiplier} (${xpBoost.fightsRemaining} fights left)`;
@@ -1608,7 +1641,6 @@
                         UIElements.xpBoostStatus.style.display = 'none';
                     }
 
-                    // Update Shop UI
                     const isBossFight = gameState.currentMonster && gameState.currentMonster.monsterType === 'boss';
                     for (const key of [25, 50, 75, 100]) {
                         const cost = gameState.potionCosts[`p${key}`];
@@ -1713,7 +1745,7 @@
                         }
                         gameState.player.statPoints -= totalToSpend;
                         logAction(`Invested ${totalToSpend} points.`, 'log-system');
-                        resetPointInvestment(); // Also updates UI
+                        resetPointInvestment();
                     }
                 }
 
@@ -1798,7 +1830,7 @@
                 }
 
                 function showTooltip(targetElement, item, isEquipped) {
-                    hideTooltip(); // Hide any existing tooltip first
+                    hideTooltip(); 
                     
                     activeTooltip.target = targetElement;
                     activeTooltip.itemId = item.id;
@@ -1814,14 +1846,14 @@
                     for (const stat in item) {
                         if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                             hasBaseStats = true;
-                            const bonus = (item.enhancementBonusStats && item.enhancementBonusStats[stat]) ? item.enhancementBonusStats[stat] : 0;
+                            const bonus = item.enhancementBonusStats?.[stat] || 0;
                             const totalStatValue = item[stat] + bonus;
                             const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(totalStatValue * 100).toFixed(1)}%` : `+${Math.round(totalStatValue)}`;
                             content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
                         }
                     }
 
-                    if (Object.keys(item.bonusStats).length > 0) {
+                    if (item.bonusStats && Object.keys(item.bonusStats).length > 0) {
                         if (hasBaseStats) content += `---- (Bonus) ----<br>`;
                         for (const stat in item.bonusStats) {
                             const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(item.bonusStats[stat] * 100).toFixed(1)}%` : `+${Math.round(item.bonusStats[stat])}`;
@@ -2072,7 +2104,7 @@
                     if (!item) return 0;
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.42, (item.enhancementLevel || 0)); // Balanced cost curve
+                    const levelMod = Math.pow(1.42, (item.enhancementLevel || 0));
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2097,16 +2129,19 @@
                         if (item[stat] && typeof item[stat] === 'number') {
                             const isPercentStat = ['critChance', 'critDmg'].includes(stat);
                             const baseValue = item[stat];
-                            const currentBonus = (item.enhancementBonusStats && item.enhancementBonusStats[stat]) ? item.enhancementBonusStats[stat] : 0;
+                            const currentBonus = item.enhancementBonusStats?.[stat] || 0;
                             const currentValue = baseValue + currentBonus;
                             
-                            const simulatedProgress = (item.enhancementProgress ? item.enhancementProgress[stat] : 0) + (baseValue * ENHANCEMENT_BONUS_PER_LEVEL);
-                            const pointsGainedThisClick = Math.floor(simulatedProgress);
-                            const nextValue = currentValue + pointsGainedThisClick;
+                            const currentProgress = item.enhancementProgress?.[stat] || 0;
+                            const increasePerClick = baseValue * ENHANCEMENT_BONUS_PER_LEVEL;
+                            const simulatedProgress = currentProgress + increasePerClick;
 
-                            if(isPercentStat) {
-                                statPreview += `<p>${STAT_NAMES[stat]}: ${(currentValue * 100).toFixed(1)}% -> ${(simulatedProgress * 100).toFixed(1)}%</p>`;
+                            if (isPercentStat) {
+                                const nextValue = currentValue + increasePerClick;
+                                statPreview += `<p>${STAT_NAMES[stat]}: ${(currentValue * 100).toFixed(1)}% -> ${(nextValue * 100).toFixed(1)}%</p>`;
                             } else {
+                                const pointsGainedThisClick = Math.floor(simulatedProgress);
+                                const nextValue = currentValue + pointsGainedThisClick;
                                 statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
                             }
                         }
@@ -2138,11 +2173,16 @@
                             if (item[stat] && typeof item[stat] === 'number') {
                                 const increase = item[stat] * ENHANCEMENT_BONUS_PER_LEVEL;
                                 item.enhancementProgress[stat] = (item.enhancementProgress[stat] || 0) + increase;
-
-                                if (item.enhancementProgress[stat] >= 1.0) {
-                                    const pointsGained = Math.floor(item.enhancementProgress[stat]);
-                                    item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + pointsGained;
-                                    item.enhancementProgress[stat] -= pointsGained;
+                                
+                                if (!['critChance', 'critDmg'].includes(stat)) {
+                                     if (item.enhancementProgress[stat] >= 1.0) {
+                                        const pointsGained = Math.floor(item.enhancementProgress[stat]);
+                                        item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + pointsGained;
+                                        item.enhancementProgress[stat] -= pointsGained;
+                                    }
+                                } else {
+                                    // For percent stats, apply directly without accumulation
+                                    item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + increase;
                                 }
                             }
                         }
