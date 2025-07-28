@@ -1126,19 +1126,16 @@
                     const enhancementBonus = (item.enhancementLevel || 0) * ENHANCEMENT_BONUS_PER_LEVEL;
                     return baseValue * (1 + enhancementBonus);
                 }
-
-                // COMPLETELY REWRITTEN AND FIXED
+                
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
                     const rawStats = {};
 
-                    // Step 1: Initialize rawStats with all stats from STAT_NAMES set to 0.
                     for (const statName in STAT_NAMES) {
                         rawStats[statName] = 0;
                     }
 
-                    // Step 2: Add player's base stats and invested points. This is a safe way to do it.
                     for (const statName in rawStats) {
                         rawStats[statName] += p.baseStats[statName] || 0;
                         if (p.investedStats[statName]) {
@@ -1148,16 +1145,14 @@
                         }
                     }
 
-                    // Step 3: Add stats from equipment.
                     const equippedSets = {};
                     const effectiveEquipment = { ...gameState.equipment };
                     if (hypotheticalItem) {
-                        effectiveEquipment[hypotheticalItem.type] = hypotheticalItem; // Use the object directly
+                        effectiveEquipment[hypotheticalItem.type] = hypotheticalItem; 
                     }
 
                     for (const type in effectiveEquipment) {
                         let item = effectiveEquipment[type];
-                        // If it's not a hypothetical item, it's an ID, so we need to find the item object.
                         if (typeof item === 'number') {
                             item = gameState.inventory.find(i => i.id === item);
                         }
@@ -1166,13 +1161,11 @@
                             if (item.setName) {
                                 equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             }
-                            // Add enhanced base stats from the item.
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                                     rawStats[stat] += getEnhancedStat(item, stat);
                                 }
                             }
-                            // Add bonus stats from the item.
                             for (const stat in item.bonusStats) {
                                 if (rawStats[stat] !== undefined) {
                                     rawStats[stat] += item.bonusStats[stat];
@@ -1181,7 +1174,6 @@
                         }
                     }
 
-                    // Step 4: Add set bonuses.
                     let hpPercentBonus = 0;
                     for (const setName in equippedSets) {
                         const setInfo = itemSets[setName];
@@ -1200,7 +1192,6 @@
                         }
                     }
                     
-                    // Step 5: Calculate final combat stats from the fully computed raw stats.
                     const finalStats = { ...rawStats };
                     const primaryStat = classes[p.baseClassName].primaryStat;
 
@@ -1210,12 +1201,10 @@
                     finalStats.accuracy = (rawStats.dex || 0) * 0.002;
                     finalStats.evasion = (rawStats.agl || 0) * 0.001;
 
-                    // Apply percentage bonuses after base calculation.
                     if (hpPercentBonus > 0) {
                         finalStats.hp *= (1 + hpPercentBonus);
                     }
 
-                    // Apply temporary skill buffs.
                     if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
                         const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
                         const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
@@ -2076,7 +2065,9 @@
                     for (const stat in STAT_NAMES) {
                         if (item[stat]) {
                             const baseValue = item[stat];
-                            const currentValue = getEnhancedStat(item, stat);
+                            // FIX: Calculate current value based on current level.
+                            const currentValue = baseValue * (1 + (currentLevel * ENHANCEMENT_BONUS_PER_LEVEL));
+                            // FIX: Calculate next value based on next level.
                             const nextValue = baseValue * (1 + ((currentLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
                             statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
                         }
