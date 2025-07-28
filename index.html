@@ -2590,7 +2590,7 @@
                     } else if (statToEnhance === 'critDmg') {
                         increase = 0.01; isPercent = true;
                     } else {
-                        const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0*/);
+                        const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0)*/;
                         increase = 1 + Math.round(baseValue * 0.10);
                     }
                     
