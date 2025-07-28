@@ -2528,8 +2528,8 @@
                     } else if (statPool.length > 0) {
                         statPool.forEach(stat => {
                             const baseValue = (item[stat] || 0) /*+ (item.bonusStats?.[stat] || 0)*/;
-                            // const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
-                            const totalValue = baseValue/* + enhancementBonus*/;
+                            const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
+                            const totalValue = baseValue + enhancementBonus;
                             const isPercent = ['critChance', 'critDmg'].includes(stat);
                             const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
 
@@ -2569,7 +2569,7 @@
                     
                     const statPool = [];
                     for (const stat in STAT_NAMES) {
-                        if ((item[stat] && typeof item[stat] === 'number') || (item.bonusStats && item.bonusStats[stat])) {
+                        if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
                             statPool.push(stat);
                         }
                     }
@@ -2590,7 +2590,7 @@
                     } else if (statToEnhance === 'critDmg') {
                         increase = 0.01; isPercent = true;
                     } else {
-                        const baseValue = (item[statToEnhance] || 0) + (item.bonusStats?.[statToEnhance] || 0);
+                        const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0*/);
                         increase = 1 + Math.round(baseValue * 0.10);
                     }
                     
