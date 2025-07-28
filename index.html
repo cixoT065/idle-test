@@ -1127,20 +1127,28 @@
                     return baseValue * (1 + enhancementBonus);
                 }
 
+                // REFACTORED AND FIXED
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
-                    const totals = {};
-
-                    for (const stat in p.baseStats) {
-                        totals[stat] = (p.baseStats[stat] || 0);
-                        if (p.investedStats[stat]) {
-                            if (stat === 'critChance') totals[stat] += p.investedStats[stat] * 0.002;
-                            else if (stat === 'critDmg') totals[stat] += p.investedStats[stat] * 0.005;
-                            else totals[stat] += p.investedStats[stat];
-                        }
+                    
+                    // 1. Start with a clean slate for raw stats
+                    const rawStats = {};
+                    for (const statName in STAT_NAMES) {
+                        rawStats[statName] = 0;
                     }
 
+                    // 2. Add player base and invested stats
+                    for (const stat in p.baseStats) {
+                        rawStats[stat] += p.baseStats[stat] || 0;
+                    }
+                    for (const stat in p.investedStats) {
+                        if (stat === 'critChance') rawStats[stat] += p.investedStats[stat] * 0.002;
+                        else if (stat === 'critDmg') rawStats[stat] += p.investedStats[stat] * 0.005;
+                        else rawStats[stat] += p.investedStats[stat];
+                    }
+
+                    // 3. Add stats from equipment
                     const equippedSets = {};
                     const effectiveEquipment = { ...gameState.equipment };
                     if (hypotheticalItem) {
@@ -1148,35 +1156,25 @@
                     }
 
                     for (const type in effectiveEquipment) {
-                        let item;
-                        if (hypotheticalItem && hypotheticalItem.id === effectiveEquipment[type]) {
-                            item = hypotheticalItem;
-                        } else {
-                            item = gameState.inventory.find(i => i.id === effectiveEquipment[type]);
-                        }
-
+                        const item = gameState.inventory.find(i => i.id === effectiveEquipment[type]);
                         if (item) {
                             if (item.setName) {
                                 equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             }
+                            // Add enhanced base stats
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
-                                    totals[stat] = (totals[stat] || 0) + getEnhancedStat(item, stat);
+                                    rawStats[stat] += getEnhancedStat(item, stat);
                                 }
                             }
+                            // Add bonus stats (not enhanced)
                             for (const stat in item.bonusStats) {
-                                totals[stat] = (totals[stat] || 0) + item.bonusStats[stat];
+                                rawStats[stat] += item.bonusStats[stat];
                             }
                         }
                     }
-
-                    const primaryStat = classes[p.baseClassName].primaryStat;
-                    totals.atk = Math.pow(totals[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
-                    totals.def = (totals.def || 0) + (gameState.rebirth.bonuses.def || 0);
-                    totals.hp = 50 + (totals.con * 5) + (gameState.rebirth.bonuses.hp || 0);
-                    totals.accuracy = (totals.dex || 0) * 0.002;
-                    totals.evasion = (totals.agl || 0) * 0.001;
-
+                    
+                    // 4. Add set bonuses
                     let hpPercentBonus = 0;
                     for (const setName in equippedSets) {
                         const setInfo = itemSets[setName];
@@ -1188,27 +1186,40 @@
                                     if (bonusStat === 'hpPercent') {
                                         hpPercentBonus += setInfo.bonuses[i][bonusStat];
                                     } else {
-                                        totals[bonusStat] = (totals[bonusStat] || 0) + setInfo.bonuses[i][bonusStat];
+                                        rawStats[bonusStat] += setInfo.bonuses[i][bonusStat];
                                     }
                                 }
                             }
                         }
                     }
+
+                    // 5. Calculate final combat stats from the fully computed raw stats
+                    const finalStats = { ...rawStats }; // Copy all raw stats over first
+                    const primaryStat = classes[p.baseClassName].primaryStat;
+
+                    finalStats.atk = Math.pow(rawStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
+                    finalStats.def = (rawStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
+                    finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
+                    finalStats.accuracy = (rawStats.dex || 0) * 0.002;
+                    finalStats.evasion = (rawStats.agl || 0) * 0.001;
+                    
+                    // Apply percentage bonuses
                     if (hpPercentBonus > 0) {
-                        totals.hp *= (1 + hpPercentBonus);
+                        finalStats.hp *= (1 + hpPercentBonus);
                     }
 
+                    // Apply active skill buffs
                     if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
-                        const missingHpPercent = 1 - (p.currentHp / totals.hp);
+                        const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
                         const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
-                        totals.atk *= (1 + frenzyBonus);
+                        finalStats.atk *= (1 + frenzyBonus);
                     }
                     if (gameState.playerTemp.standFirm > 0 && !hypotheticalItem) {
-                        totals.def *= 1.30;
+                        finalStats.def *= 1.30;
                     }
-
-                    if (p.currentHp > totals.hp && !hypotheticalItem) p.currentHp = totals.hp;
-                    return totals;
+                    
+                    if (p.currentHp > finalStats.hp && !hypotheticalItem) p.currentHp = finalStats.hp;
+                    return finalStats;
                 }
 
                 function gameLoop() {
@@ -1692,7 +1703,7 @@
                     gameState.inventory.forEach(item => {
                         const isEquipped = equippedIds.includes(item.id);
                         const rarityColor = itemData.rarities[item.rarity].color;
-                        const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                        const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
 
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'inventory-item';
@@ -1739,7 +1750,7 @@
                         itemSlot.className = 'equipment-slot-display';
                         let nameHTML = '---';
                         if (item) {
-                            const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                            const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
                             nameHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
                             itemSlot.onclick = (e) => handleTooltipToggle(e, item, true);
                         }
@@ -2052,9 +2063,7 @@
                     const currentLevel = item.enhancementLevel || 0;
 
                     let statPreview = '';
-                    // FIX: Loop over STAT_NAMES, not all item properties
                     for (const stat in STAT_NAMES) {
-                        // FIX: Check if the item actually has this stat before displaying
                         if (item[stat]) {
                             const baseValue = item[stat];
                             const currentValue = getEnhancedStat(item, stat);
@@ -2084,7 +2093,7 @@
                     if (gameState.gold >= cost) {
                         gameState.gold -= cost;
                         item.enhancementLevel = (item.enhancementLevel || 0) + 1;
-                        logAction(`Successfully enhanced ${item.name} to +${item.enhancementLevel}!`, 'log-system');
+                        logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> to +${item.enhancementLevel}!`, 'log-system');
                         updateAllUIs();
                     } else {
                         logAction('Not enough gold to enhance.', 'log-error');
