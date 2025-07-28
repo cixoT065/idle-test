@@ -1119,13 +1119,6 @@
                     logAction(`You have chosen the path of the ${className}.`, 'log-system');
                     startGame();
                 }
-
-                function getEnhancedStat(item, stat) {
-                    const baseValue = item[stat] || 0;
-                    if (baseValue === 0) return 0;
-                    const enhancementBonus = (item.enhancementLevel || 0) * ENHANCEMENT_BONUS_PER_LEVEL;
-                    return baseValue * (1 + enhancementBonus);
-                }
                 
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
@@ -1161,14 +1154,20 @@
                             if (item.setName) {
                                 equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             }
+                            // Add base, bonus, and new enhancement bonus stats
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
-                                    rawStats[stat] += getEnhancedStat(item, stat);
+                                    rawStats[stat] += item[stat];
                                 }
                             }
                             for (const stat in item.bonusStats) {
                                 if (rawStats[stat] !== undefined) {
                                     rawStats[stat] += item.bonusStats[stat];
+                                }
+                            }
+                            for (const stat in item.enhancementBonusStats) {
+                                if (rawStats[stat] !== undefined) {
+                                    rawStats[stat] += item.enhancementBonusStats[stat];
                                 }
                             }
                         }
@@ -1371,8 +1370,15 @@
                         classReq: classForDrop,
                         bonusStats: {},
                         setName: null,
-                        enhancementLevel: 0, // New property
+                        enhancementLevel: 0,
+                        enhancementBonusStats: {},
+                        enhancementProgress: {}
                     };
+
+                    for(const statName in STAT_NAMES) {
+                        newItem.enhancementBonusStats[statName] = 0;
+                        newItem.enhancementProgress[statName] = 0.0;
+                    }
 
                     let itemName;
                     if (['SR', 'SSR', 'UR', 'LR'].includes(rarityKey) && Math.random() < SET_ITEM_CHANCE) {
@@ -1784,8 +1790,8 @@
                     for (const stat in item) {
                         if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                             hasBaseStats = true;
-                            const enhancedValue = getEnhancedStat(item, stat);
-                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(enhancedValue * 100).toFixed(1)}%` : `+${Math.round(enhancedValue)}`;
+                            const totalStatValue = item[stat] + (item.enhancementBonusStats[stat] || 0);
+                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(totalStatValue * 100).toFixed(1)}%` : `+${Math.round(totalStatValue)}`;
                             content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
                         }
                     }
@@ -2041,7 +2047,7 @@
                     if (!item) return 0;
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.5, (item.enhancementLevel || 0));
+                    const levelMod = Math.pow(1.42, (item.enhancementLevel || 0));
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2063,12 +2069,17 @@
 
                     let statPreview = '';
                     for (const stat in STAT_NAMES) {
-                        if (item[stat]) {
+                        if (item[stat] && typeof item[stat] === 'number' && !['critChance', 'critDmg'].includes(stat)) {
                             const baseValue = item[stat];
-                            // FINAL FIX: Correctly calculate current and next values from the BASE stat.
-                            const currentValue = baseValue * (1 + (currentLevel * ENHANCEMENT_BONUS_PER_LEVEL));
-                            const nextValue = baseValue * (1 + ((currentLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
-                            statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
+                            const currentBonus = item.enhancementBonusStats[stat] || 0;
+                            const currentValue = baseValue + currentBonus;
+                            
+                            // Simulate the next enhancement to predict the bonus
+                            const simulatedProgress = (item.enhancementProgress[stat] || 0) + (baseValue * ENHANCEMENT_BONUS_PER_LEVEL);
+                            const pointsGainedThisClick = Math.floor(simulatedProgress);
+                            const nextValue = currentValue + pointsGainedThisClick;
+
+                            statPreview += `<p>${STAT_NAMES[stat]}: ${currentValue} -> ${nextValue}</p>`;
                         }
                     }
 
@@ -2092,7 +2103,23 @@
                     const cost = getEnhancementCost(item);
                     if (gameState.gold >= cost) {
                         gameState.gold -= cost;
-                        item.enhancementLevel = (item.enhancementLevel || 0) + 1;
+                        item.enhancementLevel++;
+
+                        // Accumulation Logic
+                        for (const stat in STAT_NAMES) {
+                            if (item[stat] && typeof item[stat] === 'number' && !['critChance', 'critDmg'].includes(stat)) {
+                                const baseValue = item[stat];
+                                const increase = baseValue * ENHANCEMENT_BONUS_PER_LEVEL;
+                                item.enhancementProgress[stat] += increase;
+
+                                if (item.enhancementProgress[stat] >= 1.0) {
+                                    const pointsGained = Math.floor(item.enhancementProgress[stat]);
+                                    item.enhancementBonusStats[stat] += pointsGained;
+                                    item.enhancementProgress[stat] -= pointsGained;
+                                }
+                            }
+                        }
+
                         logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> to +${item.enhancementLevel}!`, 'log-system');
                         updateAllUIs();
                     } else {
