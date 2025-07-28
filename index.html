@@ -1123,7 +1123,7 @@
                 function getEnhancedStat(item, stat) {
                     const baseValue = item[stat] || 0;
                     if (baseValue === 0) return 0;
-                    const enhancementBonus = item.enhancementLevel * ENHANCEMENT_BONUS_PER_LEVEL;
+                    const enhancementBonus = (item.enhancementLevel || 0) * ENHANCEMENT_BONUS_PER_LEVEL;
                     return baseValue * (1 + enhancementBonus);
                 }
 
@@ -1460,8 +1460,7 @@
                         debuffs: {},
                     };
                     logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
-                    updateUI();
-                    updateBlacksmithUI(); // Update blacksmith in case potion restriction changes
+                    updateAllUIs();
                 }
 
                 function levelUp() {
@@ -1766,7 +1765,7 @@
                     
                     const tooltip = UIElements.globalTooltip;
                     const classColor = item.classReq === gameState.player.baseClassName ? 'var(--text-color)' : '#e06c75';
-                    const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                    const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
 
                     let content = `<strong style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.name}${enhancementText} (${item.type})</strong><br>`;
                     content += `Rarity: <span style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.rarity}</span> | Class: <span style="color:${classColor};">${item.classReq}</span><br>----<br>`;
@@ -2005,7 +2004,7 @@
                         slot.dataset.type = type;
                         
                         if (item) {
-                            const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                            const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
                             slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
                         } else {
                             slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
@@ -2032,7 +2031,7 @@
                     if (!item) return 0;
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.5, item.enhancementLevel);
+                    const levelMod = Math.pow(1.5, (item.enhancementLevel || 0));
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2050,21 +2049,23 @@
                     panel.style.display = 'block';
 
                     const cost = getEnhancementCost(item);
-                    const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                    const currentLevel = item.enhancementLevel || 0;
 
                     let statPreview = '';
-                    for (const stat in item) {
-                        if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
+                    // FIX: Loop over STAT_NAMES, not all item properties
+                    for (const stat in STAT_NAMES) {
+                        // FIX: Check if the item actually has this stat before displaying
+                        if (item[stat]) {
                             const baseValue = item[stat];
                             const currentValue = getEnhancedStat(item, stat);
-                            const nextValue = baseValue * (1 + ((item.enhancementLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
+                            const nextValue = baseValue * (1 + ((currentLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
                             statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
                         }
                     }
 
                     infoDiv.innerHTML = `
                         <p><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                        <p>Enhancement: <strong>${item.enhancementLevel} -> ${item.enhancementLevel + 1}</strong></p>
+                        <p>Enhancement: <strong>${currentLevel} -> ${currentLevel + 1}</strong></p>
                         <hr style="border-color: var(--border-color);">
                         ${statPreview}
                         <hr style="border-color: var(--border-color);">
@@ -2082,7 +2083,7 @@
                     const cost = getEnhancementCost(item);
                     if (gameState.gold >= cost) {
                         gameState.gold -= cost;
-                        item.enhancementLevel++;
+                        item.enhancementLevel = (item.enhancementLevel || 0) + 1;
                         logAction(`Successfully enhanced ${item.name} to +${item.enhancementLevel}!`, 'log-system');
                         updateAllUIs();
                     } else {
