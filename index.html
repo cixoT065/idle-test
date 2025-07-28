@@ -500,6 +500,43 @@
             background-color: rgba(131, 201, 125, 0.1);
         }
 
+        /* Blacksmith Styles */
+        #blacksmith-item-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .blacksmith-slot {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            text-align: center;
+            background-color: var(--header-bg-color);
+            transition: border-color 0.2s;
+        }
+
+        .blacksmith-slot.selected {
+            border-color: var(--selection-color);
+        }
+
+        #blacksmith-enhancement-panel {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background-color: var(--header-bg-color);
+        }
+
+        #enhancement-info {
+            text-align: center;
+        }
+
+        #enhancement-info p {
+            margin: 5px 0;
+        }
+
         @media (max-width: 900px) {
             .main-container {
                 flex-direction: column;
@@ -616,6 +653,7 @@
                 <div class="tab-buttons">
                     <button class="tab-button active" data-tab="shop">Shop</button>
                     <button class="tab-button" data-tab="inventory">Inventory</button>
+                    <button class="tab-button" data-tab="blacksmith">Blacksmith</button>
                     <button class="tab-button" data-tab="rebirth">Rebirth</button>
                 </div>
                 <div class="panel-body">
@@ -670,6 +708,18 @@
                         <div class="inventory-actions" style="margin-top: 10px; display: flex; gap: 10px;">
                             <button id="sell-n-btn" class="button-secondary" style="flex: 1;">Sell All N</button>
                             <button id="sell-r-btn" class="button-secondary" style="flex: 1;">Sell All R</button>
+                        </div>
+                    </div>
+                    <div id="tab-content-blacksmith" class="tab-content">
+                        <h3>Enhance Equipment</h3>
+                        <div id="blacksmith-item-selector">
+                            <!-- JS will populate this -->
+                        </div>
+                        <div id="blacksmith-enhancement-panel" style="display: none;">
+                            <div id="enhancement-info">
+                                <!-- JS will populate this -->
+                            </div>
+                            <button id="enhance-item-btn">Enhance</button>
                         </div>
                     </div>
                     <div id="tab-content-rebirth" class="tab-content">
@@ -741,6 +791,9 @@
                 };
                 const SAVE_KEY = 'idleRpgSaveData_v13_itemStructure';
 
+                const PRIMARY_STAT_POWER_CURVE = 1.08;
+                const ENHANCEMENT_BONUS_PER_LEVEL = 0.02; // 2% bonus per level
+
                 const STAT_NAMES = {
                     str: 'STR', con: 'CON', def: 'DEF', dex: 'DEX',
                     agl: 'AGL', int: 'INT', critChance: 'Crit Chance', critDmg: 'Crit DMG'
@@ -763,6 +816,7 @@
                             pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                             classSelection: null,
                             promotionSelection: null,
+                            blacksmithSelection: null,
                         }
                     };
                 }
@@ -857,12 +911,12 @@
                 const itemData = {
                     types: ['weapon', 'body', 'legs'],
                     rarities: {
-                        N:   { color: '#DEDEDE',  statMod: 1.0, value: 2,   baseStatCount: 1, bonusStats: 0 },
-                        R:   { color: '#63C270',  statMod: 1.2, value: 8,   baseStatCount: 2, bonusStats: 1 },
-                        SR:  { color: '#6386C2',  statMod: 1.5, value: 40,  baseStatCount: 3, bonusStats: 2 },
-                        SSR: { color: '#9663C2',  statMod: 2.0, value: 200, baseStatCount: 4, bonusStats: 3 },
-                        UR:  { color: '#C29463',  statMod: 2.8, value: 1000,baseStatCount: 4, bonusStats: 4 },
-                        LR:  { color: '#FFD700',  statMod: 3.5, value: 5000,baseStatCount: 5, bonusStats: 4 },
+                        N:   { color: '#DEDEDE',  statMod: 1.0, value: 2,   baseStatCount: 1, bonusStats: 0, enhanceCostMod: 1.0 },
+                        R:   { color: '#63C270',  statMod: 1.2, value: 8,   baseStatCount: 2, bonusStats: 1, enhanceCostMod: 1.5 },
+                        SR:  { color: '#6386C2',  statMod: 1.5, value: 40,  baseStatCount: 3, bonusStats: 2, enhanceCostMod: 2.5 },
+                        SSR: { color: '#9663C2',  statMod: 2.0, value: 200, baseStatCount: 4, bonusStats: 3, enhanceCostMod: 5.0 },
+                        UR:  { color: '#C29463',  statMod: 2.8, value: 1000,baseStatCount: 4, bonusStats: 4, enhanceCostMod: 10.0 },
+                        LR:  { color: '#FFD700',  statMod: 3.5, value: 5000,baseStatCount: 5, bonusStats: 4, enhanceCostMod: 25.0 },
                     },
                     bonusStatPool: Object.keys(STAT_NAMES),
                     names: {
@@ -953,6 +1007,10 @@
                     buyPotion75: document.getElementById('buy-potion-75'), buyPotion100: document.getElementById('buy-potion-100'),
                     buyXpBoost2x: document.getElementById('buy-xp-boost-2x'), buyXpBoost3x: document.getElementById('buy-xp-boost-3x'),
                     xpBoostStatus: document.getElementById('xp-boost-status'),
+                    blacksmithItemSelector: document.getElementById('blacksmith-item-selector'),
+                    blacksmithEnhancementPanel: document.getElementById('blacksmith-enhancement-panel'),
+                    enhancementInfo: document.getElementById('enhancement-info'),
+                    enhanceItemBtn: document.getElementById('enhance-item-btn'),
                 };
 
                 function startGame() {
@@ -1062,6 +1120,13 @@
                     startGame();
                 }
 
+                function getEnhancedStat(item, stat) {
+                    const baseValue = item[stat] || 0;
+                    if (baseValue === 0) return 0;
+                    const enhancementBonus = item.enhancementLevel * ENHANCEMENT_BONUS_PER_LEVEL;
+                    return baseValue * (1 + enhancementBonus);
+                }
+
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
@@ -1096,7 +1161,7 @@
                             }
                             for (const stat in item) {
                                 if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
-                                    totals[stat] = (totals[stat] || 0) + item[stat];
+                                    totals[stat] = (totals[stat] || 0) + getEnhancedStat(item, stat);
                                 }
                             }
                             for (const stat in item.bonusStats) {
@@ -1106,7 +1171,7 @@
                     }
 
                     const primaryStat = classes[p.baseClassName].primaryStat;
-                    totals.atk = (totals[primaryStat] || 0) + (gameState.rebirth.bonuses.atk || 0);
+                    totals.atk = Math.pow(totals[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
                     totals.def = (totals.def || 0) + (gameState.rebirth.bonuses.def || 0);
                     totals.hp = 50 + (totals.con * 5) + (gameState.rebirth.bonuses.hp || 0);
                     totals.accuracy = (totals.dex || 0) * 0.002;
@@ -1295,7 +1360,8 @@
                         rarity: rarityKey,
                         classReq: classForDrop,
                         bonusStats: {},
-                        setName: null
+                        setName: null,
+                        enhancementLevel: 0, // New property
                     };
 
                     let itemName;
@@ -1395,6 +1461,7 @@
                     };
                     logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system');
                     updateUI();
+                    updateBlacksmithUI(); // Update blacksmith in case potion restriction changes
                 }
 
                 function levelUp() {
@@ -1626,12 +1693,13 @@
                     gameState.inventory.forEach(item => {
                         const isEquipped = equippedIds.includes(item.id);
                         const rarityColor = itemData.rarities[item.rarity].color;
+                        const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
 
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'inventory-item';
                         itemDiv.innerHTML = `
                             <div class="inventory-item-info" data-item-id="${item.id}">
-                                <span style="color: ${rarityColor};">${item.name}</span>
+                                <span style="color: ${rarityColor};">${item.name}${enhancementText}</span>
                                 ${isEquipped ? '<span class="equipped-tag">[Equipped]</span>' : ''}
                             </div>
                             <div class="inventory-item-actions">
@@ -1672,7 +1740,8 @@
                         itemSlot.className = 'equipment-slot-display';
                         let nameHTML = '---';
                         if (item) {
-                            nameHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}</span>`;
+                            const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                            nameHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
                             itemSlot.onclick = (e) => handleTooltipToggle(e, item, true);
                         }
                         itemSlot.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${nameHTML}`;
@@ -1697,15 +1766,17 @@
                     
                     const tooltip = UIElements.globalTooltip;
                     const classColor = item.classReq === gameState.player.baseClassName ? 'var(--text-color)' : '#e06c75';
+                    const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
 
-                    let content = `<strong style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.name} (${item.type})</strong><br>`;
+                    let content = `<strong style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.name}${enhancementText} (${item.type})</strong><br>`;
                     content += `Rarity: <span style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.rarity}</span> | Class: <span style="color:${classColor};">${item.classReq}</span><br>----<br>`;
 
                     let hasBaseStats = false;
                     for (const stat in item) {
                         if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
                             hasBaseStats = true;
-                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(item[stat] * 100).toFixed(1)}%` : `+${Math.round(item[stat])}`;
+                            const enhancedValue = getEnhancedStat(item, stat);
+                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(enhancedValue * 100).toFixed(1)}%` : `+${Math.round(enhancedValue)}`;
                             content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
                         }
                     }
@@ -1740,27 +1811,13 @@
                             
                             hasComparison = true;
                             const isPercent = ['accuracy', 'evasion', 'critChance', 'critDmg'].includes(stat);
-                            let itemContribution = 0;
-                            const primaryStat = classes[gameState.player.baseClassName].primaryStat;
-
-                            switch(stat) {
-                                case 'atk': itemContribution = (item[primaryStat] || 0) + (item.bonusStats[primaryStat] || 0); break;
-                                case 'def': itemContribution = (item.def || 0) + (item.bonusStats.def || 0); break;
-                                case 'hp': itemContribution = ((item.con || 0) + (item.bonusStats.con || 0)) * 5; break;
-                                case 'accuracy': itemContribution = ((item.dex || 0) + (item.bonusStats.dex || 0)) * 0.002; break;
-                                case 'evasion': itemContribution = ((item.agl || 0) + (item.bonusStats.agl || 0)) * 0.001; break;
-                                case 'critChance': itemContribution = (item.critChance || 0) + (item.bonusStats.critChance || 0); break;
-                                case 'critDmg': itemContribution = (item.critDmg || 0) + (item.bonusStats.critDmg || 0); break;
-                            }
-                            
-                            const itemValueDisplay = isPercent ? `${(itemContribution * 100).toFixed(1)}%` : `${Math.round(itemContribution)}`;
                             let diffDisplay = isPercent ? `${(diff * 100).toFixed(1)}%` : `${Math.round(diff)}`;
                             if (diff > 0) diffDisplay = `+${diffDisplay}`;
 
                             const symbol = diff > 0 ? '▲' : '▼';
                             const className = diff > 0 ? 'stat-increase' : 'stat-decrease';
                             
-                            comparisonContent += `${DISPLAY_STATS[stat]}: ${itemValueDisplay} <span class="${className}">${symbol}${diffDisplay}</span><br>`;
+                            comparisonContent += `${DISPLAY_STATS[stat]}: <span class="${className}">${symbol}${diffDisplay}</span><br>`;
                         }
                         if (hasComparison) content += comparisonContent;
                     }
@@ -1839,13 +1896,14 @@
                     UIElements.actionLog.scrollTop = UIElements.actionLog.scrollHeight;
                 }
 
-                function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); updatePointInvestmentUI(); }
+                function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); updatePointInvestmentUI(); updateBlacksmithUI();}
 
                 function resetTransientData() {
                     gameState.playerTemp = {
                         pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                         classSelection: null,
                         promotionSelection: null,
+                        blacksmithSelection: null,
                     };
                     if (gameState.currentMonster) gameState.currentMonster.debuffs = {};
                 }
@@ -1935,6 +1993,103 @@
                     }
                 }
 
+                // --- BLACKSMITH ---
+                function updateBlacksmithUI() {
+                    const selector = UIElements.blacksmithItemSelector;
+                    selector.innerHTML = '';
+
+                    ['weapon', 'body', 'legs'].forEach(type => {
+                        const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
+                        const slot = document.createElement('div');
+                        slot.className = 'blacksmith-slot';
+                        slot.dataset.type = type;
+                        
+                        if (item) {
+                            const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+                            slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
+                        } else {
+                            slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
+                            slot.style.color = 'var(--disabled-text-color)';
+                        }
+                        
+                        if (gameState.playerTemp.blacksmithSelection === type) {
+                            slot.classList.add('selected');
+                        }
+
+                        slot.onclick = () => selectBlacksmithItem(type);
+                        selector.appendChild(slot);
+                    });
+
+                    updateEnhancementPanel();
+                }
+
+                function selectBlacksmithItem(type) {
+                    gameState.playerTemp.blacksmithSelection = type;
+                    updateBlacksmithUI();
+                }
+
+                function getEnhancementCost(item) {
+                    if (!item) return 0;
+                    const baseCost = 50;
+                    const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
+                    const levelMod = Math.pow(1.5, item.enhancementLevel);
+                    return Math.round(baseCost * rarityMod * levelMod);
+                }
+
+                function updateEnhancementPanel() {
+                    const panel = UIElements.blacksmithEnhancementPanel;
+                    const infoDiv = UIElements.enhancementInfo;
+                    const btn = UIElements.enhanceItemBtn;
+                    const selectedType = gameState.playerTemp.blacksmithSelection;
+                    const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
+
+                    if (!item) {
+                        panel.style.display = 'none';
+                        return;
+                    }
+                    panel.style.display = 'block';
+
+                    const cost = getEnhancementCost(item);
+                    const enhancementText = item.enhancementLevel > 0 ? ` +${item.enhancementLevel}` : '';
+
+                    let statPreview = '';
+                    for (const stat in item) {
+                        if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
+                            const baseValue = item[stat];
+                            const currentValue = getEnhancedStat(item, stat);
+                            const nextValue = baseValue * (1 + ((item.enhancementLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
+                            statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
+                        }
+                    }
+
+                    infoDiv.innerHTML = `
+                        <p><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
+                        <p>Enhancement: <strong>${item.enhancementLevel} -> ${item.enhancementLevel + 1}</strong></p>
+                        <hr style="border-color: var(--border-color);">
+                        ${statPreview}
+                        <hr style="border-color: var(--border-color);">
+                        <p>Cost: <span style="color: var(--gold-color);">${cost}G</span></p>
+                    `;
+                    
+                    btn.disabled = gameState.gold < cost;
+                }
+
+                function enhanceSelectedItem() {
+                    const selectedType = gameState.playerTemp.blacksmithSelection;
+                    const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
+                    if (!item) return;
+
+                    const cost = getEnhancementCost(item);
+                    if (gameState.gold >= cost) {
+                        gameState.gold -= cost;
+                        item.enhancementLevel++;
+                        logAction(`Successfully enhanced ${item.name} to +${item.enhancementLevel}!`, 'log-system');
+                        updateAllUIs();
+                    } else {
+                        logAction('Not enough gold to enhance.', 'log-error');
+                    }
+                }
+
 
                 function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
                 function deepMerge(target, source) {
@@ -1960,6 +2115,10 @@
                             document.querySelectorAll('.tab-content').forEach(content => {
                                 content.classList.toggle('active', content.id === `tab-content-${tabId}`);
                             });
+                            // When switching to blacksmith, update its UI
+                            if (tabId === 'blacksmith') {
+                                updateBlacksmithUI();
+                            }
                         });
                     });
                 }
@@ -2012,6 +2171,7 @@
                 UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
                 UIElements.confirmInvestBtn.onclick = confirmPointInvestment;
                 UIElements.resetInvestBtn.onclick = resetPointInvestment;
+                UIElements.enhanceItemBtn.onclick = enhanceSelectedItem;
 
                 initializeGame();
             });
