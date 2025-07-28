@@ -583,7 +583,7 @@
                         <div>Stat Points: <span id="player-stat-points" style="color: var(--gold-color); font-weight: bold;">0</span></div>
                     </div>
                     <hr style="border-color: var(--border-color);">
-                    <div>HP: <span id="player-hp-text">100 / 100</span></div>
+                    <div>HP (CON): <span id="player-hp-text">100 / 100</span></div>
                     <div class="stat-bar">
                         <div class="stat-bar-fill" id="player-hp-fill"></div>
                     </div>
@@ -1061,7 +1061,7 @@
                     if (!gameState.currentMonster) spawnMonster();
 
                     updateAllUIs();
-                    gameInterval = setInterval(gameLoop, 1000);
+                    gameInterval = setInterval(gameLoop, 2000);
                     autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
                 }
 
@@ -2517,7 +2517,7 @@
                     
                     const statPool = [];
                     for (const stat in STAT_NAMES) {
-                        if ((item[stat] && typeof item[stat] === 'number') || (item.bonusStats && item.bonusStats[stat])) {
+                        if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
                             statPool.push(stat);
                         }
                     }
@@ -2527,9 +2527,9 @@
                         btn.disabled = true;
                     } else if (statPool.length > 0) {
                         statPool.forEach(stat => {
-                            const baseValue = (item[stat] || 0) + (item.bonusStats?.[stat] || 0);
-                            const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
-                            const totalValue = baseValue + enhancementBonus;
+                            const baseValue = (item[stat] || 0) /*+ (item.bonusStats?.[stat] || 0)*/;
+                            // const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
+                            const totalValue = baseValue/* + enhancementBonus*/;
                             const isPercent = ['critChance', 'critDmg'].includes(stat);
                             const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
 
