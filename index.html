@@ -1039,7 +1039,6 @@
                 }
 
                 function migrateSaveData(loadedState) {
-                    // Migrate items in inventory
                     if (loadedState.inventory && Array.isArray(loadedState.inventory)) {
                         loadedState.inventory.forEach(item => {
                             if (item) {
@@ -1060,14 +1059,12 @@
                         });
                     }
 
-                    // Migrate player object for promotion state
                     if (loadedState.player) {
                         if (loadedState.player.promotionPending === undefined) {
                             loadedState.player.promotionPending = false;
                         }
-                        if (loadedState.player.promotionPending && loadedState.player.pendingPromotionChoices === undefined) {
-                            // Can't recover choices, so reset flag to prevent lock
-                            loadedState.player.promotionPending = false;
+                        if (loadedState.player.pendingPromotionChoices === undefined) {
+                             loadedState.player.pendingPromotionChoices = null;
                         }
                     }
                     
@@ -1151,6 +1148,14 @@
                     if (gameState.player && gameState.player.promotionPending && gameState.player.pendingPromotionChoices) {
                         logAction("Promotion choice is pending. Please select your new class.", "log-system");
                         showPromotionModal(gameState.player.pendingPromotionChoices);
+                    } else if (gameState.player) {
+                        // Fallback check in case flags are mismatched
+                        const availablePromotion = getAvailablePromotion(gameState.player);
+                        if (availablePromotion) {
+                             gameState.player.promotionPending = true;
+                             gameState.player.pendingPromotionChoices = availablePromotion.choices;
+                             showPromotionModal(availablePromotion.choices);
+                        }
                     }
                 }
 
@@ -1348,7 +1353,10 @@
                     }
 
                     if (gameState.kills >= 10 && gameState.currentMonster.monsterType !== 'boss') UIElements.challengeBossBtn.disabled = false;
-                    if (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
+                    
+                    while (gameState.player.xp >= gameState.player.xpToNextLevel) {
+                        levelUp();
+                    }
 
                     spawnMonster();
                 }
@@ -1531,11 +1539,33 @@
                     updateAllUIs();
                 }
 
+                function getAvailablePromotion(player) {
+                    const baseClassInfo = classes[player.baseClassName];
+                    if (!baseClassInfo || !baseClassInfo.promotions) return null;
+
+                    const promotionTiers = Object.keys(baseClassInfo.promotions).sort((a, b) => a - b);
+
+                    for (const tierLevel of promotionTiers) {
+                        if (player.level >= tierLevel) {
+                            const tier = baseClassInfo.promotions[tierLevel];
+                            if (Array.isArray(tier) && player.className === player.baseClassName) {
+                                return { level: tierLevel, choices: tier };
+                            } else if (typeof tier === 'object' && tier[player.className]) {
+                                return { level: tierLevel, choices: tier[player.className] };
+                            }
+                        }
+                    }
+                    return null;
+                }
+
                 function levelUp() {
                     const p = gameState.player;
+                    const oldLevel = p.level;
+                    
+                    p.xp -= p.xpToNextLevel;
                     p.level++;
-                    p.xp = 0;
                     p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45));
+                    
                     const pointsGained = Math.floor(Math.random() * 3) + 5;
                     p.statPoints += pointsGained;
 
@@ -1555,13 +1585,12 @@
                     logAction('Health fully restored!', 'log-system');
                     if (p.level >= 70) UIElements.rebirthBtn.style.display = 'block';
 
-                    const promotions = classes[p.baseClassName]?.promotions;
-                    if (promotions && promotions[p.level]) {
-                        const choiceList = Array.isArray(promotions[p.level]) ? promotions[p.level] : promotions[p.level][p.className];
-                        if (choiceList) {
+                    if (!p.promotionPending) {
+                        const availablePromotion = getAvailablePromotion(p);
+                        if (availablePromotion) {
                             p.promotionPending = true;
-                            p.pendingPromotionChoices = choiceList;
-                            showPromotionModal(choiceList);
+                            p.pendingPromotionChoices = availablePromotion.choices;
+                            showPromotionModal(availablePromotion.choices);
                         }
                     }
                     updateAllUIs();
@@ -1848,7 +1877,7 @@
                             hasBaseStats = true;
                             const bonus = item.enhancementBonusStats?.[stat] || 0;
                             const totalStatValue = item[stat] + bonus;
-                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(totalStatValue * 100).toFixed(1)}%` : `+${Math.round(totalStatValue)}`;
+                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(totalStatValue * 100).toFixed(2)}%` : `+${Math.round(totalStatValue)}`;
                             content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
                         }
                     }
@@ -2065,7 +2094,7 @@
                     }
                 }
 
-                // --- BLACKSMITH ---
+                // --- BLACKSMITH (REWORKED) ---
                 function updateBlacksmithUI() {
                     const selector = UIElements.blacksmithItemSelector;
                     selector.innerHTML = '';
@@ -2100,11 +2129,54 @@
                     updateBlacksmithUI();
                 }
 
-                function getEnhancementCost(item) {
-                    if (!item) return 0;
+                function getNextEnhancementBreakdown(item) {
+                    if (!item) return null;
+
+                    let primaryIntegerStat = null;
+                    let maxBaseValue = -1;
+
+                    // Find the integer stat with the highest base value to be our target for +1
+                    for (const stat in STAT_NAMES) {
+                        if (item[stat] && typeof item[stat] === 'number' && !['critChance', 'critDmg'].includes(stat)) {
+                            if (item[stat] > maxBaseValue) {
+                                maxBaseValue = item[stat];
+                                primaryIntegerStat = stat;
+                            }
+                        }
+                    }
+
+                    // If no integer stats, fall back to simple 1-level enhancement
+                    if (!primaryIntegerStat) {
+                        const cost = getEnhancementCostForLevel(item, item.enhancementLevel || 0);
+                        return { primaryStat: null, clicksNeeded: 1, totalCost: cost, statGains: {} };
+                    }
+
+                    const progressNeeded = 1.0 - (item.enhancementProgress[primaryIntegerStat] || 0);
+                    const increasePerClick = item[primaryIntegerStat] * ENHANCEMENT_BONUS_PER_LEVEL;
+                    if (increasePerClick <= 0) return null; // Avoid division by zero
+
+                    const clicksNeeded = Math.ceil(progressNeeded / increasePerClick);
+                    
+                    let totalCost = 0;
+                    for (let i = 0; i < clicksNeeded; i++) {
+                        totalCost += getEnhancementCostForLevel(item, (item.enhancementLevel || 0) + i);
+                    }
+
+                    const statGains = {};
+                    for (const stat in STAT_NAMES) {
+                        if (item[stat] && typeof item[stat] === 'number') {
+                            const gainPerClick = item[stat] * ENHANCEMENT_BONUS_PER_LEVEL;
+                            statGains[stat] = gainPerClick * clicksNeeded;
+                        }
+                    }
+
+                    return { primaryStat: primaryIntegerStat, clicksNeeded, totalCost, statGains };
+                }
+
+                function getEnhancementCostForLevel(item, level) {
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.42, (item.enhancementLevel || 0));
+                    const levelMod = Math.pow(1.42, level);
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2121,68 +2193,74 @@
                     }
                     panel.style.display = 'block';
 
-                    const cost = getEnhancementCost(item);
+                    const breakdown = getNextEnhancementBreakdown(item);
+                    if (!breakdown) {
+                        infoDiv.innerHTML = `<p>Cannot enhance this item further.</p>`;
+                        btn.disabled = true;
+                        return;
+                    }
+
+                    const { primaryStat, clicksNeeded, totalCost, statGains } = breakdown;
                     const currentLevel = item.enhancementLevel || 0;
-
+                    const nextLevel = currentLevel + clicksNeeded;
+                    
                     let statPreview = '';
-                    for (const stat in STAT_NAMES) {
-                        if (item[stat] && typeof item[stat] === 'number') {
-                            const isPercentStat = ['critChance', 'critDmg'].includes(stat);
-                            const baseValue = item[stat];
-                            const currentBonus = item.enhancementBonusStats?.[stat] || 0;
-                            const currentValue = baseValue + currentBonus;
-                            
-                            const currentProgress = item.enhancementProgress?.[stat] || 0;
-                            const increasePerClick = baseValue * ENHANCEMENT_BONUS_PER_LEVEL;
-                            const simulatedProgress = currentProgress + increasePerClick;
+                    for (const stat in statGains) {
+                        const isPercentStat = ['critChance', 'critDmg'].includes(stat);
+                        const currentBonus = item.enhancementBonusStats[stat] || 0;
+                        const currentValue = (item[stat] || 0) + currentBonus;
 
-                            if (isPercentStat) {
-                                const nextValue = currentValue + increasePerClick;
-                                statPreview += `<p>${STAT_NAMES[stat]}: ${(currentValue * 100).toFixed(1)}% -> ${(nextValue * 100).toFixed(1)}%</p>`;
-                            } else {
-                                const pointsGainedThisClick = Math.floor(simulatedProgress);
-                                const nextValue = currentValue + pointsGainedThisClick;
-                                statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
-                            }
+                        const simulatedProgress = (item.enhancementProgress[stat] || 0) + statGains[stat];
+                        const pointsGained = isPercentStat ? statGains[stat] : Math.floor(simulatedProgress);
+                        const nextValue = currentValue + pointsGained;
+
+                        if (isPercentStat) {
+                             statPreview += `<p>${STAT_NAMES[stat]}: ${(currentValue * 100).toFixed(2)}% -> ${(nextValue * 100).toFixed(2)}%</p>`;
+                        } else {
+                             statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
                         }
                     }
 
                     infoDiv.innerHTML = `
                         <p><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                        <p>Enhancement: <strong>${currentLevel} -> ${currentLevel + 1}</strong></p>
+                        <p>Enhancement: <strong>+${currentLevel} -> +${nextLevel}</strong></p>
                         <hr style="border-color: var(--border-color);">
                         ${statPreview || '<p>No enhanceable stats on this item.</p>'}
                         <hr style="border-color: var(--border-color);">
-                        <p>Cost: <span style="color: var(--gold-color);">${cost}G</span></p>
+                        <p>Cost: <span style="color: var(--gold-color);">${totalCost}G</span></p>
                     `;
                     
-                    btn.disabled = gameState.gold < cost;
+                    btn.disabled = gameState.gold < totalCost;
                 }
 
                 function enhanceSelectedItem() {
                     const selectedType = gameState.playerTemp.blacksmithSelection;
                     const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
                     if (!item) return;
+                    
+                    const breakdown = getNextEnhancementBreakdown(item);
+                    if (!breakdown) return;
 
-                    const cost = getEnhancementCost(item);
-                    if (gameState.gold >= cost) {
-                        gameState.gold -= cost;
-                        item.enhancementLevel = (item.enhancementLevel || 0) + 1;
+                    const { clicksNeeded, totalCost, statGains } = breakdown;
 
-                        for (const stat in STAT_NAMES) {
-                            if (item[stat] && typeof item[stat] === 'number') {
-                                const increase = item[stat] * ENHANCEMENT_BONUS_PER_LEVEL;
-                                item.enhancementProgress[stat] = (item.enhancementProgress[stat] || 0) + increase;
-                                
-                                if (!['critChance', 'critDmg'].includes(stat)) {
-                                     if (item.enhancementProgress[stat] >= 1.0) {
-                                        const pointsGained = Math.floor(item.enhancementProgress[stat]);
-                                        item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + pointsGained;
-                                        item.enhancementProgress[stat] -= pointsGained;
-                                    }
-                                } else {
-                                    // For percent stats, apply directly without accumulation
-                                    item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + increase;
+                    if (gameState.gold >= totalCost) {
+                        gameState.gold -= totalCost;
+                        item.enhancementLevel = (item.enhancementLevel || 0) + clicksNeeded;
+
+                        for (const stat in statGains) {
+                            const isPercentStat = ['critChance', 'critDmg'].includes(stat);
+                            item.enhancementProgress[stat] = (item.enhancementProgress[stat] || 0) + statGains[stat];
+                            
+                            if (isPercentStat) {
+                                // For percentage stats, we apply the gain directly to the bonus.
+                                item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + statGains[stat];
+                                item.enhancementProgress[stat] = 0; // No fractional progress for percent stats.
+                            } else {
+                                // For integer stats, we check if we crossed the threshold.
+                                if (item.enhancementProgress[stat] >= 1.0) {
+                                    const pointsGained = Math.floor(item.enhancementProgress[stat]);
+                                    item.enhancementBonusStats[stat] = (item.enhancementBonusStats[stat] || 0) + pointsGained;
+                                    item.enhancementProgress[stat] -= pointsGained; // Keep the remainder
                                 }
                             }
                         }
