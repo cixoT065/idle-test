@@ -15,10 +15,10 @@
             --secondary-color: #333333;
             --border-color: #2c2c2c;
             --header-bg-color: #000000;
-            --hp-color: #543232;
-            --xp-color: #323954;
+            --hp-color: #b84545;
+            --xp-color: #457ab8;
             --gold-color: #c7a552;
-            --rebirth-color: #724394;
+            --rebirth-color: #9f6ac2;
             --disabled-bg-color: #222222;
             --disabled-text-color: #555555;
             --skill-color: #ffffff;
@@ -700,7 +700,7 @@
                     target: null,
                     itemId: null
                 };
-                const SAVE_KEY = 'idleRpgSaveData_v13_itemStructure'; // Changed key for new structure
+                const SAVE_KEY = 'idleRpgSaveData_v13_itemStructure';
 
                 const STAT_NAMES = {
                     str: 'STR', con: 'CON', def: 'DEF', dex: 'DEX',
@@ -1272,7 +1272,6 @@
                         return value;
                     };
 
-                    // --- New Stat Generation Logic ---
                     let coreStat = null;
                     if (newItem.type === 'weapon') coreStat = (newItem.classReq === 'Wizard') ? 'int' : 'str';
                     else if (newItem.type === 'body') coreStat = 'def';
@@ -1298,7 +1297,6 @@
                         const stat = bonusStatPool.pop();
                         newItem.bonusStats[stat] = calculateStatValue(stat);
                     }
-                    // --- End of New Logic ---
 
                     gameState.inventory.push(newItem);
                     const color = rarityInfo.color;
@@ -1313,9 +1311,9 @@
                         monsterTemplate = monsters.bosses[(gameState.wave - 1) % monsters.bosses.length];
                     } else {
                         const rand = Math.random();
-                        if (gameState.wave > 3 && rand < 0.15) { // Elites appear after wave 3
+                        if (gameState.wave > 3 && rand < 0.15) {
                             monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
-                        } else if (gameState.wave > 1 && rand < 0.30) { // Mutants appear after wave 1 (15% chance)
+                        } else if (gameState.wave > 1 && rand < 0.30) {
                             monsterTemplate = monsters.mutant[Math.floor(Math.random() * monsters.mutant.length)];
                         } else {
                             monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
@@ -1325,7 +1323,7 @@
                     const hpScale = Math.pow(1.20, gameState.wave - 1);
                     const statScale = Math.pow(1.12, gameState.wave - 1);
                     const goldScale = Math.pow(1.15, gameState.wave - 1);
-                    const xpScale = Math.pow(1.08, gameState.wave - 1);
+                    const xpScale = Math.pow(1.09, gameState.wave - 1); // ADJUSTED XP CURVE
 
                     gameState.currentMonster = {
                         ...monsterTemplate,
@@ -1348,8 +1346,8 @@
                     const p = gameState.player;
                     p.level++;
                     p.xp = 0;
-                    p.xpToNextLevel = Math.round(40 * Math.pow(p.level, 1.5));
-                    const pointsGained = Math.floor(Math.random() * 3) + 5; // 5-7 points
+                    p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45)); // ADJUSTED XP CURVE
+                    const pointsGained = Math.floor(Math.random() * 3) + 5;
                     p.statPoints += pointsGained;
 
                     let growth = { ...classes[p.baseClassName].growth };
