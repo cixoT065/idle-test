@@ -32,6 +32,7 @@
             --selection-color: #61afef;
             --stat-increase-color: #98c379;
             --stat-decrease-color: #e06c75;
+            --enhancement-color: #e06c75;
             --boost-color: #83c97d;
         }
 
@@ -188,6 +189,7 @@
         
         .stat-increase { color: var(--stat-increase-color); }
         .stat-decrease { color: var(--stat-decrease-color); }
+        .enhancement-bonus { color: var(--enhancement-color); }
 
         button,
         .button {
@@ -530,7 +532,7 @@
         }
 
         #enhancement-info {
-            text-align: center;
+            text-align: left;
         }
 
         #enhancement-info p {
@@ -719,7 +721,7 @@
                             <div id="enhancement-info">
                                 <!-- JS will populate this -->
                             </div>
-                            <button id="enhance-item-btn">Enhance</button>
+                            <button id="enhance-item-btn" style="text-align:center;">Enhance</button>
                         </div>
                     </div>
                     <div id="tab-content-rebirth" class="tab-content">
@@ -816,6 +818,7 @@
                             classSelection: null,
                             promotionSelection: null,
                             blacksmithSelection: null,
+                            lastEnhancementResult: null,
                             // Buffs and skill trackers
                             standFirmTurns: 0,
                             battleRushTurns: 0,
@@ -1760,15 +1763,18 @@
                     if (coreStat) {
                         newItem[coreStat] = calculateStatValue(coreStat);
                     }
-
+                    
+                    const generatedBaseStats = [];
                     const baseStatsToGenerate = rarityInfo.baseStatCount - (coreStat ? 1 : 0);
                     for (let i = 0; i < baseStatsToGenerate; i++) {
                         if (baseStatPool.length === 0) break;
                         const stat = baseStatPool.pop();
                         newItem[stat] = calculateStatValue(stat);
+                        generatedBaseStats.push(stat);
                     }
 
                     let bonusStatPool = shuffleArray([...itemData.bonusStatPool]);
+                    bonusStatPool = bonusStatPool.filter(s => s !== coreStat && !generatedBaseStats.includes(s));
                     for (let i = 0; i < rarityInfo.bonusStats; i++) {
                         if (bonusStatPool.length === 0) break;
                         const stat = bonusStatPool.pop();
@@ -2188,25 +2194,45 @@
 
                     let content = `<strong style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.name}${enhancementText} (${item.type})</strong><br>`;
                     content += `Rarity: <span style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.rarity}</span> | Class: <span style="color:${classColor};">${item.classReq}</span><br>----<br>`;
+                    
+                    const buildStatString = (stat, baseValue) => {
+                        const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
+                        if (baseValue === 0 && enhancementBonus === 0) return '';
 
-                    let hasBaseStats = false;
-                    for (const stat in item) {
-                        if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
-                            hasBaseStats = true;
-                            const bonus = item.enhancementBonusStats?.[stat] || 0;
-                            const totalStatValue = item[stat] + bonus;
-                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(totalStatValue * 100).toFixed(2)}%` : `+${Math.round(totalStatValue)}`;
-                            content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
+                        const totalValue = baseValue + enhancementBonus;
+                        const isPercent = ['critChance', 'critDmg'].includes(stat);
+                        let displayString;
+
+                        if (isPercent) {
+                            displayString = `+${(totalValue * 100).toFixed(1)}%`;
+                            if (enhancementBonus > 0) {
+                                displayString += ` (<span class="enhancement-bonus">+${(enhancementBonus * 100).toFixed(1)}%</span>)`;
+                            }
+                        } else {
+                            displayString = `+${Math.round(totalValue)}`;
+                            if (enhancementBonus > 0) {
+                                displayString += ` (<span class="enhancement-bonus">+${Math.round(enhancementBonus)}</span>)`;
+                            }
+                        }
+                        return `${STAT_NAMES[stat]}: ${displayString}<br>`;
+                    };
+
+                    let baseStatContent = '';
+                    let bonusStatContent = '';
+
+                    for (const stat in STAT_NAMES) {
+                        if (item[stat] && typeof item[stat] === 'number') {
+                            baseStatContent += buildStatString(stat, item[stat]);
+                        } else if (item.bonusStats && item.bonusStats[stat]) {
+                            bonusStatContent += buildStatString(stat, item.bonusStats[stat]);
                         }
                     }
-
-                    if (item.bonusStats && Object.keys(item.bonusStats).length > 0) {
-                        if (hasBaseStats) content += `---- (Bonus) ----<br>`;
-                        for (const stat in item.bonusStats) {
-                            const displayVal = (['critChance', 'critDmg'].includes(stat)) ? `+${(item.bonusStats[stat] * 100).toFixed(1)}%` : `+${Math.round(item.bonusStats[stat])}`;
-                            content += `${STAT_NAMES[stat]}: ${displayVal}<br>`;
-                        }
+                    
+                    content += baseStatContent;
+                    if (bonusStatContent) {
+                        content += `---- (Bonus) ----<br>${bonusStatContent}`;
                     }
+
 
                     if (item.setName) {
                         content += `----<br><strong>${item.setName}</strong><br>`;
@@ -2323,6 +2349,7 @@
                         classSelection: null,
                         promotionSelection: null,
                         blacksmithSelection: null,
+                        lastEnhancementResult: null,
                         standFirmTurns: 0,
                         battleRushTurns: 0,
                         guaranteedCrit: false,
@@ -2452,6 +2479,7 @@
 
                 function selectBlacksmithItem(type) {
                     gameState.playerTemp.blacksmithSelection = type;
+                    gameState.playerTemp.lastEnhancementResult = null; // Clear last result on new selection
                     updateBlacksmithUI();
                 }
 
@@ -2459,7 +2487,7 @@
                     if (!item) return 0;
                     const baseCost = 50;
                     const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.3, (item.enhancementLevel || 0));
+                    const levelMod = Math.pow(1.4, (item.enhancementLevel || 0));
                     return Math.round(baseCost * rarityMod * levelMod);
                 }
 
@@ -2479,22 +2507,43 @@
                     const cost = getEnhancementCost(item);
                     const currentLevel = item.enhancementLevel || 0;
                     const MAX_ENHANCEMENT = 10;
+                    const lastResult = gameState.playerTemp.lastEnhancementResult;
 
                     let infoHTML = `
-                        <p><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                        <p>Enhancement: <strong>+${currentLevel} / +${MAX_ENHANCEMENT}</strong></p>
+                        <p style="text-align:center;"><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
+                        <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
                         <hr style="border-color: var(--border-color);">
                     `;
+                    
+                    const statPool = [];
+                    for (const stat in STAT_NAMES) {
+                        if ((item[stat] && typeof item[stat] === 'number') || (item.bonusStats && item.bonusStats[stat])) {
+                            statPool.push(stat);
+                        }
+                    }
 
                     if (currentLevel >= MAX_ENHANCEMENT) {
-                        infoHTML += `<p>Max Level Reached</p>`;
+                        infoHTML += `<p style="text-align:center;">Max Level Reached</p>`;
                         btn.disabled = true;
-                    } else {
-                        infoHTML += `
-                            <p>Enhances one random stat on the item.</p>
-                            <p>Cost: <span style="color: var(--gold-color);">${cost}G</span></p>
-                        `;
+                    } else if (statPool.length > 0) {
+                        statPool.forEach(stat => {
+                            const baseValue = (item[stat] || 0) + (item.bonusStats?.[stat] || 0);
+                            const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
+                            const totalValue = baseValue + enhancementBonus;
+                            const isPercent = ['critChance', 'critDmg'].includes(stat);
+                            const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
+
+                            let statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} -> ?`;
+                            if (lastResult && lastResult.stat === stat) {
+                                statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} <span class="stat-increase"><-- Just Enhanced!</span>`;
+                            }
+                            infoHTML += `${statLine}</p>`;
+                        });
+                        infoHTML += `<hr style="border-color: var(--border-color);"><p style="text-align:center;">Cost: <span style="color: var(--gold-color);">${cost}G</span></p>`;
                         btn.disabled = gameState.gold < cost;
+                    } else {
+                        infoHTML += `<p style="text-align:center;">This item has no stats to enhance.</p>`;
+                        btn.disabled = true;
                     }
                     
                     infoDiv.innerHTML = infoHTML;
@@ -2520,7 +2569,7 @@
                     
                     const statPool = [];
                     for (const stat in STAT_NAMES) {
-                        if (item[stat] || (item.bonusStats && item.bonusStats[stat])) {
+                        if ((item[stat] && typeof item[stat] === 'number') || (item.bonusStats && item.bonusStats[stat])) {
                             statPool.push(stat);
                         }
                     }
@@ -2529,28 +2578,30 @@
                         logAction("This item has no stats to enhance.", "log-error");
                         return;
                     }
-
+                    
                     gameState.gold -= cost;
+
                     const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
                     let increase = 0;
                     let isPercent = false;
 
                     if (statToEnhance === 'critChance') {
-                        increase = 0.003; // +0.3%
-                        isPercent = true;
+                        increase = 0.003; isPercent = true;
                     } else if (statToEnhance === 'critDmg') {
-                        increase = 0.01; // +1.0%
-                        isPercent = true;
+                        increase = 0.01; isPercent = true;
                     } else {
-                        const baseValue = item[statToEnhance] || item.bonusStats[statToEnhance];
+                        const baseValue = (item[statToEnhance] || 0) + (item.bonusStats?.[statToEnhance] || 0);
                         increase = 1 + Math.round(baseValue * 0.10);
                     }
                     
                     item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
                     item.enhancementLevel = currentLevel + 1;
+                    
+                    gameState.playerTemp.lastEnhancementResult = { stat: statToEnhance };
 
                     const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
                     logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${displayIncrease}.`, 'log-system');
+                    
                     updateAllUIs();
                 }
 
