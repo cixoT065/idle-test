@@ -1385,14 +1385,21 @@
                     const p = gameState.player;
                     const monster = gameState.currentMonster;
                     
+                    // --- HIT CHANCE CLAMPING ---
+                    const MIN_HIT_CHANCE = 0.25; // 25% minimum chance to hit
+                    const MAX_HIT_CHANCE = 0.95; // 95% maximum chance to hit
+
                     const defenderEvasion = isPlayerAttacker ? (monster.evasion || 0) : (defender.evasion || 0);
                     const attackerAccuracy = attacker.accuracy || 0;
-                    const hitChance = Math.max(0.1, Math.min(0.99, 0.9 + attackerAccuracy - defenderEvasion));
+
+                    let hitChance = 0.90 + attackerAccuracy - defenderEvasion;
+                    hitChance = Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
 
                     if (Math.random() > hitChance) {
                         logAction(`${isPlayerAttacker ? 'Your' : (attacker.name + "'s")} attack was evaded!`, 'log-system');
                         return { damage: 0, isCrit: false, preMitigationDamage: 0 };
                     }
+                    // --- END HIT CHANCE ---
 
                     let isCrit = false;
                     if (isPlayerAttacker) {
