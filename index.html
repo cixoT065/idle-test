@@ -2065,9 +2065,8 @@
                     for (const stat in STAT_NAMES) {
                         if (item[stat]) {
                             const baseValue = item[stat];
-                            // FIX: Calculate current value based on current level.
+                            // FINAL FIX: Correctly calculate current and next values from the BASE stat.
                             const currentValue = baseValue * (1 + (currentLevel * ENHANCEMENT_BONUS_PER_LEVEL));
-                            // FIX: Calculate next value based on next level.
                             const nextValue = baseValue * (1 + ((currentLevel + 1) * ENHANCEMENT_BONUS_PER_LEVEL));
                             statPreview += `<p>${STAT_NAMES[stat]}: ${Math.round(currentValue)} -> ${Math.round(nextValue)}</p>`;
                         }
