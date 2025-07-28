@@ -1061,7 +1061,7 @@
                     if (!gameState.currentMonster) spawnMonster();
 
                     updateAllUIs();
-                    gameInterval = setInterval(gameLoop, 1500);
+                    gameInterval = setInterval(gameLoop, 1000);
                     autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
                 }
 
