@@ -700,7 +700,7 @@
                     target: null,
                     itemId: null
                 };
-                const SAVE_KEY = 'idleRpgSaveData_v12_mobileTooltip'; // Changed key for new structure
+                const SAVE_KEY = 'idleRpgSaveData_v13_itemStructure'; // Changed key for new structure
 
                 const STAT_NAMES = {
                     str: 'STR', con: 'CON', def: 'DEF', dex: 'DEX',
@@ -818,10 +818,10 @@
                     types: ['weapon', 'body', 'legs'],
                     rarities: {
                         N:   { color: '#DEDEDE',  statMod: 1.0, value: 2,   baseStatCount: 1, bonusStats: 0 },
-                        R:   { color: '#63C270',  statMod: 1.2, value: 8,   baseStatCount: 1, bonusStats: 1 },
-                        SR:  { color: '#6386C2',  statMod: 1.5, value: 40,  baseStatCount: 2, bonusStats: 2 },
-                        SSR: { color: '#9663C2',  statMod: 2.0, value: 200, baseStatCount: 2, bonusStats: 3 },
-                        UR:  { color: '#C29463',  statMod: 2.8, value: 1000,baseStatCount: 3, bonusStats: 4 },
+                        R:   { color: '#63C270',  statMod: 1.2, value: 8,   baseStatCount: 2, bonusStats: 1 },
+                        SR:  { color: '#6386C2',  statMod: 1.5, value: 40,  baseStatCount: 3, bonusStats: 2 },
+                        SSR: { color: '#9663C2',  statMod: 2.0, value: 200, baseStatCount: 4, bonusStats: 3 },
+                        UR:  { color: '#C29463',  statMod: 2.8, value: 1000,baseStatCount: 4, bonusStats: 4 },
                         LR:  { color: '#FFD700',  statMod: 3.5, value: 5000,baseStatCount: 5, bonusStats: 4 },
                     },
                     bonusStatPool: Object.keys(STAT_NAMES),
@@ -1231,8 +1231,8 @@
                     }
 
                     const rarityInfo = itemData.rarities[rarityKey];
-                    const waveScale = 1 + Math.log10(gameState.wave || 1); // Logarithmic scaling for stats
-                    const SET_ITEM_CHANCE = 0.10; // 10% chance for SR+ items to be a set item
+                    const waveScale = 1 + Math.log10(gameState.wave || 1);
+                    const SET_ITEM_CHANCE = 0.10;
 
                     const newItem = {
                         id: Date.now() + Math.random(),
@@ -1244,7 +1244,6 @@
                     };
 
                     let itemName;
-                    // Check for set item generation
                     if (['SR', 'SSR', 'UR', 'LR'].includes(rarityKey) && Math.random() < SET_ITEM_CHANCE) {
                         const possibleSets = Object.keys(itemSets).filter(name => itemSets[name].class === classForDrop);
                         if (possibleSets.length > 0) {
@@ -1255,7 +1254,6 @@
                         }
                     }
 
-                    // Generate a regular name if not a set item
                     if (!newItem.setName) {
                         const possibleNames = itemData.names[itemType][classForDrop];
                         const baseName = possibleNames[Math.floor(Math.random() * possibleNames.length)];
@@ -1264,8 +1262,6 @@
                     }
                     newItem.name = itemName;
 
-
-                    const statPool = shuffleArray([...itemData.bonusStatPool]);
                     const calculateStatValue = (stat) => {
                         let value;
                         if (['critChance', 'critDmg'].includes(stat)) {
@@ -1276,17 +1272,33 @@
                         return value;
                     };
 
-                    for (let i = 0; i < rarityInfo.baseStatCount; i++) {
-                        if (statPool.length === 0) break;
-                        const stat = statPool.pop();
+                    // --- New Stat Generation Logic ---
+                    let coreStat = null;
+                    if (newItem.type === 'weapon') coreStat = (newItem.classReq === 'Wizard') ? 'int' : 'str';
+                    else if (newItem.type === 'body') coreStat = 'def';
+                    else if (newItem.type === 'legs') coreStat = 'con';
+
+                    let baseStatPool = shuffleArray([...itemData.bonusStatPool]);
+                    baseStatPool = baseStatPool.filter(s => s !== coreStat);
+
+                    if (coreStat) {
+                        newItem[coreStat] = calculateStatValue(coreStat);
+                    }
+
+                    const baseStatsToGenerate = rarityInfo.baseStatCount - (coreStat ? 1 : 0);
+                    for (let i = 0; i < baseStatsToGenerate; i++) {
+                        if (baseStatPool.length === 0) break;
+                        const stat = baseStatPool.pop();
                         newItem[stat] = calculateStatValue(stat);
                     }
 
+                    let bonusStatPool = shuffleArray([...itemData.bonusStatPool]);
                     for (let i = 0; i < rarityInfo.bonusStats; i++) {
-                        if (statPool.length === 0) break;
-                        const stat = statPool.pop();
+                        if (bonusStatPool.length === 0) break;
+                        const stat = bonusStatPool.pop();
                         newItem.bonusStats[stat] = calculateStatValue(stat);
                     }
+                    // --- End of New Logic ---
 
                     gameState.inventory.push(newItem);
                     const color = rarityInfo.color;
