@@ -32,6 +32,7 @@
             --selection-color: #61afef;
             --stat-increase-color: #98c379;
             --stat-decrease-color: #e06c75;
+            --boost-color: #83c97d;
         }
 
         body {
@@ -320,6 +321,7 @@
         .log-drop { color: #d7ba7d; }
         .log-error { color: #ff6b6b; font-weight: bold; }
         .log-skill { color: #61afef; font-weight: bold; }
+        .log-boost { color: var(--boost-color); font-weight: bold; }
 
 
         .point-investment-stat,
@@ -478,10 +480,24 @@
             padding: 10px;
             text-align: center;
             background-color: var(--header-bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .shop-item button {
             margin-top: 10px;
+        }
+
+        #xp-boost-status {
+            color: var(--boost-color);
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            border: 1px solid var(--boost-color);
+            padding: 5px;
+            border-radius: 3px;
+            background-color: rgba(131, 201, 125, 0.1);
         }
 
         @media (max-width: 900px) {
@@ -536,6 +552,7 @@
                     <div class="stat-bar">
                         <div class="stat-bar-fill" id="player-xp-fill"></div>
                     </div>
+                    <div id="xp-boost-status" style="display: none;"></div>
                     <div class="gold-display">Gold: <span id="player-gold">0</span>G</div>
                 </div>
             </div>
@@ -605,24 +622,46 @@
                     <div id="tab-content-shop" class="tab-content active">
                         <div class="shop-grid">
                             <div class="shop-item">
-                                <strong>Minor Potion</strong>
-                                <p>Heals 25% HP</p>
-                                <button id="buy-potion-25">Buy (20G)</button>
+                                <div>
+                                    <strong>Minor Potion</strong>
+                                    <p>Heals 25% HP</p>
+                                </div>
+                                <button id="buy-potion-25">Buy</button>
                             </div>
                             <div class="shop-item">
-                                <strong>Standard Potion</strong>
-                                <p>Heals 50% HP</p>
-                                <button id="buy-potion-50">Buy (35G)</button>
+                                <div>
+                                    <strong>Standard Potion</strong>
+                                    <p>Heals 50% HP</p>
+                                </div>
+                                <button id="buy-potion-50">Buy</button>
                             </div>
                             <div class="shop-item">
-                                <strong>Greater Potion</strong>
-                                <p>Heals 75% HP</p>
-                                <button id="buy-potion-75">Buy (50G)</button>
+                                <div>
+                                    <strong>Greater Potion</strong>
+                                    <p>Heals 75% HP</p>
+                                </div>
+                                <button id="buy-potion-75">Buy</button>
                             </div>
                             <div class="shop-item">
-                                <strong>Full Restore</strong>
-                                <p>Heals 100% HP</p>
-                                <button id="buy-potion-100">Buy (65G)</button>
+                                <div>
+                                    <strong>Full Restore</strong>
+                                    <p>Heals 100% HP</p>
+                                </div>
+                                <button id="buy-potion-100">Buy</button>
+                            </div>
+                            <div class="shop-item">
+                                <div>
+                                    <strong>2x XP Boost</strong>
+                                    <p>Doubles XP gain for the next 100 fights.</p>
+                                </div>
+                                <button id="buy-xp-boost-2x">Buy</button>
+                            </div>
+                            <div class="shop-item">
+                                <div>
+                                    <strong>3x XP Boost</strong>
+                                    <p>Triples XP gain for the next 100 fights.</p>
+                                </div>
+                                <button id="buy-xp-boost-3x">Buy</button>
                             </div>
                         </div>
                     </div>
@@ -719,6 +758,7 @@
                         equipment: { weapon: null, body: null, legs: null },
                         maxInventorySize: 20,
                         rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
+                        activeBoosts: { xp: null },
                         playerTemp: {
                             pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                             classSelection: null,
@@ -911,6 +951,8 @@
                     resetInvestBtn: document.getElementById('reset-invest-btn'),
                     buyPotion25: document.getElementById('buy-potion-25'), buyPotion50: document.getElementById('buy-potion-50'),
                     buyPotion75: document.getElementById('buy-potion-75'), buyPotion100: document.getElementById('buy-potion-100'),
+                    buyXpBoost2x: document.getElementById('buy-xp-boost-2x'), buyXpBoost3x: document.getElementById('buy-xp-boost-3x'),
+                    xpBoostStatus: document.getElementById('xp-boost-status'),
                 };
 
                 function startGame() {
@@ -1147,13 +1189,26 @@
                     logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system');
 
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
-                    const xpBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
+                    const xpRebirthBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
                     const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
-                    const xpGained = Math.round(gameState.currentMonster.xp * xpBonus);
+
+                    let xpShopBoostMultiplier = 1;
+                    let xpLogMessage = '';
+                    if (gameState.activeBoosts.xp && gameState.activeBoosts.xp.fightsRemaining > 0) {
+                        xpShopBoostMultiplier = gameState.activeBoosts.xp.multiplier;
+                        gameState.activeBoosts.xp.fightsRemaining--;
+                        xpLogMessage = ` (x${xpShopBoostMultiplier} Boost!)`;
+                        if (gameState.activeBoosts.xp.fightsRemaining <= 0) {
+                            gameState.activeBoosts.xp = null;
+                            logAction('Your XP Boost has expired.', 'log-boost');
+                        }
+                    }
+
+                    const xpGained = Math.round(gameState.currentMonster.xp * xpRebirthBonus * xpShopBoostMultiplier);
 
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
-                    logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop');
+                    logAction(`You gained ${goldGained} gold and ${xpGained} XP.${xpLogMessage}`, 'log-drop');
 
                     if (Math.random() < gameState.currentMonster.dropChance) {
                         generateItemDrop(gameState.currentMonster);
@@ -1438,12 +1493,33 @@
                     UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
                     UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
 
+                    // Update XP Boost UI
+                    const xpBoost = gameState.activeBoosts.xp;
+                    if (xpBoost && xpBoost.fightsRemaining > 0) {
+                        UIElements.xpBoostStatus.textContent = `XP BOOST: x${xpBoost.multiplier} (${xpBoost.fightsRemaining} fights left)`;
+                        UIElements.xpBoostStatus.style.display = 'block';
+                    } else {
+                        UIElements.xpBoostStatus.style.display = 'none';
+                    }
+
+                    // Update Shop UI
+                    const isBossFight = gameState.currentMonster && gameState.currentMonster.monsterType === 'boss';
                     for (const key of [25, 50, 75, 100]) {
                         const cost = gameState.potionCosts[`p${key}`];
                         const btn = UIElements[`buyPotion${key}`];
-                        btn.textContent = `Buy (${cost}G)`;
-                        btn.disabled = gameState.gold < cost || gameState.player.currentHp >= totalStats.hp;
+                        if (btn) {
+                            btn.textContent = `Buy (${cost}G)`;
+                            btn.disabled = isBossFight || gameState.gold < cost || gameState.player.currentHp >= totalStats.hp;
+                        }
                     }
+
+                    const boost2xCost = 250 * gameState.wave;
+                    UIElements.buyXpBoost2x.textContent = `Buy (${boost2xCost}G)`;
+                    UIElements.buyXpBoost2x.disabled = gameState.gold < boost2xCost || !!gameState.activeBoosts.xp;
+                    
+                    const boost3xCost = 600 * gameState.wave;
+                    UIElements.buyXpBoost3x.textContent = `Buy (${boost3xCost}G)`;
+                    UIElements.buyXpBoost3x.disabled = gameState.gold < boost3xCost || !!gameState.activeBoosts.xp;
                 }
 
                 function updatePointInvestmentUI() {
@@ -1844,6 +1920,21 @@
                     }
                 }
 
+                function buyXpBoost(multiplier) {
+                    const baseCost = multiplier === 2 ? 250 : 600;
+                    const cost = baseCost * gameState.wave;
+
+                    if (gameState.gold >= cost && !gameState.activeBoosts.xp) {
+                        gameState.gold -= cost;
+                        gameState.activeBoosts.xp = {
+                            multiplier: multiplier,
+                            fightsRemaining: 100
+                        };
+                        logAction(`Purchased a x${multiplier} XP Boost for 100 fights!`, 'log-boost');
+                        updateAllUIs();
+                    }
+                }
+
 
                 function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
                 function deepMerge(target, source) {
@@ -1912,6 +2003,8 @@
                 UIElements.buyPotion50.onclick = () => buyPotion(50);
                 UIElements.buyPotion75.onclick = () => buyPotion(75);
                 UIElements.buyPotion100.onclick = () => buyPotion(100);
+                UIElements.buyXpBoost2x.onclick = () => buyXpBoost(2);
+                UIElements.buyXpBoost3x.onclick = () => buyXpBoost(3);
                 document.querySelectorAll('#tab-content-rebirth .rebirth-stat button').forEach(btn => {
                     btn.onclick = () => investRebirthPoint(btn.dataset.rebirth);
                 });
