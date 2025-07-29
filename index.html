@@ -92,7 +92,7 @@
         }
 
         #system-panel {
-            /* margin-top: auto; /* Removed to allow sidebar scrolling */
+            margin-top: auto;
         }
 
         .panel-header {
@@ -188,7 +188,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             pointer-events: auto;
         }
-      
+        
         .stat-increase { color: var(--stat-increase-color); }
         .stat-decrease { color: var(--stat-decrease-color); }
         .enhancement-bonus { color: var(--enhancement-color); }
@@ -277,7 +277,7 @@
             padding: 12px 20px;
             border: 2px solid transparent;
         }
-      
+        
         .modal-choices button.selected {
             border-color: var(--selection-color);
             background-color: #555;
@@ -293,7 +293,7 @@
             color: #b0b0b0;
             font-style: italic;
         }
-      
+        
         .modal-footer-confirm {
             margin-top: 20px;
         }
@@ -755,7 +755,7 @@
                     </div>
                 </div>
             </div>
-          
+            
             <!-- NEW LOG AREA -->
             <div class="log-area-container">
 <!--                 <div class="panel" style="flex-grow: 1;>
@@ -839,7 +839,7 @@
                     str: 'STR', con: 'CON', def: 'DEF', dex: 'DEX',
                     agl: 'AGL', int: 'INT', critChance: 'Crit Chance', critDmg: 'Crit DMG'
                 };
-              
+                
                 const DISPLAY_STATS = {
                     atk: 'ATK', def: 'DEF', hp: 'HP', accuracy: 'Accuracy', evasion: 'Evasion', critChance: 'Crit Chance', critDmg: 'Crit DMG'
                 };
@@ -1127,7 +1127,7 @@
                                 if (item.bonusStats === undefined) item.bonusStats = {};
                                 if (item.enhancementBonusStats === undefined) item.enhancementBonusStats = {};
                                 if (item.enhancementProgress) delete item.enhancementProgress; // Remove obsolete property
-                              
+                                
                                 for (const statName in STAT_NAMES) {
                                     if (item.enhancementBonusStats[statName] === undefined) {
                                         item.enhancementBonusStats[statName] = 0;
@@ -1148,7 +1148,7 @@
                             loadedState.player.activeSkills = [];
                         }
                     }
-                  
+                    
                     return loadedState;
                 }
 
@@ -1158,7 +1158,7 @@
                         if (savedState) {
                             let loadedState = JSON.parse(savedState);
                             if (!loadedState.player || !loadedState.player.baseStats) throw new Error("Invalid save.");
-                          
+                            
                             loadedState = migrateSaveData(loadedState);
 
                             gameState = deepMerge(getDefaultGameState(), loadedState);
@@ -1257,7 +1257,7 @@
                     logAction(`You have chosen the path of the ${className}.`, 'log-system', "event");
                     startGame();
                 }
-              
+                
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
@@ -1327,7 +1327,7 @@
                             }
                         }
                     }
-                  
+                    
                     const finalStats = { ...rawStats };
                     const primaryStat = classes[p.baseClassName].primaryStat;
 
@@ -1358,14 +1358,14 @@
                     if (p.currentHp > finalStats.hp && !hypotheticalItem) {
                         p.currentHp = finalStats.hp;
                     }
-                  
+                    
                     return finalStats;
                 }
 
                 function gameLoop() {
                     if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
                     const player = gameState.player;
-                  
+                    
                     handleBuffsAndDebuffs();
 
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
@@ -1374,11 +1374,11 @@
                     let playerDamage = calculateDamage(playerStats, gameState.currentMonster, true);
                     gameState.currentMonster.hp -= playerDamage.damage;
                     logAction(`You hit ${gameState.currentMonster.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player', 'battle');
-                  
+                    
                     handlePostPlayerAttackSkills(playerStats, playerDamage);
 
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
-                  
+                    
                     if (gameState.currentMonster.missNextAttack) {
                         logAction(`${gameState.currentMonster.name}'s attack was nullified by a time distortion!`, 'log-skill', 'battle');
                         gameState.currentMonster.missNextAttack = false;
@@ -1387,7 +1387,7 @@
                         gameState.playerTemp.guaranteedEvasion = false;
                     } else {
                         let monsterDamage = calculateDamage(gameState.currentMonster, playerStats, false);
-                      
+                        
                         let wasBlocked = false;
                         if(player.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
                             wasBlocked = true;
@@ -1428,7 +1428,7 @@
                 function calculateDamage(attacker, defender, isPlayerAttacker) {
                     const p = gameState.player;
                     const monster = gameState.currentMonster;
-                  
+                    
                     // --- HIT CHANCE CLAMPING ---
                     const MIN_HIT_CHANCE = 0.25; // 25% minimum chance to hit
                     const MAX_HIT_CHANCE = 0.95; // 95% maximum chance to hit
@@ -1466,7 +1466,7 @@
                     }
 
                     let baseDamage = (attacker.atk || 0);
-                  
+                    
                     let defenderDef = isPlayerAttacker ? (monster.def || 0) : (defender.def || 0);
                     if (isPlayerAttacker && monster.debuffs['Sunder']) {
                         defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
@@ -1487,7 +1487,7 @@
                             damageMultiplier += executeBonus;
                         }
                     }
-                  
+                    
                     const preMitigationDamage = baseDamage * critMultiplier * damageMultiplier;
                     const damageReduction = 1 - (defenderDef / (defenderDef + 100));
                     let finalDamage = Math.round(preMitigationDamage * damageReduction);
@@ -1498,7 +1498,7 @@
                 function handlePostPlayerAttackSkills(playerStats, playerDamage) {
                     const p = gameState.player;
                     const monster = gameState.currentMonster;
-                  
+                    
                     // Lifesteal
                     if (p.activeSkills.includes('Unyielding Assault') && gameState.playerTemp.battleRushTurns > 0) {
                         const lifestealAmount = Math.round(playerDamage.damage * 0.10);
@@ -1527,7 +1527,7 @@
                     if (playerDamage.isCrit && p.activeSkills.includes('Bleed')) {
                         const maxStacks = p.activeSkills.includes('Hemorrhage') ? 3 : 1;
                         let logMsg;
-                      
+                        
                         if (!monster.debuffs['Bleed']) {
                             monster.debuffs['Bleed'] = { damage: Math.round(playerStats.atk * 0.3), duration: 3, stacks: 1 };
                             logMsg = 'Your critical hit causes the enemy to Bleed!';
@@ -1562,7 +1562,7 @@
                     let arcanePowerChance = 0;
                     if(p.activeSkills.includes('High Voltage')) arcanePowerChance = 0.15;
                     else if (p.activeSkills.includes('Arcane Power')) arcanePowerChance = 0.10;
-                  
+                    
                     if (arcanePowerChance > 0 && Math.random() < arcanePowerChance) {
                         arcanePowerProc = true;
                         let arcaneDmg = playerStats.atk * (p.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
@@ -1591,7 +1591,7 @@
                         }
                         drainDmg = Math.round(drainDmg);
                         monster.hp -= drainDmg;
-                      
+                        
                         let healPercent = p.activeSkills.includes('Devour Soul') ? 0.75 : 0.50;
                         const healAmount = Math.round(drainDmg * healPercent);
                         p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
@@ -1679,7 +1679,7 @@
                     }
 
                     if (gameState.kills >= 10 && gameState.currentMonster.monsterType !== 'boss') UIElements.challengeBossBtn.disabled = false;
-                  
+                    
                     while (gameState.player.xp >= gameState.player.xpToNextLevel) {
                         levelUp();
                     }
@@ -1804,7 +1804,7 @@
                     if (coreStat) {
                         newItem[coreStat] = calculateStatValue(coreStat);
                     }
-                  
+                    
                     const generatedBaseStats = [];
                     const baseStatsToGenerate = rarityInfo.baseStatCount - (coreStat ? 1 : 0);
                     for (let i = 0; i < baseStatsToGenerate; i++) {
@@ -1888,11 +1888,11 @@
 
                 function levelUp() {
                     const p = gameState.player;
-                  
+                    
                     p.xp -= p.xpToNextLevel;
                     p.level++;
                     p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45));
-                  
+                    
                     const pointsGained = Math.floor(Math.random() * 3) + 5;
                     p.statPoints += pointsGained;
 
@@ -1927,7 +1927,7 @@
                     gameState.isRunning = false;
                     UIElements.promotionDescription.textContent = 'Select a promotion to learn more.';
                     UIElements.confirmPromotionBtn.disabled = true;
-                  
+                    
                     const promotionChoices = UIElements.promotionChoices;
                     promotionChoices.innerHTML = '';
 
@@ -1970,7 +1970,7 @@
                             updateAllUIs();
                         }
                     };
-                  
+                    
                     UIElements.promotionModal.style.display = 'flex';
                 }
 
@@ -2023,7 +2023,7 @@
                     const boost2xCost = 250 * gameState.wave;
                     UIElements.buyXpBoost2x.textContent = `Buy (${boost2xCost}G)`;
                     UIElements.buyXpBoost2x.disabled = gameState.gold < boost2xCost || !!gameState.activeBoosts.xp;
-                  
+                    
                     const boost3xCost = 600 * gameState.wave;
                     UIElements.buyXpBoost3x.textContent = `Buy (${boost3xCost}G)`;
                     UIElements.buyXpBoost3x.disabled = gameState.gold < boost3xCost || !!gameState.activeBoosts.xp;
@@ -2202,7 +2202,7 @@
                     panel.style.display = 'flex';
                     // Find the skill data for all active skills
                     const activeSkillData = Object.values(promotionSkills).filter(skill => gameState.player.activeSkills.includes(skill.name));
-                  
+                    
                     activeSkillData.forEach(skillData => {
                         const skillDiv = document.createElement('div');
                         skillDiv.className = 'skill-entry';
@@ -2225,17 +2225,17 @@
 
                 function showTooltip(targetElement, item, isEquipped) {
                     hideTooltip(); 
-                  
+                    
                     activeTooltip.target = targetElement;
                     activeTooltip.itemId = item.id;
-                  
+                    
                     const tooltip = UIElements.globalTooltip;
                     const classColor = item.classReq === gameState.player.baseClassName ? 'var(--text-color)' : '#e06c75';
                     const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
 
                     let content = `<strong style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.name}${enhancementText} (${item.type})</strong><br>`;
                     content += `Rarity: <span style="color: ${itemData.rarities[item.rarity].color}; font-weight: bold;">${item.rarity}</span> | Class: <span style="color:${classColor};">${item.classReq}</span><br>----<br>`;
-                  
+                    
                     const buildStatString = (stat, baseValue) => {
                         const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
                         if (baseValue === 0 && enhancementBonus === 0) return '';
@@ -2268,7 +2268,7 @@
                             bonusStatContent += buildStatString(stat, item.bonusStats[stat]);
                         }
                     }
-                  
+                    
                     content += baseStatContent;
                     if (bonusStatContent) {
                         content += `---- (Bonus) ----<br>${bonusStatContent}`;
@@ -2284,7 +2284,7 @@
                             content += `<span style="color: ${bonusIsActive ? 'var(--set-bonus-active)' : 'var(--disabled-text-color)'};">${setInfo.bonuses[count].description}</span><br>`;
                         }
                     }
-                  
+                    
                     if (!isEquipped && gameState.equipment[item.type]) {
                         const currentStats = getPlayerTotalStats();
                         const futureStats = getPlayerTotalStats(item);
@@ -2294,7 +2294,7 @@
                         for (const stat in DISPLAY_STATS) {
                             const diff = futureStats[stat] - currentStats[stat];
                             if (Math.abs(diff) < 0.0001) continue;
-                          
+                            
                             hasComparison = true;
                             const isPercent = ['accuracy', 'evasion', 'critChance', 'critDmg'].includes(stat);
                             let diffDisplay = isPercent ? `${(diff * 100).toFixed(1)}%` : `${Math.round(diff)}`;
@@ -2302,7 +2302,7 @@
 
                             const symbol = diff > 0 ? '▲' : '▼';
                             const className = diff > 0 ? 'stat-increase' : 'stat-decrease';
-                          
+                            
                             comparisonContent += `${DISPLAY_STATS[stat]}: <span class="${className}">${symbol}${diffDisplay}</span><br>`;
                         }
                         if (hasComparison) content += comparisonContent;
@@ -2321,7 +2321,7 @@
                     if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
                     tooltip.style.top = `${top}px`;
                     tooltip.style.left = `${left}px`;
-                  
+                    
                     setTimeout(() => window.addEventListener('click', handleDocumentClickForTooltip), 0);
                 }
 
@@ -2333,7 +2333,7 @@
                         window.removeEventListener('click', handleDocumentClickForTooltip);
                     }
                 }
-              
+                
                 function handleDocumentClickForTooltip(event) {
                     if (activeTooltip.target && !activeTooltip.target.contains(event.target) && !UIElements.globalTooltip.contains(event.target)) {
                         hideTooltip();
@@ -2501,7 +2501,7 @@
                         const slot = document.createElement('div');
                         slot.className = 'blacksmith-slot';
                         slot.dataset.type = type;
-                      
+                        
                         if (item) {
                             const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
                             slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
@@ -2509,7 +2509,7 @@
                             slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
                             slot.style.color = 'var(--disabled-text-color)';
                         }
-                      
+                        
                         if (gameState.playerTemp.blacksmithSelection === type) {
                             slot.classList.add('selected');
                         }
@@ -2558,7 +2558,7 @@
                         <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
                         <hr style="border-color: var(--border-color);">
                     `;
-                  
+                    
                     const statPool = [];
                     for (const stat in STAT_NAMES) {
                         if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
@@ -2589,7 +2589,7 @@
                         infoHTML += `<p style="text-align:center;">This item has no stats to enhance.</p>`;
                         btn.disabled = true;
                     }
-                  
+                    
                     infoDiv.innerHTML = infoHTML;
                 }
 
@@ -2610,7 +2610,7 @@
                         logAction('Not enough gold to enhance.', 'log-error', "event");
                         return;
                     }
-                  
+                    
                     const statPool = [];
                     for (const stat in STAT_NAMES) {
                         if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
@@ -2622,7 +2622,7 @@
                         logAction("This item has no stats to enhance.", "log-error", "event");
                         return;
                     }
-                  
+                    
                     gameState.gold -= cost;
 
                     const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
@@ -2637,15 +2637,15 @@
                         const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0)*/;
                         increase = 1 + Math.round(baseValue * 0.10);
                     }
-                  
+                    
                     item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
                     item.enhancementLevel = currentLevel + 1;
-                  
+                    
                     gameState.playerTemp.lastEnhancementResult = { stat: statToEnhance };
 
                     const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
                     logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${displayIncrease}.`, 'log-system', "event");
-                  
+                    
                     updateAllUIs();
                 }
 
@@ -2680,19 +2680,19 @@
                         });
                     });
                 }
-              
+                
                 function setupClassSelectionEvents() {
                     const choiceButtons = UIElements.classSelectionChoices.querySelectorAll('button');
-                  
+                    
                     choiceButtons.forEach(btn => {
                         btn.addEventListener('click', () => {
                             const className = btn.dataset.class;
                             gameState.playerTemp.classSelection = className;
                             UIElements.classDescription.textContent = classes[className].description;
-                          
+                            
                             choiceButtons.forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
-                          
+                            
                             UIElements.confirmClassBtn.disabled = false;
                         });
                     });
