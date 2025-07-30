@@ -10,18 +10,18 @@
             --bg-color: #0a0a0a;
             --panel-bg-color: #1a1a1a;
             --text-color: #e0e0e0;
-            --primary-color: #444444;
+            --primary-color: #4444;
             /* Enabled button color */
-            --secondary-color: #333333;
+            --secondary-color: #3333;
             --border-color: #2c2c2c;
-            --header-bg-color: #000000;
+            --header-bg-color: #0000;
             --hp-color: #543232;
             --xp-color: #323954;
             --gold-color: #c7a552;
             --rebirth-color: #724394;
-            --disabled-bg-color: #222222;
-            --disabled-text-color: #555555;
-            --skill-color: #ffffff;
+            --disabled-bg-color: #2222;
+            --disabled-text-color: #5555;
+            --skill-color: #ffff;
             --stat-str: #c97d7d;
             --stat-con: #7dc982;
             --stat-def: #7d8ec9;
@@ -111,13 +111,21 @@
 
         #invest-points-panel,
         #equipment-panel,
-        #skill-panel {
+        #skill-panel,
+        #system-panel {
             flex-grow: 1;
             min-height: 0;
         }
 
+        #player-profile-panel .panel-body,
+        #combat-stats-panel .panel-body {
+            overflow-y: auto;
+            max-height: 220px;
+        }
+
         #invest-points-panel .panel-body,
         #equipment-panel .panel-body,
+        #system-panel .panel-body,
         #skill-panel .panel-body {
             flex-grow: 1;
             overflow-y: auto;
@@ -151,7 +159,7 @@
         }
 
         #monster-hp-fill {
-            background-color: #999999;
+            background-color: #9999;
         }
 
         .stats-grid {
@@ -169,7 +177,7 @@
             font-size: 1.5em;
             font-weight: bold;
             margin: 20px 0;
-            color: #ffffff;
+            color: #ffff;
         }
 
         .activity-log-container {
@@ -234,7 +242,7 @@
         }
 
         button:hover:not(:disabled) {
-            background-color: #555555;
+            background-color: #5555;
         }
 
         button:disabled {
@@ -249,7 +257,7 @@
         }
 
         .button-secondary:hover:not(:disabled) {
-            background-color: #444444;
+            background-color: #4444;
         }
 
         .button-danger {
@@ -496,7 +504,7 @@
         }
 
         .equipped-tag {
-            color: #ffffff;
+            color: #ffff;
             font-size: 0.8em;
             margin-left: 8px;
             font-style: italic;
@@ -684,7 +692,7 @@
         }
 
         .info-tab-content strong {
-            color: #ffffff;
+            color: #ffff;
         }
 
         .info-tab-content .stat-name {
@@ -712,6 +720,8 @@
             margin-top: 20px;
             flex-shrink: 0;
         }
+
+
 
         @media (max-width: 900px) {
             .main-container {
@@ -751,7 +761,7 @@
 
     <div class="main-container" id="main-container-div">
         <div class="sidebar">
-            <div class="panel">
+            <div class="panel" id="player-profile-panel">
                 <div class="panel-header">Player Profile</div>
                 <div class="panel-body">
                     <div id="player-info">
@@ -774,7 +784,7 @@
                     <div class="gold-display">Gold: <span id="player-gold">0</span>G</div>
                 </div>
             </div>
-            <div class="panel">
+            <div class="panel" id="combat-stats-panel">
                 <div class="panel-header">Combat Stats</div>
                 <div class="panel-body stats-grid">
                     <div>ATK (STR/INT): <span id="player-atk">10</span></div>
@@ -1022,10 +1032,10 @@
 
             const FINAL_BOSS_BASE_STATS = {
                 name: "The Chronos Tyrant",
-                hp: 25000000,
+                hp: 250000,
                 atk: 75000,
                 def: 150000,
-                gold: 5000000,
+                gold: 50000,
                 xp: 0
             };
 
@@ -1418,14 +1428,14 @@
                 clearInterval(gameInterval);
                 clearInterval(autoSaveInterval);
                 UIElements.mainContainer.innerHTML = `
-                        <div class="win-screen">
-                            <h1>Congratulations!</h1>
-                            <p>You have defeated ${gameState.finalBoss.name} and conquered the game!</p>
-                            <p>Your final achievement was accomplished after ${gameState.rebirth.points} rebirths.</p>
-                            <p>Thank you for playing Idle RPG Evolved!</p>
-                            <button onclick="localStorage.removeItem('${SAVE_KEY}'); location.reload();" class="button">Play Again From Scratch</button>
-                        </div>
-                    `;
+    <div class="win-screen">
+    <h1>Congratulations!</h1>
+    <p>You have defeated ${gameState.finalBoss.name} and conquered the game!</p>
+    <p>Your final achievement was accomplished after ${gameState.rebirth.points} rebirths.</p>
+    <p>Thank you for playing Idle RPG Evolved!</p>
+    <button onclick="localStorage.removeItem('${SAVE_KEY}'); location.reload();" class="button">Play Again From Scratch</button>
+    </div>
+    `;
             }
 
             function startGame() {
@@ -2028,24 +2038,24 @@
                 return array;
             }
 
-            // =================================================================================
+            // ====
             // ORIGINAL FUNCTION (for reference)
-            // =================================================================================
+            // ====
             /*
             function getRarityProbabilities(monsterType) {
-                switch (monsterType) {
-                    case 'regular': return { N: 0.80, R: 0.17, SR: 0.025, SSR: 0.005, UR: 0, LR: 0 };
-                    case 'mutant': return { N: 0.647, R: 0.30, SR: 0.04, SSR: 0.01, UR: 0.003, LR: 0 };
-                    case 'elite': return { N: 0.459, R: 0.40, SR: 0.10, SSR: 0.03, UR: 0.01, LR: 0.001 };
-                    case 'boss': return { N: 0.10, R: 0.60, SR: 0.20, SSR: 0.075, UR: 0.02, LR: 0.005 };
-                    default: return { N: 1.0, R: 0, SR: 0, SSR: 0, UR: 0, LR: 0 };
-                }
+            switch (monsterType) {
+            case 'regular': return { N: 0.80, R: 0.17, SR: 0.025, SSR: 0.005, UR: 0, LR: 0 };
+            case 'mutant': return { N: 0.647, R: 0.30, SR: 0.04, SSR: 0.01, UR: 0.003, LR: 0 };
+            case 'elite': return { N: 0.459, R: 0.40, SR: 0.10, SSR: 0.03, UR: 0.01, LR: 0.001 };
+            case 'boss': return { N: 0.10, R: 0.60, SR: 0.20, SSR: 0.075, UR: 0.02, LR: 0.005 };
+            default: return { N: 1.0, R: 0, SR: 0, SSR: 0, UR: 0, LR: 0 };
+            }
             }
             */
 
-            // =================================================================================
+            // ====
             // NEW MODIFIED FUNCTION
-            // =================================================================================
+            // ====
             function getRarityProbabilities(monsterType) {
                 let baseProbs;
                 switch (monsterType) {
@@ -2310,7 +2320,7 @@
 
                 const xpBoost = gameState.activeBoosts.xp;
                 if (xpBoost && xpBoost.fightsRemaining > 0) {
-                    UIElements.xpBoostStatus.textContent = `XP BOOST: x${xpBoost.multiplier} (${xpBoost.fightsRemaining} fights left)`;
+                    UIElements.xpBoostStatus.textContent = `XP BOOST: x${xpBoost.multiplier} (${xpBoost.fightsRemaining} left)`;
                     UIElements.xpBoostStatus.style.display = 'block';
                 } else {
                     UIElements.xpBoostStatus.style.display = 'none';
@@ -2341,7 +2351,7 @@
                     btn.style.display = 'block';
                     const boss = gameState.finalBoss;
                     if (boss) {
-                        const hpDisplay = boss.hp > 1000000 ? `${(boss.hp / 1000000).toFixed(2)}M` : Math.round(boss.hp);
+                        const hpDisplay = boss.hp > 10000 ? `${(boss.hp / 10000).toFixed(2)}M` : Math.round(boss.hp);
                         btn.innerHTML = `Challenge ${boss.name}<br>(HP: ${hpDisplay})`;
                     }
                 } else {
@@ -2387,15 +2397,15 @@
                     }
 
                     statDiv.innerHTML = `
-                            <span class="stat-label">${STAT_NAMES[stat]}: <span class="stat-value">${displayCurrent}</span>
-                                ${pendingPoints > 0 ? ` -> ${displayFuture}` : ''}
-                            </span>
-                            <div class="investment-controls">
-                                <button class="btn-minus" data-stat="${stat}">-</button>
-                                <span class="pending-points">${pendingPoints}</span>
-                                <button class="btn-plus" data-stat="${stat}">+</button>
-                            </div>
-                        `;
+    <span class="stat-label">${STAT_NAMES[stat]}: <span class="stat-value">${displayCurrent}</span>
+    ${pendingPoints > 0 ? ` -> ${displayFuture}` : ''}
+    </span>
+    <div class="investment-controls">
+    <button class="btn-minus" data-stat="${stat}">-</button>
+    <span class="pending-points">${pendingPoints}</span>
+    <button class="btn-plus" data-stat="${stat}">+</button>
+    </div>
+    `;
                     const plusBtn = statDiv.querySelector('.btn-plus');
                     const minusBtn = statDiv.querySelector('.btn-minus');
                     plusBtn.disabled = pointsAvailable <= 0;
@@ -2449,15 +2459,15 @@
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'inventory-item';
                     itemDiv.innerHTML = `
-                            <div class="inventory-item-info" data-item-id="${item.id}">
-                                <span style="color: ${rarityColor};">${item.name}${enhancementText}</span>
-                                ${isEquipped ? '<span class="equipped-tag">[Equipped]</span>' : ''}
-                            </div>
-                            <div class="inventory-item-actions">
-                                <button class="equip-btn" data-item-id="${item.id}">${isEquipped ? 'Unequip' : 'Equip'}</button>
-                                <button class="sell-btn" data-item-id="${item.id}">Sell</button>
-                            </div>
-                        `;
+    <div class="inventory-item-info" data-item-id="${item.id}">
+    <span style="color: ${rarityColor};">${item.name}${enhancementText} (${item.type})</span>
+    ${isEquipped ? '<span class="equipped-tag">[Equipped]</span>' : ''}
+    </div>
+    <div class="inventory-item-actions">
+    <button class="equip-btn" data-item-id="${item.id}">${isEquipped ? 'Unequip' : 'Equip'}</button>
+    <button class="sell-btn" data-item-id="${item.id}">Sell</button>
+    </div>
+    `;
                     list.appendChild(itemDiv);
                 });
 
@@ -2635,115 +2645,87 @@
 
             function sellItem(itemId) {
                 const itemIndex = gameState.inventory.findIndex(i => i.id == itemId);
-                if (itemIndex === -1) return;
-                const item = gameState.inventory[itemIndex];
-                if (Object.values(gameState.equipment).includes(item.id)) {
-                    logAction("Cannot sell an equipped item.", 'log-error', "event"); return;
+                if (itemIndex > -1) {
+                    const item = gameState.inventory[itemIndex];
+                    const sellValue = itemData.rarities[item.rarity].value;
+                    gameState.gold += sellValue;
+                    logAction(`Sold ${item.name} for ${sellValue}G.`, 'log-system', "event");
+                    gameState.inventory.splice(itemIndex, 1);
+                    hideTooltip();
+                    updateAllUIs();
                 }
-                gameState.gold += itemData.rarities[item.rarity].value;
-                gameState.inventory.splice(itemIndex, 1);
-                logAction(`Sold <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> for ${itemData.rarities[item.rarity].value}G.`, 'log-system', "event");
+            }
+
+            function sellByRarity(rarity) {
+                const equippedIds = Object.values(gameState.equipment);
+                const itemsToSell = gameState.inventory.filter(i => i.rarity === rarity && !equippedIds.includes(i.id));
+                if (itemsToSell.length === 0) {
+                    logAction(`No unequipped [${rarity}] items to sell.`, 'log-system', "event");
+                    return;
+                }
+                let totalValue = 0;
+                itemsToSell.forEach(item => totalValue += itemData.rarities[item.rarity].value);
+                gameState.gold += totalValue;
+                gameState.inventory = gameState.inventory.filter(i => i.rarity !== rarity || equippedIds.includes(i.id));
+                logAction(`Sold ${itemsToSell.length} [${rarity}] items for ${totalValue}G.`, 'log-system', "event");
                 hideTooltip();
                 updateAllUIs();
             }
 
-            function logAction(message, typeClass, logType = 'event') {
-                const p = document.createElement('p');
-                p.innerHTML = message;
-                if (typeClass) p.classList.add(typeClass);
-                const targetLog = logType === 'battle' ? UIElements.battleLog : UIElements.eventLog;
-                targetLog.appendChild(p);
-                targetLog.scrollTop = targetLog.scrollHeight;
-            }
-
-            function updateAllUIs() {
-                updateUI(); updateInventoryUI(); updateEquipmentUI();
-                updatePointInvestmentUI(); updateSkillUI(); updateBlacksmithUI();
-                updateFinalBossButton();
-            }
-
-            function resetTransientData() {
-                gameState.playerTemp = getDefaultGameState().playerTemp;
-                if (gameState.currentMonster) {
-                    gameState.currentMonster.debuffs = {};
-                    gameState.currentMonster.missNextAttack = false;
+            function rebirth() {
+                if (!gameState.player || gameState.player.level < 70) {
+                    logAction('You must be at least level 70 to rebirth.', 'log-error', "event");
+                    return;
                 }
-            }
+                if (!confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) return;
 
-            function handleNewGame() {
-                clearInterval(gameInterval); clearInterval(autoSaveInterval);
-                localStorage.removeItem(SAVE_KEY);
-                const rebirthData = gameState.rebirth;
+                const pointsGained = Math.floor(Math.pow(gameState.wave, 1.2) / 10) + Math.floor(gameState.player.level / 10);
+                logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
+
+                const oldRebirth = { ...gameState.rebirth };
+                const oldMaxWave = gameState.maxWaveReached;
+                const oldFinalBossDefeated = gameState.finalBossDefeated;
+
                 gameState = getDefaultGameState();
-                gameState.rebirth = rebirthData;
-                UIElements.eventLog.innerHTML = ''; UIElements.battleLog.innerHTML = '';
-                logAction('The world is born anew. Choose your class.', 'log-system', "event");
-                UIElements.rebirthBtn.style.display = 'none';
+                gameState.rebirth = oldRebirth;
+                gameState.rebirth.points += pointsGained;
+                gameState.maxWaveReached = oldMaxWave;
+                gameState.finalBossDefeated = oldFinalBossDefeated;
+
                 UIElements.classSelectionModal.style.display = 'flex';
+                UIElements.rebirthBtn.style.display = 'none';
+                clearInterval(gameInterval);
+                clearInterval(autoSaveInterval);
                 updateAllUIs();
             }
 
-            function handleRebirth() {
-                if (!gameState.player || gameState.player.level < 70) return;
-                if (confirm('Are you sure you want to rebirth?')) {
-                    const pointsGained = Math.floor((gameState.player.level - 69) * 1.5 + gameState.wave * 2);
-                    clearInterval(gameInterval); clearInterval(autoSaveInterval);
-                    localStorage.removeItem(SAVE_KEY);
-                    const rebirthData = gameState.rebirth;
-                    rebirthData.points += pointsGained;
-                    gameState = getDefaultGameState();
-                    gameState.rebirth = rebirthData;
-                    logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
-                    UIElements.rebirthBtn.style.display = 'none';
-                    UIElements.classSelectionModal.style.display = 'flex';
-                    updateAllUIs();
-                }
-            }
-
-            function investRebirthPoint(stat) {
+            function spendRebirthPoint(stat) {
                 if (gameState.rebirth.points > 0) {
                     gameState.rebirth.points--;
-                    gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : (['gold', 'xp'].includes(stat) ? 1 : 1));
+                    if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 5;
+                    else gameState.rebirth.bonuses[stat] += 1;
                     updateAllUIs();
-                }
-            }
-
-            function sellItemsByRarity(rarity) {
-                let soldCount = 0, goldEarned = 0;
-                const equippedIds = Object.values(gameState.equipment);
-                const itemsToKeep = gameState.inventory.filter(item => {
-                    if (item.rarity === rarity && !equippedIds.includes(item.id)) {
-                        goldEarned += itemData.rarities[item.rarity].value; soldCount++; return false;
-                    }
-                    return true;
-                });
-                if (soldCount > 0) {
-                    gameState.inventory = itemsToKeep; gameState.gold += goldEarned;
-                    logAction(`Sold ${soldCount} [${rarity}] items for ${goldEarned}G.`, 'log-system', "event");
-                    updateAllUIs();
-                } else {
-                    logAction(`No unequipped [${rarity}] items to sell.`, 'log-system', "event");
                 }
             }
 
             function buyPotion(percent) {
                 const cost = gameState.potionCosts[`p${percent}`];
-                const totalStats = getPlayerTotalStats();
-                if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
+                if (gameState.gold >= cost) {
+                    const totalStats = getPlayerTotalStats();
+                    const healAmount = Math.round(totalStats.hp * (percent / 100));
+                    gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + healAmount);
                     gameState.gold -= cost;
-                    gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + (totalStats.hp * (percent / 100)));
-                    gameState.potionCosts[`p${percent}`] = Math.round(cost * 1.03);
-                    logAction(`You drink a potion, restoring health.`, 'log-system', "event");
-                    updateUI();
+                    logAction(`Used a potion, healing for ${healAmount} HP.`, 'log-system', "event");
+                    updateAllUIs();
                 }
             }
 
             function buyXpBoost(multiplier) {
-                const cost = (multiplier === 2 ? 250 : 600) * gameState.wave;
+                const cost = multiplier === 2 ? 250 * gameState.wave : 600 * gameState.wave;
                 if (gameState.gold >= cost && !gameState.activeBoosts.xp) {
                     gameState.gold -= cost;
                     gameState.activeBoosts.xp = { multiplier: multiplier, fightsRemaining: 100 };
-                    logAction(`Purchased a x${multiplier} XP Boost for 100 fights!`, 'log-boost', "event");
+                    logAction(`Purchased a ${multiplier}x XP Boost!`, 'log-boost', "event");
                     updateAllUIs();
                 }
             }
@@ -2751,143 +2733,302 @@
             function updateBlacksmithUI() {
                 const selector = UIElements.blacksmithItemSelector;
                 selector.innerHTML = '';
+                gameState.playerTemp.blacksmithSelection = null;
+                UIElements.blacksmithEnhancementPanel.style.display = 'none';
+
                 ['weapon', 'body', 'legs'].forEach(type => {
                     const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
-                    const slot = document.createElement('div');
-                    slot.className = 'blacksmith-slot';
-                    slot.dataset.type = type;
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = 'blacksmith-slot';
+                    slotDiv.dataset.type = type;
                     if (item) {
                         const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
-                        slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
+                        slotDiv.innerHTML = `<span style="color:${itemData.rarities[item.rarity].color}">${item.name}${enhancementText}</span>`;
+                        slotDiv.onclick = () => selectBlacksmithItem(type);
                     } else {
-                        slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
-                        slot.style.color = 'var(--disabled-text-color)';
+                        slotDiv.textContent = `[Empty ${type}]`;
+                        slotDiv.classList.add('disabled');
                     }
-                    if (gameState.playerTemp.blacksmithSelection === type) slot.classList.add('selected');
-                    slot.onclick = () => selectBlacksmithItem(type);
-                    selector.appendChild(slot);
+                    selector.appendChild(slotDiv);
                 });
-                updateEnhancementPanel();
             }
 
             function selectBlacksmithItem(type) {
                 gameState.playerTemp.blacksmithSelection = type;
-                gameState.playerTemp.lastEnhancementResult = null;
-                updateBlacksmithUI();
-            }
-
-            function getEnhancementCost(item) {
-                if (!item) return 0;
-                return Math.round(50 * itemData.rarities[item.rarity].enhanceCostMod * Math.pow(1.4, (item.enhancementLevel || 0)));
+                document.querySelectorAll('.blacksmith-slot').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.type === type);
+                });
+                updateEnhancementPanel();
             }
 
             function updateEnhancementPanel() {
-                const panel = UIElements.blacksmithEnhancementPanel;
-                const infoDiv = UIElements.enhancementInfo;
-                const btn = UIElements.enhanceItemBtn;
-                const selectedType = gameState.playerTemp.blacksmithSelection;
-                const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
-
-                if (!item) { panel.style.display = 'none'; return; }
-                panel.style.display = 'block';
-
-                const cost = getEnhancementCost(item);
-                const currentLevel = item.enhancementLevel || 0;
-                const MAX_ENHANCEMENT = 10;
-                const lastResult = gameState.playerTemp.lastEnhancementResult;
-
-                let infoHTML = `<p style="text-align:center;"><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                                    <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
-                                    <hr style="border-color: var(--border-color);">`;
-
-                const statPool = Object.keys(STAT_NAMES).filter(stat => item[stat] && typeof item[stat] === 'number');
-
-                if (currentLevel >= MAX_ENHANCEMENT) {
-                    infoHTML += `<p style="text-align:center;">Max Level Reached</p>`;
-                    btn.disabled = true;
-                } else if (statPool.length > 0) {
-                    statPool.forEach(stat => {
-                        const totalValue = (item[stat] || 0) + (item.enhancementBonusStats?.[stat] || 0);
-                        const isPercent = ['critChance', 'critDmg'].includes(stat);
-                        const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
-                        let statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} -> ?`;
-                        if (lastResult && lastResult.stat === stat) statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} <span class="stat-increase"><-- Just Enhanced!</span>`;
-                        infoHTML += `${statLine}</p>`;
-                    });
-                    infoHTML += `<hr style="border-color: var(--border-color);"><p style="text-align:center;">Cost: <span style="color: var(--gold-color);">${cost}G</span></p>`;
-                    btn.disabled = gameState.gold < cost;
-                } else {
-                    infoHTML += `<p style="text-align:center;">This item has no stats to enhance.</p>`;
-                    btn.disabled = true;
+                const type = gameState.playerTemp.blacksmithSelection;
+                if (!type) {
+                    UIElements.blacksmithEnhancementPanel.style.display = 'none';
+                    return;
                 }
-                infoDiv.innerHTML = infoHTML;
+                const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
+                if (!item) {
+                    UIElements.blacksmithEnhancementPanel.style.display = 'none';
+                    return;
+                }
+
+                const panel = UIElements.blacksmithEnhancementPanel;
+                const info = UIElements.enhancementInfo;
+                const btn = UIElements.enhanceItemBtn;
+                const level = item.enhancementLevel || 0;
+                const rarityInfo = itemData.rarities[item.rarity];
+
+                const cost = Math.round(Math.pow(level + 1, 2.5) * 20 * rarityInfo.enhanceCostMod);
+                const successChance = Math.max(0.1, 1 - (level * 0.05));
+
+                info.innerHTML = `
+    <p><strong>Item:</strong> <span style="color:${rarityInfo.color}">${item.name}</span></p>
+    <p><strong>Current Level:</strong> +${level}</p>
+    <p><strong>Next Level:</strong> +${level + 1}</p>
+    <p><strong>Success Chance:</strong> ${(successChance * 100).toFixed(0)}%</p>
+    <p><strong>Enhancement Cost:</strong> ${cost}G</p>
+    `;
+                if (gameState.playerTemp.lastEnhancementResult) {
+                    const resultText = gameState.playerTemp.lastEnhancementResult.success ?
+                        '<span style="color:var(--stat-increase-color)">SUCCESS</span>' :
+                        '<span style="color:var(--stat-decrease-color)">FAILURE</span>';
+                    info.innerHTML += `<p><strong>Last Attempt:</strong> ${resultText}</p>`;
+                }
+
+                btn.textContent = `Enhance (${cost}G)`;
+                btn.disabled = gameState.gold < cost;
+                panel.style.display = 'block';
             }
 
-            function enhanceSelectedItem() {
-                const selectedType = gameState.playerTemp.blacksmithSelection;
-                const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
+            function enhanceItem() {
+                const type = gameState.playerTemp.blacksmithSelection;
+                if (!type) return;
+                const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
                 if (!item) return;
 
-                const currentLevel = item.enhancementLevel || 0;
-                if (currentLevel >= 10) return;
-
-                const cost = getEnhancementCost(item);
+                const level = item.enhancementLevel || 0;
+                const rarityInfo = itemData.rarities[item.rarity];
+                const cost = Math.round(Math.pow(level + 1, 2.5) * 20 * rarityInfo.enhanceCostMod);
                 if (gameState.gold < cost) return;
 
-                const statPool = Object.keys(STAT_NAMES).filter(stat => item[stat] && typeof item[stat] === 'number');
-                if (statPool.length === 0) return;
-
                 gameState.gold -= cost;
-                const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
-                let increase = 0, isPercent = false;
+                const successChance = Math.max(0.1, 1 - (level * 0.05));
+                const success = Math.random() < successChance;
 
-                if (statToEnhance === 'critChance') { increase = 0.003; isPercent = true; }
-                else if (statToEnhance === 'critDmg') { increase = 0.01; isPercent = true; }
-                else increase = 1 + Math.round((item[statToEnhance] || 0) * 0.10);
-
-                item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
-                item.enhancementLevel = currentLevel + 1;
-                gameState.playerTemp.lastEnhancementResult = { stat: statToEnhance };
-
-                logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`}.`, 'log-system', "event");
+                if (success) {
+                    item.enhancementLevel++;
+                    logAction(`Successfully enhanced ${item.name} to +${item.enhancementLevel}!`, 'log-system', "event");
+                    recalculateEnhancementBonuses(item);
+                } else {
+                    logAction(`Enhancement for ${item.name} failed.`, 'log-error', "event");
+                }
+                gameState.playerTemp.lastEnhancementResult = { success: success };
                 updateAllUIs();
             }
 
-            function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
-            function deepMerge(target, source) {
-                let output = { ...target };
-                if (isObject(target) && isObject(source)) {
-                    Object.keys(source).forEach(key => {
-                        if (isObject(source[key]) && key in target && isObject(target[key])) output[key] = deepMerge(target[key], source[key]);
-                        else output[key] = source[key];
-                    });
+            function recalculateEnhancementBonuses(item) {
+                const level = item.enhancementLevel;
+                if (level === 0) {
+                    for (const stat in item.enhancementBonusStats) item.enhancementBonusStats[stat] = 0;
+                    return;
                 }
-                return output;
+
+                const rarityInfo = itemData.rarities[item.rarity];
+                const waveScale = 1 + Math.log10(gameState.wave || 1);
+                const enhancementPower = Math.pow(level, 1.5);
+
+                for (const stat in STAT_NAMES) {
+                    const baseValue = (item[stat] || 0) + (item.bonusStats[stat] || 0);
+                    if (baseValue > 0) {
+                        let bonus;
+                        if (['critChance', 'critDmg'].includes(stat)) {
+                            bonus = baseValue * 0.1 * enhancementPower;
+                        } else {
+                            bonus = Math.round(baseValue * 0.08 * enhancementPower);
+                        }
+                        item.enhancementBonusStats[stat] = bonus;
+                    }
+                }
+            }
+
+            function setupInfoModal() {
+                const modal = UIElements.infoModal;
+                const tabButtons = modal.querySelectorAll('.info-tab-button');
+                const tabContents = modal.querySelectorAll('.info-tab-content');
+
+                tabButtons.forEach(button => {
+                    button.onclick = () => {
+                        const tabId = button.dataset.infotab;
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        button.classList.add('active');
+                        document.getElementById(`info-tab-${tabId}`).classList.add('active');
+                    };
+                });
+
+                UIElements.gameInfoBtn.onclick = () => {
+                    populateInfoModal();
+                    modal.style.display = 'flex';
+                };
+                UIElements.closeInfoModalBtn.onclick = () => modal.style.display = 'none';
+            }
+
+            function populateInfoModal() {
+                populateStatsInfo();
+                populateItemsInfo();
+                populateCombatInfo();
+                populateClassesInfo();
+                populateRebirthInfo();
+                populateDropsInfo();
+            }
+
+            function populateStatsInfo() {
+                const content = document.getElementById('info-tab-stats');
+                content.innerHTML = `
+    <h3>Primary Stats</h3>
+    <p>These are the core stats you invest points into. They form the foundation of your character's power.</p>
+    <ul>
+    <li><strong class="stat-name" style="color:var(--stat-str)">STR (Strength):</strong> Primarily increases ATK for Warriors and Rogues.</li>
+    <li><strong class="stat-name" style="color:var(--stat-con)">CON (Constitution):</strong> Increases your maximum HP.</li>
+    <li><strong class="stat-name" style="color:var(--stat-def)">DEF (Defense):</strong> Increases your DEF, reducing damage taken.</li>
+    <li><strong class="stat-name" style="color:var(--stat-dex)">DEX (Dexterity):</strong> Increases your Accuracy, making your attacks less likely to miss.</li>
+    <li><strong class="stat-name" style="color:var(--stat-agl)">AGL (Agility):</strong> Increases your Evasion, making you more likely to dodge enemy attacks.</li>
+    <li><strong class="stat-name" style="color:var(--stat-int)">INT (Intelligence):</strong> Primarily increases ATK for Wizards.</li>
+    </ul>
+    <h3>Secondary Stats</h3>
+    <p>These stats are derived from your primary stats and equipment. They directly affect your performance in combat.</p>
+    <ul>
+    <li><strong class="stat-name">ATK (Attack):</strong> Your total damage output before enemy defense is calculated. Scales non-linearly with your primary damage stat (STR or INT).</li>
+    <li><strong class="stat-name">DEF (Defense):</strong> Your total damage reduction. Higher DEF means you take less damage.</li>
+    <li><strong class="stat-name">HP (Health Points):</strong> Your life force. If it reaches zero, you are defeated.</li>
+    <li><strong class="stat-name">Accuracy:</strong> Your chance to hit an enemy. Countered by the enemy's Evasion.</li>
+    <li><strong class="stat-name">Evasion:</strong> Your chance to dodge an incoming attack. Countered by the enemy's Accuracy.</li>
+    <li><strong class="stat-name">Crit Chance:</strong> The probability of your attack being a critical hit, dealing bonus damage.</li>
+    <li><strong class="stat-name">Crit DMG:</strong> The damage multiplier applied when you land a critical hit.</li>
+    </ul>
+    `;
+            }
+
+            function populateItemsInfo() {
+                const content = document.getElementById('info-tab-items');
+                let rarityTable = '<h3>Rarities</h3><table><tr><th>Rarity</th><th>Color</th><th>Stat Mod</th><th>Base Stats</th><th>Bonus Stats</th></tr>';
+                for (const r in itemData.rarities) {
+                    const info = itemData.rarities[r];
+                    rarityTable += `<tr><td><strong style="color:${info.color}">${r}</strong></td><td style="color:${info.color}">Sample</td><td>x${info.statMod}</td><td>${info.baseStatCount}</td><td>${info.bonusStats}</td></tr>`;
+                }
+                rarityTable += '</table>';
+
+                let setsTable = '<h3>Item Sets</h3><p>Equipping multiple items from the same set grants powerful bonuses. Set items typically drop from bosses and have a chance to drop from other high-level monsters.</p><table><tr><th>Set Name</th><th>Class</th><th>Rarity</th><th>2pc Bonus</th><th>3pc Bonus</th></tr>';
+                for (const setName in itemSets) {
+                    const set = itemSets[setName];
+                    setsTable += `<tr><td>${setName}</td><td>${set.class}</td><td style="color:${itemData.rarities[set.rarity].color}">${set.rarity}</td><td>${set.bonuses[2].description}</td><td>${set.bonuses[3].description}</td></tr>`;
+                }
+                setsTable += '</table>';
+
+                content.innerHTML = `
+    <p>Equipment is crucial for your progression. Items come in different types, rarities, and can even be part of powerful sets.</p>
+    ${rarityTable}
+    <h3>Enhancement</h3>
+    <p>You can enhance your equipped items at the Blacksmith. Enhancement increases an item's stats but has a chance to fail. The cost and failure chance increase with each level.</p>
+    ${setsTable}
+    `;
+            }
+
+            function populateCombatInfo() {
+                const content = document.getElementById('info-tab-combat');
+                content.innerHTML = `
+    <h3>Damage Calculation</h3>
+    <p>The damage you deal is a complex formula involving your ATK, the enemy's DEF, critical hits, and various skills and bonuses.</p>
+    <ol>
+    <li><strong>Hit Chance:</strong> Your Accuracy is pitted against the enemy's Evasion to determine if the attack lands. There's always a minimum chance to hit and a maximum cap.</li>
+    <li><strong>Critical Hit:</strong> Your Crit Chance determines if the attack is a critical. If so, your Crit DMG multiplier is applied to the base damage.</li>
+    <li><strong>Base Damage:</strong> Calculated from your ATK stat.</li>
+    <li><strong>Damage Reduction:</strong> The enemy's DEF reduces the incoming damage. The more DEF they have relative to your ATK, the less damage they take.</li>
+    <li><strong>Final Damage:</strong> The result after all calculations, with a minimum of 1 damage.</li>
+    </ol>
+    <h3>Skills & Procs</h3>
+    <p>Many class promotions and item sets grant skills or effects that can trigger ("proc") during combat. These can include extra attacks, healing, applying debuffs to enemies, or buffing yourself. Pay attention to the battle log to see them in action!</p>
+    `;
+            }
+
+            function populateClassesInfo() {
+                const content = document.getElementById('info-tab-classes');
+                let html = '<h3>Base Classes</h3>';
+                for (const className in classes) {
+                    const c = classes[className];
+                    html += `<h4>${className}</h4><p>${c.description}</p>`;
+                }
+                html += '<h3>Promotions</h3><p>As you level up, you will be able to promote your class, unlocking new skills and specializing your playstyle. Each promotion offers a unique path and powerful abilities.</p>';
+                let promoTable = '<table><tr><th>Promotion</th><th>Unlocks Skill</th><th>Description</th></tr>';
+                for (const promoName in promotionInfo) {
+                    const skill = promotionSkills[promoName];
+                    promoTable += `<tr><td><strong>${promoName}</strong></td><td>${skill ? skill.name : 'N/A'}</td><td>${promotionInfo[promoName].description}${skill ? `<br><em>${skill.description}</em>` : ''}</td></tr>`;
+                }
+                promoTable += '</table>';
+                content.innerHTML = html + promoTable;
+            }
+
+            function populateRebirthInfo() {
+                const content = document.getElementById('info-tab-rebirth');
+                content.innerHTML = `
+    <h3>What is Rebirth?</h3>
+    <p>Once you reach Level 70, you unlock the ability to Rebirth. This is a core prestige mechanic in the game.</p>
+    <p>When you Rebirth, you will:</p>
+    <ul>
+    <li>Start over from Level 1, choosing a new class.</li>
+    <li>Lose all your items, gold, and stat point investments.</li>
+    <li><strong>Gain Rebirth Points</strong> based on your level and the highest wave you reached.</li>
+    </ul>
+    <h3>Rebirth Points</h3>
+    <p>These points are permanent and can be spent in the Rebirth tab to gain powerful, permanent bonuses that apply to all future runs. These bonuses are essential for progressing to higher waves and defeating stronger enemies.</p>
+    <ul>
+    <li><strong>ATK/DEF/HP Bonus:</strong> Flat additions to your core combat stats.</li>
+    <li><strong>Gold/XP Bonus:</strong> Percentage increases to your Gold and XP gains, speeding up future runs.</li>
+    </ul>
+    <p>Rebirthing is the key to long-term power growth!</p>
+    `;
+            }
+
+            function populateDropsInfo() {
+                const content = document.getElementById('info-tab-drops');
+                let html = '<h3>Item Drop Rates by Monster Type</h3><p>The quality of items dropped depends on the type of monster you defeat. Higher waves also slightly increase the chance of better rarities.</p>';
+                const monsterTypes = ['regular', 'mutant', 'elite', 'boss'];
+                monsterTypes.forEach(type => {
+                    html += `<h4>${type.charAt(0).toUpperCase() + type.slice(1)} Monsters</h4><table><tr>`;
+                    const probs = getRarityProbabilities(type);
+                    for (const r in probs) { html += `<th>${r}</th>`; }
+                    html += '</tr><tr>';
+                    for (const r in probs) { html += `<td>${(probs[r] * 100).toFixed(1)}%</td>`; }
+                    html += '</tr></table>';
+                });
+                content.innerHTML = html;
             }
 
             function setupTabs() {
                 document.querySelectorAll('.tab-button').forEach(button => {
                     button.addEventListener('click', () => {
-                        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                        const tabId = button.dataset.tab;
+                        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                         button.classList.add('active');
-                        const tabId = button.getAttribute('data-tab');
-                        document.querySelectorAll('.tab-content').forEach(content => {
-                            content.classList.toggle('active', content.id === `tab-content-${tabId}`);
-                        });
-                        if (tabId === 'blacksmith') updateBlacksmithUI();
+                        document.getElementById(`tab-content-${tabId}`).classList.add('active');
+                        if (tabId === 'blacksmith') {
+                            gameState.playerTemp.lastEnhancementResult = null;
+                            updateBlacksmithUI();
+                        }
                     });
                 });
             }
 
             function setupClassSelectionEvents() {
-                const choiceButtons = UIElements.classSelectionChoices.querySelectorAll('button');
-                choiceButtons.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const className = btn.dataset.class;
+                UIElements.classSelectionChoices.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const className = button.dataset.class;
                         gameState.playerTemp.classSelection = className;
                         UIElements.classDescription.textContent = classes[className].description;
-                        choiceButtons.forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
+                        UIElements.classSelectionChoices.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+                        button.classList.add('selected');
                         UIElements.confirmClassBtn.disabled = false;
                     });
                 });
@@ -2896,176 +3037,75 @@
                 });
             }
 
-            // 1. CREATE THIS NEW FUNCTION
-            // This function will be responsible for dynamically generating the content
-            // for the drop rates tab based on the current game state.
-            function updateDropsInfoTab() {
-                const dropsContent = UIElements.infoModal.querySelector('#info-tab-drops');
-                // Note the updated text to clarify that these are the CURRENT rates.
-                let dropsHTML = `<h3>Current Drop Rates by Monster Type</h3>
-            <p>The chance to get an item drop is determined by the monster. The rarity of that item is then rolled based on the monster's type. <strong>Rarity rates improve as you reach higher waves. The table below reflects your rates for the current wave (${gameState.wave}).</strong></p>
-            <table>
-                <tr><th>Monster Type</th><th>N</th><th>R</th><th>SR</th><th>SSR</th><th>UR</th><th>LR</th></tr>
-        `;
-                const monsterTypesForInfo = ['regular', 'mutant', 'elite', 'boss'];
-                monsterTypesForInfo.forEach(type => {
-                    // This now calls your new getRarityProbabilities function and uses the current wave
-                    const probs = getRarityProbabilities(type);
-                    dropsHTML += `<tr><td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>`;
-                    Object.values(probs).forEach(prob => {
-                        dropsHTML += `<td>${(prob * 100).toFixed(2)}%</td>`;
-                    });
-                    dropsHTML += `</tr>`;
+            function setupEventListeners() {
+                UIElements.newGameBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to start a new game? Your current progress will be lost!')) {
+                        localStorage.removeItem(SAVE_KEY);
+                        location.reload();
+                    }
                 });
-                dropsHTML += `</table>`;
-                dropsContent.innerHTML = dropsHTML;
+                UIElements.rebirthBtn.addEventListener('click', rebirth);
+                UIElements.manualSaveBtn.addEventListener('click', manualSave);
+                UIElements.manualLoadBtn.addEventListener('click', manualLoad);
+                UIElements.closeSaveModalBtn.addEventListener('click', () => UIElements.manualSaveModal.style.display = 'none');
+                UIElements.challengeBossBtn.addEventListener('click', () => spawnMonster(true));
+                UIElements.challengeFinalBossBtn.addEventListener('click', challengeFinalBoss);
+                UIElements.sellNBtn.addEventListener('click', () => sellByRarity('N'));
+                UIElements.sellRBtn.addEventListener('click', () => sellByRarity('R'));
+                document.querySelector('#tab-content-rebirth').addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON' && e.target.dataset.rebirth) spendRebirthPoint(e.target.dataset.rebirth);
+                });
+                UIElements.confirmInvestBtn.addEventListener('click', confirmPointInvestment);
+                UIElements.resetInvestBtn.addEventListener('click', resetPointInvestment);
+                UIElements.buyPotion25.addEventListener('click', () => buyPotion(25));
+                UIElements.buyPotion50.addEventListener('click', () => buyPotion(50));
+                UIElements.buyPotion75.addEventListener('click', () => buyPotion(75));
+                UIElements.buyPotion100.addEventListener('click', () => buyPotion(100));
+                UIElements.buyXpBoost2x.addEventListener('click', () => buyXpBoost(2));
+                UIElements.buyXpBoost3x.addEventListener('click', () => buyXpBoost(3));
+                UIElements.enhanceItemBtn.addEventListener('click', enhanceItem);
             }
 
-            function setupInfoModal() {
-                const infoTabs = {
-                    stats: document.getElementById('info-tab-stats'),
-                    items: document.getElementById('info-tab-items'),
-                    combat: document.getElementById('info-tab-combat'),
-                    classes: document.getElementById('info-tab-classes'),
-                    rebirth: document.getElementById('info-tab-rebirth'),
-                    drops: document.getElementById('info-tab-drops'),
-                };
-
-                updateDropsInfoTab();
-
-                infoTabs.stats.innerHTML = `
-                        <h3>Stats & Attributes</h3>
-                        <p>Your character's power is determined by core stats that you can invest points into. These stats influence your combat attributes.</p>
-                        <ul>
-                            <li><span class="stat-name" style="color: var(--stat-str);">STR (Strength):</span> Primarily increases <strong>ATK</strong> for Warriors and Rogues.</li>
-                            <li><span class="stat-name" style="color: var(--stat-int);">INT (Intelligence):</span> Primarily increases <strong>ATK</strong> for Wizards.</li>
-                            <li><span class="stat-name" style="color: var(--stat-con);">CON (Constitution):</span> Increases your maximum <strong>HP</strong>.</li>
-                            <li><span class="stat-name" style="color: var(--stat-def);">DEF (Defense):</span> Increases your <strong>Defense</strong>, reducing incoming damage.</li>
-                            <li><span class="stat-name" style="color: var(--stat-dex);">DEX (Dexterity):</span> Increases your <strong>Accuracy</strong>, improving your chance to hit enemies.</li>
-                            <li><span class="stat-name" style="color: var(--stat-agl);">AGL (Agility):</span> Increases your <strong>Evasion</strong>, improving your chance to dodge enemy attacks.</li>
-                        </ul>
-                        <p>You also have secondary stats like <strong>Crit Chance</strong> and <strong>Crit Damage</strong> which can be improved through gear, skills, and point investment.</p>
-                    `;
-
-                infoTabs.items.innerHTML = `
-                        <h3>Item System</h3>
-                        <p>Items are dropped by monsters and are crucial for your progression. They come in various rarities, each providing better stats.</p>
-                        <ul>
-                            ${Object.entries(itemData.rarities).map(([rarity, data]) => `<li><strong style="color: ${data.color};">[${rarity}]</strong>: ${rarity} items provide a significant boost in power.</li>`).join('')}
-                        </ul>
-                        <h3>Enhancement</h3>
-                        <p>At the <strong>Blacksmith</strong>, you can spend Gold to enhance your equipped items up to <strong>+10</strong>. Each level randomly increases one of the item's base stats.</p>
-                        <h3>Item Sets</h3>
-                        <p>High-rarity items (SSR, UR, LR) can be part of a set. Equipping multiple items from the same set will grant powerful unique bonuses. Check an item's tooltip to see its set information.</p>
-                    `;
-
-                infoTabs.combat.innerHTML = `
-                        <h3>Combat Mechanics</h3>
-                        <p>Combat is automated. Your character and the monster take turns attacking each other.</p>
-                        <ul>
-                            <li><strong>Hit Chance:</strong> Your chance to hit an enemy is based on your <strong>Accuracy</strong> versus the enemy's <strong>Evasion</strong>. There is always at least a 25% chance to hit and at most a 95% chance.</li>
-                            <li><strong>Damage:</strong> Your <strong>ATK</strong> is compared against the enemy's <strong>DEF</strong> to determine damage. High defense can significantly reduce incoming damage.</li>
-                            <li><strong>Critical Hits:</strong> Based on your <strong>Crit Chance</strong>, your attacks can become critical hits, dealing bonus damage based on your <strong>Crit Damage</strong> stat.</li>
-                            <li><strong>Skills & Buffs:</strong> Many skills and set bonuses trigger automatically during combat, providing buffs, dealing extra damage, or applying debuffs to the enemy.</li>
-                        </ul>
-                    `;
-
-                infoTabs.classes.innerHTML = `
-                        <h3>Classes & Promotions</h3>
-                        <p>You begin by choosing one of three base classes: <strong>Warrior</strong>, <strong>Rogue</strong>, or <strong>Wizard</strong>.</p>
-                        <p>As you reach certain level milestones (20, 40, and 70), you will be offered a <strong>Class Promotion</strong>. Each promotion allows you to specialize your character down a specific path, unlocking new, powerful passive skills.</p>
-                        <p>For example, a Warrior can choose to become a defensive Knight or an offensive Berserker. These choices determine your character's future growth and abilities.</p>
-                        <p>New skills are added to the "Active Skills" panel on the left after you promote.</p>
-                    `;
-
-                infoTabs.rebirth.innerHTML = `
-                        <h3>Rebirth System</h3>
-                        <p>Once you reach <strong>Level 70</strong>, you unlock the ability to Rebirth. This is the main prestige system of the game.</p>
-                        <p>When you rebirth:</p>
-                        <ul>
-                            <li>Your character's level, gold, items, and wave progress are reset.</li>
-                            <li>You are returned to the class selection screen to start a new run.</li>
-                            <li>You earn <strong>Rebirth Points</strong> based on your level and the highest wave you reached.</li>
-                        </ul>
-                        <p>Rebirth Points are permanent and can be spent in the Rebirth tab to buy powerful, permanent bonuses that apply to all future runs, such as increased ATK, HP, Gold gain, and XP gain. This allows you to progress further and faster with each new life.</p>
-                    `;
-
-                const dropProbs = getRarityProbabilities('regular');
-                infoTabs.drops.innerHTML = `
-                        <h3>Item Drop Rates</h3>
-                        <p>The chance of getting higher rarity items increases as you face tougher monsters. The table below shows the approximate probability for an item of a specific rarity to drop, given that a drop occurs.</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Rarity</th>
-                                    <th>Regular</th>
-                                    <th>Mutant</th>
-                                    <th>Elite</th>
-                                    <th>Boss</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            ${Object.keys(dropProbs).map(rarity => `
-                                <tr>
-                                    <td><strong style="color: ${itemData.rarities[rarity].color};">[${rarity}]</strong></td>
-                                    <td>${(getRarityProbabilities('regular')[rarity] * 100).toFixed(1)}%</td>
-                                    <td>${(getRarityProbabilities('mutant')[rarity] * 100).toFixed(1)}%</td>
-                                    <td>${(getRarityProbabilities('elite')[rarity] * 100).toFixed(1)}%</td>
-                                    <td>${(getRarityProbabilities('boss')[rarity] * 100).toFixed(1)}%</td>
-                                </tr>
-                            `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-
-                document.querySelectorAll('.info-tab-button').forEach(button => {
-                    button.addEventListener('click', () => {
-                        document.querySelectorAll('.info-tab-button').forEach(btn => btn.classList.remove('active'));
-                        button.classList.add('active');
-                        const tabId = button.getAttribute('data-infotab');
-                        document.querySelectorAll('.info-tab-content').forEach(content => {
-                            content.classList.toggle('active', content.id === `info-tab-${tabId}`);
-                        });
-                    });
-                });
-
-                UIElements.gameInfoBtn.onclick = () => {
-                    updateDropsInfoTab(); // Refresh data just before showing!
-                    UIElements.infoModal.style.display = 'flex';
-                };
-
-                UIElements.closeInfoModalBtn.onclick = () => {
-                    UIElements.infoModal.style.display = 'none';
-                };
-            }
-
-            UIElements.manualSaveBtn.onclick = manualSave;
-            UIElements.manualLoadBtn.onclick = manualLoad;
-            UIElements.closeSaveModalBtn.onclick = () => { UIElements.manualSaveModal.style.display = 'none'; };
-            UIElements.newGameBtn.onclick = handleNewGame;
-            UIElements.rebirthBtn.onclick = handleRebirth;
-            UIElements.challengeBossBtn.onclick = () => {
-                spawnMonster(true);
-                gameState.player.currentHp = getPlayerTotalStats().hp;
-                UIElements.challengeBossBtn.disabled = true;
+            function updateAllUIs() {
                 updateUI();
-            };
-            UIElements.challengeFinalBossBtn.onclick = challengeFinalBoss;
-            UIElements.buyPotion25.onclick = () => buyPotion(25);
-            UIElements.buyPotion50.onclick = () => buyPotion(50);
-            UIElements.buyPotion75.onclick = () => buyPotion(75);
-            UIElements.buyPotion100.onclick = () => buyPotion(100);
-            UIElements.buyXpBoost2x.onclick = () => buyXpBoost(2);
-            UIElements.buyXpBoost3x.onclick = () => buyXpBoost(3);
-            document.querySelectorAll('#tab-content-rebirth .rebirth-stat button').forEach(btn => {
-                btn.onclick = () => investRebirthPoint(btn.dataset.rebirth);
-            });
-            UIElements.sellNBtn.onclick = () => sellItemsByRarity('N');
-            UIElements.sellRBtn.onclick = () => sellItemsByRarity('R');
-            UIElements.confirmInvestBtn.onclick = confirmPointInvestment;
-            UIElements.resetInvestBtn.onclick = resetPointInvestment;
-            UIElements.enhanceItemBtn.onclick = enhanceSelectedItem;
+                updatePointInvestmentUI();
+                updateInventoryUI();
+                updateEquipmentUI();
+                updateSkillUI();
+                updateFinalBossButton();
+            }
 
+            function resetTransientData() {
+                gameState.playerTemp = getDefaultGameState().playerTemp;
+                if (gameState.player) {
+                    const totalStats = getPlayerTotalStats();
+                    gameState.player.currentHp = totalStats.hp;
+                }
+            }
+
+            function deepMerge(target, source) {
+                for (const key in source) {
+                    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                        if (!target[key]) Object.assign(target, { [key]: {} });
+                        deepMerge(target[key], source[key]);
+                    } else {
+                        Object.assign(target, { [key]: source[key] });
+                    }
+                }
+                return target;
+            }
+
+            function logAction(message, className = 'log-system', logType = 'event') {
+                const logContainer = (logType === 'battle') ? UIElements.battleLog : UIElements.eventLog;
+                const p = document.createElement('p');
+                p.innerHTML = message;
+                p.className = className;
+                logContainer.appendChild(p);
+                while (logContainer.children.length > 100) logContainer.removeChild(logContainer.firstChild);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            setupEventListeners();
             initializeGame();
         });
     </script>
