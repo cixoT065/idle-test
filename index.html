@@ -2460,7 +2460,7 @@
                     itemDiv.className = 'inventory-item';
                     itemDiv.innerHTML = `
     <div class="inventory-item-info" data-item-id="${item.id}">
-    <span style="color: ${rarityColor};">${item.name}${enhancementText} (${item.type})</span>
+    <span style="color: ${rarityColor};">[${item.classReq}] ${item.name}${enhancementText} (${item.type})</span>
     ${isEquipped ? '<span class="equipped-tag">[Equipped]</span>' : ''}
     </div>
     <div class="inventory-item-actions">
