@@ -238,6 +238,15 @@
         .button-danger:hover:not(:disabled) {
             background-color: #616161;
         }
+        
+        .button-final-boss {
+            background-color: #6d2d2d;
+            color: #ffdddd;
+            border-color: #ff7b7b;
+        }
+        .button-final-boss:hover:not(:disabled) {
+            background-color: #8b3a3a;
+        }
 
         .modal {
             display: none;
@@ -552,6 +561,12 @@
         .log-area-container .panel {
             flex: 1; /* Each log panel takes up half the space */
         }
+        
+        .win-screen {
+            text-align: center;
+            padding: 50px;
+            width: 100%;
+        }
 
         @media (max-width: 900px) {
             .main-container {
@@ -590,7 +605,7 @@
 
 <body>
 
-    <div class="main-container">
+    <div class="main-container" id="main-container-div">
         <div class="sidebar">
             <div class="panel">
                 <div class="panel-header">Player Profile</div>
@@ -666,6 +681,8 @@
                     </div>
                     <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
                     <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+                    <!-- FINAL BOSS SYSTEM: Added button -->
+                    <button id="challenge-final-boss-btn" class="button-final-boss" style="display: none;">Challenge Final Boss</button>
                 </div>
             </div>
 
@@ -758,28 +775,16 @@
             
             <!-- NEW LOG AREA -->
             <div class="log-area-container">
-<!--                 <div class="panel" style="flex-grow: 1;>
+                <div class="panel" style="flex-grow: 1;">
                     <div class="panel-header">Event Log</div>
-                    <div class="panel-body" style="padding: 0; flex-grow: 1;">
-                        <div id="event-log" class="activity-log-container" style="border: none; border-radius: 0; height: 100%;"></div>
+                    <div class="panel-body activity-log-container" id="event-log">
                     </div>
                 </div>
-                <div class="panel" style="flex-grow: 1;>
+                <div class="panel" style="flex-grow: 1;">
                     <div class="panel-header">Battle Log</div>
-                    <div class="panel-body" style="padding: 0; flex-grow: 1;">
-                        <div id="battle-log" class="activity-log-container" style="border: none; border-radius: 0; height: 100%;"></div>
+                    <div class="panel-body activity-log-container" id="battle-log">
                     </div>
-                </div> -->
-        <div class="panel" style="flex-grow: 1;">
-                <div class="panel-header">Event Log</div>
-                <div class="panel-body activity-log-container" id="event-log">
                 </div>
-            </div>
-        <div class="panel" style="flex-grow: 1;">
-                <div class="panel-header">Battle Log</div>
-                <div class="panel-body activity-log-container" id="battle-log">
-                </div>
-            </div>
             </div>
         </div>
 
@@ -822,6 +827,7 @@
 
         <!-- Global Tooltip -->
         <div id="global-tooltip"></div>
+    </div>
 
         <script>
             document.addEventListener('DOMContentLoaded', () => {
@@ -844,6 +850,16 @@
                     atk: 'ATK', def: 'DEF', hp: 'HP', accuracy: 'Accuracy', evasion: 'Evasion', critChance: 'Crit Chance', critDmg: 'Crit DMG'
                 };
 
+                // FINAL BOSS SYSTEM: Added boss base stats
+                const FINAL_BOSS_BASE_STATS = {
+                    name: "The Chronos Tyrant",
+                    hp: 25000000, // 25 Million HP
+                    atk: 75000,   // 75k Attack
+                    def: 150000,  // 150k Defense
+                    gold: 5000000,
+                    xp: 0 
+                };
+
                 function getDefaultGameState() {
                     return {
                         player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
@@ -853,6 +869,11 @@
                         maxInventorySize: 20,
                         rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
                         activeBoosts: { xp: null },
+                        // FINAL BOSS SYSTEM: Added state properties
+                        maxWaveReached: 1,
+                        finalBoss: null,
+                        finalBossDefeated: false,
+                        totalBossesDefeatedInRun: 0,
                         playerTemp: {
                             pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                             classSelection: null,
@@ -1052,6 +1073,7 @@
                 };
 
                 const UIElements = {
+                    mainContainer: document.getElementById('main-container-div'),
                     playerName: document.getElementById('player-name'), playerClass: document.getElementById('player-class'),
                     playerLevel: document.getElementById('player-level'), playerStatPoints: document.getElementById('player-stat-points'),
                     playerHpText: document.getElementById('player-hp-text'), playerHpFill: document.getElementById('player-hp-fill'),
@@ -1064,6 +1086,8 @@
                     waveCounter: document.getElementById('wave-counter'), killCounter: document.getElementById('kill-counter'), 
                     eventLog: document.getElementById('event-log'), battleLog: document.getElementById('battle-log'),
                     challengeBossBtn: document.getElementById('challenge-boss-btn'),
+                    // FINAL BOSS SYSTEM: Added button to UI map
+                    challengeFinalBossBtn: document.getElementById('challenge-final-boss-btn'),
                     classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
                     classSelectionChoices: document.getElementById('class-selection-choices'),
                     promotionChoices: document.getElementById('promotion-choices'),
@@ -1094,12 +1118,113 @@
                     enhanceItemBtn: document.getElementById('enhance-item-btn'),
                 };
 
+                // FINAL BOSS SYSTEM: New function to calculate boss weakness
+                function weakenFinalBoss() {
+                    const base = FINAL_BOSS_BASE_STATS;
+                    // Each wave boss defeated reduces the final boss's stats by 2.5%
+                    const reductionPerBoss = 0.025;
+                    const totalReduction = 1 - (gameState.totalBossesDefeatedInRun * reductionPerBoss);
+
+                    // Cap the reduction at 90% (boss retains at least 10% of stats)
+                    const effectiveReduction = Math.max(0.1, totalReduction);
+
+                    gameState.finalBoss = {
+                        ...base,
+                        hp: Math.round(base.hp * effectiveReduction),
+                        maxHp: Math.round(base.hp * effectiveReduction),
+                        atk: Math.round(base.atk * effectiveReduction),
+                        def: Math.round(base.def * effectiveReduction),
+                        evasion: 0.15, // Final boss has high base evasion
+                        accuracy: 0.10,
+                        critChance: 0.15,
+                        critDmg: 2.0,
+                    };
+                }
+
+                // FINAL BOSS SYSTEM: New function for the final fight
+                function challengeFinalBoss() {
+                    if (gameState.finalBossDefeated) {
+                        logAction("You have already defeated the final boss.", 'log-system', "event");
+                        return;
+                    }
+                    if (gameState.player.currentHp <= 0) {
+                        logAction("You must be at full health to challenge the final boss!", 'log-error', "event");
+                        return;
+                    }
+
+                    logAction(`You challenge the mighty ${gameState.finalBoss.name}!`, 'log-system', "event");
+                    clearInterval(gameInterval); // Pause the main game loop
+
+                    const player = gameState.player;
+                    const boss = { ...gameState.finalBoss }; // Make a copy for the fight
+                    const playerStats = getPlayerTotalStats();
+                    player.currentHp = playerStats.hp; // Heal to full for the fight
+
+                    let fightLog = [];
+                    const addFightLog = (msg, type) => {
+                        fightLog.push({msg, type});
+                        logAction(msg, type, 'battle');
+                    };
+
+                    const fightInterval = setInterval(() => {
+                        if (player.currentHp <= 0 || boss.hp <= 0) {
+                            clearInterval(fightInterval);
+                            if (player.currentHp > 0) {
+                                // Player wins
+                                addFightLog(`You have vanquished ${boss.name}! The realm is safe!`, 'log-system');
+                                gameState.finalBossDefeated = true;
+                                gameState.gold += boss.gold;
+                                showGameWonScreen();
+                            } else {
+                                // Player loses
+                                addFightLog(`You have been defeated by ${boss.name}. Grow stronger and try again!`, 'log-monster');
+                                player.currentHp = 0;
+                                updateAllUIs();
+                                startGame(); // Resume main game loop
+                            }
+                            return;
+                        }
+
+                        // Player attacks
+                        let playerDamage = calculateDamage(playerStats, boss, true);
+                        boss.hp -= playerDamage.damage;
+                        addFightLog(`You hit ${boss.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player');
+
+                        if (boss.hp <= 0) return;
+
+                        // Boss attacks
+                        let bossDamage = calculateDamage(boss, playerStats, false);
+                        player.currentHp -= bossDamage.damage;
+                        addFightLog(`${boss.name} hits you for ${bossDamage.damage} damage.`, 'log-monster');
+                        
+                        updateUI(); // Update UI during the fight
+                    }, 1000);
+                }
+
+                // FINAL BOSS SYSTEM: New function to show the win screen
+                function showGameWonScreen() {
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    UIElements.mainContainer.innerHTML = `
+                        <div class="win-screen">
+                            <h1>Congratulations!</h1>
+                            <p>You have defeated ${gameState.finalBoss.name} and conquered the game!</p>
+                            <p>Your final achievement was accomplished after ${gameState.rebirth.points} rebirths.</p>
+                            <p>Thank you for playing Idle RPG Evolved!</p>
+                            <button onclick="localStorage.removeItem('${SAVE_KEY}'); location.reload();" class="button">Play Again From Scratch</button>
+                        </div>
+                    `;
+                }
+
                 function startGame() {
                     if (gameInterval) clearInterval(gameInterval);
                     if (autoSaveInterval) clearInterval(autoSaveInterval);
 
                     gameState.isRunning = true;
                     if (!gameState.currentMonster) spawnMonster();
+                    
+                    // FINAL BOSS SYSTEM: Initialize boss stats on game start
+                    weakenFinalBoss();
 
                     updateAllUIs();
                     gameInterval = setInterval(gameLoop, 1000);
@@ -1149,6 +1274,12 @@
                         }
                     }
                     
+                    // FINAL BOSS SYSTEM: Handle migration for old saves
+                    if (loadedState.maxWaveReached === undefined) loadedState.maxWaveReached = loadedState.wave || 1;
+                    if (loadedState.finalBoss === undefined) loadedState.finalBoss = null;
+                    if (loadedState.finalBossDefeated === undefined) loadedState.finalBossDefeated = false;
+                    if (loadedState.totalBossesDefeatedInRun === undefined) loadedState.totalBossesDefeatedInRun = 0;
+
                     return loadedState;
                 }
 
@@ -1433,7 +1564,7 @@
                     const MIN_HIT_CHANCE = 0.25; // 25% minimum chance to hit
                     const MAX_HIT_CHANCE = 0.95; // 95% maximum chance to hit
 
-                    const defenderEvasion = isPlayerAttacker ? (monster.evasion || 0) : (defender.evasion || 0);
+                    const defenderEvasion = isPlayerAttacker ? (defender.evasion || 0) : (defender.evasion || 0);
                     const attackerAccuracy = attacker.accuracy || 0;
 
                     let hitChance = 0.90 + attackerAccuracy - defenderEvasion;
@@ -1467,16 +1598,16 @@
 
                     let baseDamage = (attacker.atk || 0);
                     
-                    let defenderDef = isPlayerAttacker ? (monster.def || 0) : (defender.def || 0);
-                    if (isPlayerAttacker && monster.debuffs['Sunder']) {
+                    let defenderDef = isPlayerAttacker ? (defender.def || 0) : (defender.def || 0);
+                    if (isPlayerAttacker && monster && monster.debuffs['Sunder']) {
                         defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
                     }
-                     if (isPlayerAttacker && monster.debuffs['Apocalypse']) {
+                     if (isPlayerAttacker && monster && monster.debuffs['Apocalypse']) {
                         defenderDef *= (1 - 0.15);
                     }
 
                     let damageMultiplier = 1.0;
-                    if (isPlayerAttacker) {
+                    if (isPlayerAttacker && monster) {
                         let executeThreshold = 0.2;
                         let executeBonus = 0.5;
                         if (p.activeSkills.includes('Cull the Weak')) {
@@ -1674,8 +1805,15 @@
                     gameState.kills++;
                     if (gameState.currentMonster.monsterType === 'boss') {
                         gameState.wave++;
+                        if (gameState.wave > gameState.maxWaveReached) {
+                            gameState.maxWaveReached = gameState.wave;
+                        }
                         gameState.kills = 0;
                         UIElements.challengeBossBtn.disabled = true;
+                        // FINAL BOSS SYSTEM: Increment counter and weaken boss
+                        gameState.totalBossesDefeatedInRun++;
+                        weakenFinalBoss();
+                        logAction(`The Chronos Tyrant feels a tremor of weakness...`, 'log-system', "event");
                     }
 
                     if (gameState.kills >= 10 && gameState.currentMonster.monsterType !== 'boss') UIElements.challengeBossBtn.disabled = false;
@@ -2027,6 +2165,21 @@
                     const boost3xCost = 600 * gameState.wave;
                     UIElements.buyXpBoost3x.textContent = `Buy (${boost3xCost}G)`;
                     UIElements.buyXpBoost3x.disabled = gameState.gold < boost3xCost || !!gameState.activeBoosts.xp;
+                }
+
+                // FINAL BOSS SYSTEM: New UI update function for the button
+                function updateFinalBossButton() {
+                    const btn = UIElements.challengeFinalBossBtn;
+                    if (gameState.maxWaveReached >= 35 && !gameState.finalBossDefeated) {
+                        btn.style.display = 'block';
+                        const boss = gameState.finalBoss;
+                        if (boss) {
+                            const hpDisplay = boss.hp > 1000000 ? `${(boss.hp / 1000000).toFixed(2)}M` : Math.round(boss.hp);
+                            btn.innerHTML = `Challenge ${boss.name}<br>(HP: ${hpDisplay})`;
+                        }
+                    } else {
+                        btn.style.display = 'none';
+                    }
                 }
 
                 function updatePointInvestmentUI() {
@@ -2384,7 +2537,16 @@
                     targetLog.scrollTop = targetLog.scrollHeight;
                 }
 
-                function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); updatePointInvestmentUI(); updateSkillUI(); updateBlacksmithUI();}
+                function updateAllUIs() { 
+                    updateUI(); 
+                    updateInventoryUI(); 
+                    updateEquipmentUI(); 
+                    updatePointInvestmentUI(); 
+                    updateSkillUI(); 
+                    updateBlacksmithUI();
+                    // FINAL BOSS SYSTEM: Call the UI update function
+                    updateFinalBossButton();
+                }
 
                 function resetTransientData() {
                     gameState.playerTemp = {
@@ -2716,6 +2878,8 @@
                     UIElements.challengeBossBtn.disabled = true;
                     updateUI();
                 };
+                // FINAL BOSS SYSTEM: Added event listener
+                UIElements.challengeFinalBossBtn.onclick = challengeFinalBoss;
                 UIElements.buyPotion25.onclick = () => buyPotion(25);
                 UIElements.buyPotion50.onclick = () => buyPotion(50);
                 UIElements.buyPotion75.onclick = () => buyPotion(75);
