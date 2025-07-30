@@ -91,8 +91,9 @@
             gap: 10px;
         }
 
+        /* MODIFICATION: Removed margin-top: auto. The flex-grow on panels above will now handle positioning. */
         #system-panel {
-            margin-top: auto;
+            /* margin-top: auto; */
         }
 
         .panel-header {
@@ -108,6 +109,23 @@
         .panel-body {
             padding: 15px;
         }
+
+        /* MODIFICATION: Added rules to make specific sidebar panels grow to fill vertical space */
+        #invest-points-panel,
+        #equipment-panel,
+        #skill-panel {
+            flex-grow: 1;
+            min-height: 0; /* Crucial for proper flexbox sizing and scrolling */
+        }
+
+        /* MODIFICATION: Make the body of the growing panels also grow and become scrollable */
+        #invest-points-panel .panel-body,
+        #equipment-panel .panel-body,
+        #skill-panel .panel-body {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
 
         .stat-bar {
             background-color: #0a0a0a;
@@ -237,6 +255,15 @@
 
         .button-danger:hover:not(:disabled) {
             background-color: #616161;
+        }
+        
+        .button-final-boss {
+            background-color: #6d2d2d;
+            color: #ffdddd;
+            border-color: #ff7b7b;
+        }
+        .button-final-boss:hover:not(:disabled) {
+            background-color: #8b3a3a;
         }
 
         .modal {
@@ -552,6 +579,12 @@
         .log-area-container .panel {
             flex: 1; /* Each log panel takes up half the space */
         }
+        
+        .win-screen {
+            text-align: center;
+            padding: 50px;
+            width: 100%;
+        }
 
         @media (max-width: 900px) {
             .main-container {
@@ -590,7 +623,7 @@
 
 <body>
 
-    <div class="main-container">
+    <div class="main-container" id="main-container-div">
         <div class="sidebar">
             <div class="panel">
                 <div class="panel-header">Player Profile</div>
@@ -625,7 +658,8 @@
                     <div>Crit DMG: <span id="player-crit-dmg">150%</span></div>
                 </div>
             </div>
-            <div class="panel">
+            <!-- MODIFICATION: Added ID for CSS targeting -->
+            <div class="panel" id="invest-points-panel">
                 <div class="panel-header">Invest Points</div>
                 <div class="panel-body" id="point-investment-display">
                     <!-- Dynamic content here -->
@@ -635,7 +669,8 @@
                     <button id="reset-invest-btn" class="button-secondary">Reset</button>
                 </div>
             </div>
-            <div class="panel">
+            <!-- MODIFICATION: Added ID for CSS targeting -->
+            <div class="panel" id="equipment-panel">
                 <div class="panel-header">Equipment</div>
                 <div class="panel-body" id="equipment-display"></div>
             </div>
@@ -666,6 +701,8 @@
                     </div>
                     <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
                     <button id="challenge-boss-btn" disabled>Challenge Boss</button>
+                    <!-- FINAL BOSS SYSTEM: Added button -->
+                    <button id="challenge-final-boss-btn" class="button-final-boss" style="display: none;">Challenge Final Boss</button>
                 </div>
             </div>
 
@@ -758,28 +795,16 @@
             
             <!-- NEW LOG AREA -->
             <div class="log-area-container">
-<!--                 <div class="panel" style="flex-grow: 1;>
+                <div class="panel" style="flex-grow: 1;">
                     <div class="panel-header">Event Log</div>
-                    <div class="panel-body" style="padding: 0; flex-grow: 1;">
-                        <div id="event-log" class="activity-log-container" style="border: none; border-radius: 0; height: 100%;"></div>
+                    <div class="panel-body activity-log-container" id="event-log">
                     </div>
                 </div>
-                <div class="panel" style="flex-grow: 1;>
+                <div class="panel" style="flex-grow: 1;">
                     <div class="panel-header">Battle Log</div>
-                    <div class="panel-body" style="padding: 0; flex-grow: 1;">
-                        <div id="battle-log" class="activity-log-container" style="border: none; border-radius: 0; height: 100%;"></div>
+                    <div class="panel-body activity-log-container" id="battle-log">
                     </div>
-                </div> -->
-        <div class="panel" style="flex-grow: 1;">
-                <div class="panel-header">Event Log</div>
-                <div class="panel-body activity-log-container" id="event-log">
                 </div>
-            </div>
-        <div class="panel" style="flex-grow: 1;">
-                <div class="panel-header">Battle Log</div>
-                <div class="panel-body activity-log-container" id="battle-log">
-                </div>
-            </div>
             </div>
         </div>
 
@@ -822,6 +847,7 @@
 
         <!-- Global Tooltip -->
         <div id="global-tooltip"></div>
+    </div>
 
         <script>
             document.addEventListener('DOMContentLoaded', () => {
@@ -844,6 +870,16 @@
                     atk: 'ATK', def: 'DEF', hp: 'HP', accuracy: 'Accuracy', evasion: 'Evasion', critChance: 'Crit Chance', critDmg: 'Crit DMG'
                 };
 
+                // FINAL BOSS SYSTEM: Added boss base stats
+                const FINAL_BOSS_BASE_STATS = {
+                    name: "The Chronos Tyrant",
+                    hp: 25000000, // 25 Million HP
+                    atk: 75000,   // 75k Attack
+                    def: 150000,  // 150k Defense
+                    gold: 5000000,
+                    xp: 0 
+                };
+
                 function getDefaultGameState() {
                     return {
                         player: null, currentMonster: null, wave: 1, kills: 0, gold: 0, isRunning: false,
@@ -853,6 +889,11 @@
                         maxInventorySize: 20,
                         rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
                         activeBoosts: { xp: null },
+                        // FINAL BOSS SYSTEM: Added state properties
+                        maxWaveReached: 1,
+                        finalBoss: null,
+                        finalBossDefeated: false,
+                        totalBossesDefeatedInRun: 0,
                         playerTemp: {
                             pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
                             classSelection: null,
@@ -865,6 +906,10 @@
                             guaranteedCrit: false,
                             guaranteedEvasion: false,
                             attacksSinceLastFocus: 0,
+                            // New state for set bonuses
+                            firstAttackCritUsed: false,
+                            evasionAtkBuffStacks: 0,
+                            evasionAtkBuffDuration: 0,
                         }
                     };
                 }
@@ -1025,33 +1070,85 @@
                 };
 
                 const itemSets = {
-                    "Stonewall Plate": {
-                        class: "Warrior",
-                        items: ["Stonewall Greathelm", "Stonewall Chestplate", "Stonewall Greaves"],
-                        bonuses: {
-                            2: { def: 30, description: "2pc: +30 DEF" },
-                            3: { hpPercent: 0.15, description: "3pc: +15% Max HP" }
-                        }
+                    // --- SSR Sets ---
+                    "Stalwart Guard's Battlegear": {
+                        class: "Warrior", rarity: "SSR", items: ["Stalwart Guard's Helm", "Stalwart Guard's Plate", "Stalwart Guard's Greaves"],
+                        bonuses: { 2: { def: 75, description: "2pc: +75 DEF" }, 3: { hpPercent: 0.10, description: "3pc: +10% Max HP" } }
                     },
-                    "Undead King's Regalia": {
-                        class: "Rogue",
-                        items: ["Undead King's Dagger", "Undead King's Robe", "Undead King's Slippers"],
-                        bonuses: {
-                            2: { agl: 20, description: "2pc: +20 AGL" },
-                            3: { critDmg: 0.25, description: "3pc: +25% Crit Damage" }
-                        }
+                    "Executioner's Judgment": {
+                        class: "Warrior", rarity: "SSR", items: ["Executioner's Headcase", "Executioner's Garb", "Executioner's Stompers"],
+                        bonuses: { 2: { str: 50, description: "2pc: +50 STR" }, 3: { critDmg: 0.15, description: "3pc: +15% Crit Damage" } }
                     },
-                    "Archon's Raiment": {
-                        class: "Wizard",
-                        items: ["Archon's Crown", "Archon's Mantle", "Archon's Treads"],
-                        bonuses: {
-                            2: { int: 25, description: "2pc: +25 INT" },
-                            3: { critChance: 0.05, description: "3pc: +5% Crit Chance" }
-                        }
+                    "Shadow-Walker's Guise": {
+                        class: "Rogue", rarity: "SSR", items: ["Shadow-Walker's Cowl", "Shadow-Walker's Leathers", "Shadow-Walker's Boots"],
+                        bonuses: { 2: { agl: 60, description: "2pc: +60 AGL" }, 3: { critDmg: 0.15, description: "3pc: +15% Crit Damage" } }
+                    },
+                    "Viper's Embrace": {
+                        class: "Rogue", rarity: "SSR", items: ["Viper's Fangs", "Viper's Scales", "Viper's Trail"],
+                        bonuses: { 2: { dex: 60, description: "2pc: +60 DEX" }, 3: { dotOnCrit: { damagePercent: 0.25, duration: 3 }, description: "3pc: Crits apply a poison for 25% of ATK over 3s." } }
+                    },
+                    "Sage's Regalia": {
+                        class: "Wizard", rarity: "SSR", items: ["Sage's Circlet", "Sage's Robe", "Sage's Slippers"],
+                        bonuses: { 2: { int: 75, description: "2pc: +75 INT" }, 3: { critChance: 0.05, description: "3pc: +5% Crit Chance" } }
+                    },
+                    "Mana-Weaver's Attire": {
+                        class: "Wizard", rarity: "SSR", items: ["Mana-Weaver's Hood", "Mana-Weaver's Vestments", "Mana-Weaver's Treads"],
+                        bonuses: { 2: { int: 50, description: "2pc: +50 INT" }, 3: { lifesteal: 0.05, description: "3pc: Gain 5% Lifesteal." } }
+                    },
+                    // --- UR Sets ---
+                    "Aegis of the Unbreakable": {
+                        class: "Warrior", rarity: "UR", items: ["Unbreakable Helm", "Unbreakable Chestplate", "Unbreakable Sabatons"],
+                        bonuses: { 2: { hpPercent: 0.15, description: "2pc: +15% Max HP" }, 3: { reflectDamage: 0.10, description: "3pc: Reflect 10% of damage taken." } }
+                    },
+                    "Warlord's Onslaught": {
+                        class: "Warrior", rarity: "UR", items: ["Warlord's Greathelm", "Warlord's Battleplate", "Warlord's Warboots"],
+                        bonuses: { 2: { str: 100, description: "2pc: +100 STR" }, 3: { lowerEnemyDefOnHit: { chance: 0.15, percent: 0.2, duration: 5 }, description: "3pc: 15% chance on hit to lower enemy DEF by 20% for 5s." } }
+                    },
+                    "Phantom's Mirage": {
+                        class: "Rogue", rarity: "UR", items: ["Phantom's Mask", "Phantom's Wraps", "Phantom's Steps"],
+                        bonuses: { 2: { agl: 120, description: "2pc: +120 AGL" }, 3: { firstAttackCrit: true, description: "3pc: Your first attack in combat is a guaranteed critical hit." } }
+                    },
+                    "Reaper's Embrace": {
+                        class: "Rogue", rarity: "UR", items: ["Reaper's Hood", "Reaper's Shroud", "Reaper's Treads"],
+                        bonuses: { 2: { lifesteal: 0.10, description: "2pc: +10% Lifesteal" }, 3: { executeDmg: { hpThreshold: 0.3, dmgBonus: 0.25 }, description: "3pc: Deal 25% more damage to enemies below 30% HP." } }
+                    },
+                    "Archmage's Imperium": {
+                        class: "Wizard", rarity: "UR", items: ["Archmage's Crown", "Archmage's Robes", "Archmage's Boots"],
+                        bonuses: { 2: { int: 150, description: "2pc: +150 INT" }, 3: { critDmg: 0.30, description: "3pc: +30% Crit Damage" } }
+                    },
+                    "Chronomancer's Paradox": {
+                        class: "Wizard", rarity: "UR", items: ["Paradox Hood", "Paradox Vestments", "Paradox Treads"],
+                        bonuses: { 2: { int: 100, description: "2pc: +100 INT" }, 3: { stunOnHit: { chance: 0.10 }, description: "3pc: Attacks have a 10% chance to stun the enemy for 1 turn." } }
+                    },
+                    // --- LR Sets ---
+                    "Colossus's Earth-Shattering Plate": {
+                        class: "Warrior", rarity: "LR", items: ["Helm of the Colossus", "Aegis of the Colossus", "Greaves of the Colossus"],
+                        bonuses: { 2: { hpPercent: 0.25, def: 150, description: "2pc: +25% Max HP & +150 DEF" }, 3: { immuneToCrits: true, description: "3pc: You are immune to enemy critical hits." } }
+                    },
+                    "Dragon-Slayer's Aspect": {
+                        class: "Warrior", rarity: "LR", items: ["Dragon-Slayer's Visage", "Dragon-Slayer's Carapace", "Dragon-Slayer's Striders"],
+                        bonuses: { 2: { str: 200, description: "2pc: +200 STR" }, 3: { bonusCurrentHpDamage: 0.05, description: "3pc: Attacks deal bonus damage equal to 5% of the enemy's current HP." } }
+                    },
+                    "Storm-Chaser's Regalia": {
+                        class: "Rogue", rarity: "LR", items: ["Storm-Chaser's Cowl", "Storm-Chaser's Doublet", "Storm-Chaser's Boots"],
+                        bonuses: { 2: { agl: 250, evasion: 0.05, description: "2pc: +250 AGL & +5% Evasion" }, 3: { evasionGrantsAtk: { percent: 0.05, maxStacks: 5, duration: 5 }, description: "3pc: Evading an attack grants +5% ATK for 5s (stacks 5 times)." } }
+                    },
+                    "King-Slayer's Guile": {
+                        class: "Rogue", rarity: "LR", items: ["King-Slayer's Hood", "King-Slayer's Jerkin", "King-Slayer's Treads"],
+                        bonuses: { 2: { critDmg: 0.50, description: "2pc: +50% Crit Damage" }, 3: { critIgnoresDef: 0.50, description: "3pc: Critical hits ignore 50% of enemy DEF." } }
+                    },
+                    "Celestial Fabric of the Cosmos": {
+                        class: "Wizard", rarity: "LR", items: ["Celestial Diadem", "Celestial Robe", "Celestial Sandals"],
+                        bonuses: { 2: { int: 300, description: "2pc: +300 INT" }, 3: { doubleCastChance: 0.25, description: "3pc: Your skill-based spells have a 25% chance to cast a second time." } }
+                    },
+                    "Void-Drinker's Vestments": {
+                        class: "Wizard", rarity: "LR", items: ["Void-Drinker's Cowl", "Void-Drinker's Mantle", "Void-Drinker's Wraps"],
+                        bonuses: { 2: { int: 150, skillLifesteal: 0.15, description: "2pc: +150 INT & 15% Lifesteal from skill damage." }, 3: { killRestoresHp: 0.20, description: "3pc: Killing an enemy with a skill restores 20% of your max HP." } }
                     }
                 };
 
                 const UIElements = {
+                    mainContainer: document.getElementById('main-container-div'),
                     playerName: document.getElementById('player-name'), playerClass: document.getElementById('player-class'),
                     playerLevel: document.getElementById('player-level'), playerStatPoints: document.getElementById('player-stat-points'),
                     playerHpText: document.getElementById('player-hp-text'), playerHpFill: document.getElementById('player-hp-fill'),
@@ -1064,6 +1161,7 @@
                     waveCounter: document.getElementById('wave-counter'), killCounter: document.getElementById('kill-counter'), 
                     eventLog: document.getElementById('event-log'), battleLog: document.getElementById('battle-log'),
                     challengeBossBtn: document.getElementById('challenge-boss-btn'),
+                    challengeFinalBossBtn: document.getElementById('challenge-final-boss-btn'),
                     classSelectionModal: document.getElementById('class-selection-modal'), promotionModal: document.getElementById('promotion-modal'),
                     classSelectionChoices: document.getElementById('class-selection-choices'),
                     promotionChoices: document.getElementById('promotion-choices'),
@@ -1094,13 +1192,106 @@
                     enhanceItemBtn: document.getElementById('enhance-item-btn'),
                 };
 
+                function weakenFinalBoss() {
+                    const base = FINAL_BOSS_BASE_STATS;
+                    const reductionPerBoss = 0.025;
+                    const totalReduction = 1 - (gameState.totalBossesDefeatedInRun * reductionPerBoss);
+                    const effectiveReduction = Math.max(0.1, totalReduction);
+
+                    gameState.finalBoss = {
+                        ...base,
+                        hp: Math.round(base.hp * effectiveReduction),
+                        maxHp: Math.round(base.hp * effectiveReduction),
+                        atk: Math.round(base.atk * effectiveReduction),
+                        def: Math.round(base.def * effectiveReduction),
+                        evasion: 0.15,
+                        accuracy: 0.10,
+                        critChance: 0.15,
+                        critDmg: 2.0,
+                        monsterType: 'boss',
+                        debuffs: {},
+                        missNextAttack: false
+                    };
+                }
+
+                function challengeFinalBoss() {
+                    if (gameState.finalBossDefeated) {
+                        logAction("You have already defeated the final boss.", 'log-system', "event");
+                        return;
+                    }
+                    if (gameState.player.currentHp <= 0) {
+                        logAction("You must be at full health to challenge the final boss!", 'log-error', "event");
+                        return;
+                    }
+
+                    logAction(`You challenge the mighty ${gameState.finalBoss.name}!`, 'log-system', "event");
+                    clearInterval(gameInterval);
+
+                    gameState.currentMonster = { ...gameState.finalBoss }; 
+                    const playerStats = getPlayerTotalStats();
+                    gameState.player.currentHp = playerStats.hp; 
+                    
+                    updateAllUIs(); 
+
+                    const fightInterval = setInterval(() => {
+                        const player = gameState.player;
+                        const boss = gameState.currentMonster;
+
+                        if (player.currentHp <= 0 || boss.hp <= 0) {
+                            clearInterval(fightInterval);
+                            if (player.currentHp > 0) {
+                                logAction(`You have vanquished ${boss.name}! The realm is safe!`, 'log-system');
+                                gameState.finalBossDefeated = true;
+                                gameState.gold += boss.gold;
+                                showGameWonScreen();
+                            } else {
+                                logAction(`You have been defeated by ${boss.name}. Grow stronger and try again!`, 'log-monster');
+                                player.currentHp = 0;
+                                updateAllUIs();
+                                startGame();
+                            }
+                            return;
+                        }
+
+                        const currentStats = getPlayerTotalStats();
+                        let playerDamage = calculateDamage(currentStats, boss, true);
+                        boss.hp -= playerDamage.damage;
+                        logAction(`You hit ${boss.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player', 'battle');
+                        handlePostPlayerAttackSkills(currentStats, playerDamage, 0);
+
+                        if (boss.hp <= 0) {
+                             updateUI();
+                             return;
+                        }
+
+                        let bossDamage = calculateDamage(boss, currentStats, false);
+                        player.currentHp -= bossDamage.damage;
+                        logAction(`${boss.name} hits you for ${bossDamage.damage} damage.`, 'log-monster');
+                        
+                        updateUI();
+                    }, 1000);
+                }
+
+                function showGameWonScreen() {
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    UIElements.mainContainer.innerHTML = `
+                        <div class="win-screen">
+                            <h1>Congratulations!</h1>
+                            <p>You have defeated ${gameState.finalBoss.name} and conquered the game!</p>
+                            <p>Your final achievement was accomplished after ${gameState.rebirth.points} rebirths.</p>
+                            <p>Thank you for playing Idle RPG Evolved!</p>
+                            <button onclick="localStorage.removeItem('${SAVE_KEY}'); location.reload();" class="button">Play Again From Scratch</button>
+                        </div>
+                    `;
+                }
+
                 function startGame() {
                     if (gameInterval) clearInterval(gameInterval);
                     if (autoSaveInterval) clearInterval(autoSaveInterval);
-
                     gameState.isRunning = true;
                     if (!gameState.currentMonster) spawnMonster();
-
+                    weakenFinalBoss();
                     updateAllUIs();
                     gameInterval = setInterval(gameLoop, 1000);
                     autoSaveInterval = setInterval(autoSaveToLocalStorage, 15000);
@@ -1110,7 +1301,7 @@
                     if (!gameState.player || !gameState.isRunning) return;
                     try {
                         const stateToSave = { ...gameState };
-                        delete stateToSave.playerTemp; // Don't save transient data
+                        delete stateToSave.playerTemp;
                         const gameStateString = JSON.stringify(stateToSave);
                         localStorage.setItem(SAVE_KEY, gameStateString);
                     } catch (e) {
@@ -1126,8 +1317,7 @@
                                 if (item.enhancementLevel === undefined) item.enhancementLevel = 0;
                                 if (item.bonusStats === undefined) item.bonusStats = {};
                                 if (item.enhancementBonusStats === undefined) item.enhancementBonusStats = {};
-                                if (item.enhancementProgress) delete item.enhancementProgress; // Remove obsolete property
-                                
+                                if (item.enhancementProgress) delete item.enhancementProgress;
                                 for (const statName in STAT_NAMES) {
                                     if (item.enhancementBonusStats[statName] === undefined) {
                                         item.enhancementBonusStats[statName] = 0;
@@ -1136,19 +1326,15 @@
                             }
                         });
                     }
-
                     if (loadedState.player) {
-                        if (loadedState.player.promotionPending === undefined) {
-                            loadedState.player.promotionPending = false;
-                        }
-                        if (loadedState.player.pendingPromotionChoices === undefined) {
-                             loadedState.player.pendingPromotionChoices = null;
-                        }
-                        if (loadedState.player.activeSkills === undefined) {
-                            loadedState.player.activeSkills = [];
-                        }
+                        if (loadedState.player.promotionPending === undefined) loadedState.player.promotionPending = false;
+                        if (loadedState.player.pendingPromotionChoices === undefined) loadedState.player.pendingPromotionChoices = null;
+                        if (loadedState.player.activeSkills === undefined) loadedState.player.activeSkills = [];
                     }
-                    
+                    if (loadedState.maxWaveReached === undefined) loadedState.maxWaveReached = loadedState.wave || 1;
+                    if (loadedState.finalBoss === undefined) loadedState.finalBoss = null;
+                    if (loadedState.finalBossDefeated === undefined) loadedState.finalBossDefeated = false;
+                    if (loadedState.totalBossesDefeatedInRun === undefined) loadedState.totalBossesDefeatedInRun = 0;
                     return loadedState;
                 }
 
@@ -1158,9 +1344,7 @@
                         if (savedState) {
                             let loadedState = JSON.parse(savedState);
                             if (!loadedState.player || !loadedState.player.baseStats) throw new Error("Invalid save.");
-                            
                             loadedState = migrateSaveData(loadedState);
-
                             gameState = deepMerge(getDefaultGameState(), loadedState);
                             resetTransientData();
                             logAction("Game loaded automatically.", 'log-system', "event");
@@ -1196,9 +1380,7 @@
                     try {
                         let loadedState = JSON.parse(atob(encodedSave));
                         if (!loadedState.player || !loadedState.player.baseStats) throw new Error("Invalid save.");
-
                         loadedState = migrateSaveData(loadedState);
-
                         clearInterval(gameInterval); clearInterval(autoSaveInterval);
                         gameState = deepMerge(getDefaultGameState(), loadedState);
                         resetTransientData();
@@ -1261,14 +1443,14 @@
                 function getPlayerTotalStats(hypotheticalItem = null) {
                     if (!gameState.player) return {};
                     const p = gameState.player;
-                    const rawStats = {};
+                    const rawStats = { lifesteal: 0, skillLifesteal: 0 };
 
                     for (const statName in STAT_NAMES) {
                         rawStats[statName] = 0;
                     }
 
                     for (const statName in rawStats) {
-                        rawStats[statName] += p.baseStats[statName] || 0;
+                        if (p.baseStats[statName] !== undefined) rawStats[statName] += p.baseStats[statName];
                         if (p.investedStats[statName]) {
                             if (statName === 'critChance') rawStats[statName] += p.investedStats[statName] * 0.002;
                             else if (statName === 'critDmg') rawStats[statName] += p.investedStats[statName] * 0.005;
@@ -1287,123 +1469,104 @@
                         if (typeof item === 'number') {
                             item = gameState.inventory.find(i => i.id === item);
                         }
-
                         if (item) {
-                            if (item.setName) {
-                                equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
-                            }
+                            if (item.setName) equippedSets[item.setName] = (equippedSets[item.setName] || 0) + 1;
                             for (const stat in item) {
-                                if (STAT_NAMES[stat] && typeof item[stat] === 'number') {
-                                    rawStats[stat] += item[stat];
-                                }
+                                if (STAT_NAMES[stat] && typeof item[stat] === 'number') rawStats[stat] += item[stat];
                             }
                             for (const stat in (item.bonusStats || {})) {
-                                if (rawStats[stat] !== undefined) {
-                                    rawStats[stat] += item.bonusStats[stat];
-                                }
+                                if (rawStats[stat] !== undefined) rawStats[stat] += item.bonusStats[stat];
                             }
                             for (const stat in (item.enhancementBonusStats || {})) {
-                                if (rawStats[stat] !== undefined) {
-                                    rawStats[stat] += item.enhancementBonusStats[stat];
-                                }
+                                if (rawStats[stat] !== undefined) rawStats[stat] += item.enhancementBonusStats[stat];
                             }
                         }
                     }
 
                     let hpPercentBonus = 0;
+                    const finalStats = { ...rawStats, hp: 0, atk: 0, def: 0, accuracy: 0, evasion: 0, activeSets: {} };
+
                     for (const setName in equippedSets) {
                         const setInfo = itemSets[setName];
                         const count = equippedSets[setName];
+                        finalStats.activeSets[setName] = count; 
                         for (let i = 2; i <= count; i++) {
                             if (setInfo.bonuses[i]) {
                                 for (const bonusStat in setInfo.bonuses[i]) {
                                     if (bonusStat === 'description') continue;
-                                    if (bonusStat === 'hpPercent') {
-                                        hpPercentBonus += setInfo.bonuses[i][bonusStat];
-                                    } else if (rawStats[bonusStat] !== undefined) {
-                                        rawStats[bonusStat] += setInfo.bonuses[i][bonusStat];
-                                    }
+                                    if (bonusStat === 'hpPercent') hpPercentBonus += setInfo.bonuses[i][bonusStat];
+                                    else if (finalStats[bonusStat] !== undefined) finalStats[bonusStat] += setInfo.bonuses[i][bonusStat];
+                                    else finalStats[bonusStat] = setInfo.bonuses[i][bonusStat]; // For new unique bonuses
                                 }
                             }
                         }
                     }
                     
-                    const finalStats = { ...rawStats };
                     const primaryStat = classes[p.baseClassName].primaryStat;
+                    finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
+                    finalStats.def = (finalStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
+                    finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
+                    finalStats.accuracy = (finalStats.dex || 0) * 0.002;
+                    finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
-                    finalStats.atk = Math.pow(rawStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
-                    finalStats.def = (rawStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
-                    finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
-                    finalStats.accuracy = (rawStats.dex || 0) * 0.002;
-                    finalStats.evasion = (rawStats.agl || 0) * 0.001;
+                    if (hpPercentBonus > 0) finalStats.hp *= (1 + hpPercentBonus);
 
-                    if (hpPercentBonus > 0) {
-                        finalStats.hp *= (1 + hpPercentBonus);
-                    }
-
-                    // SKILL MODS
                     if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
                         const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
-                        const frenzyBonus = Math.floor(missingHpPercent / 0.1) * 0.08;
-                        finalStats.atk *= (1 + frenzyBonus);
+                        finalStats.atk *= (1 + (Math.floor(missingHpPercent / 0.1) * 0.08));
                     }
-                    if (gameState.playerTemp.standFirmTurns > 0 && !hypotheticalItem) {
-                        finalStats.def *= 1.30;
-                    }
-                    if (gameState.playerTemp.battleRushTurns > 0 && !hypotheticalItem) {
-                        finalStats.atk *= 1.20;
+                    if (gameState.playerTemp.standFirmTurns > 0 && !hypotheticalItem) finalStats.def *= 1.30;
+                    if (gameState.playerTemp.battleRushTurns > 0 && !hypotheticalItem) finalStats.atk *= 1.20;
+                    if (gameState.playerTemp.evasionAtkBuffStacks > 0 && !hypotheticalItem) {
+                        const setBonus = finalStats.evasionGrantsAtk;
+                        if(setBonus) finalStats.atk *= (1 + (setBonus.percent * gameState.playerTemp.evasionAtkBuffStacks));
                     }
 
-
-                    if (p.currentHp > finalStats.hp && !hypotheticalItem) {
-                        p.currentHp = finalStats.hp;
-                    }
+                    if (p.currentHp > finalStats.hp && !hypotheticalItem) p.currentHp = finalStats.hp;
                     
                     return finalStats;
                 }
 
                 function gameLoop() {
                     if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
-                    const player = gameState.player;
                     
                     handleBuffsAndDebuffs();
 
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
 
                     const playerStats = getPlayerTotalStats();
+                    const p = gameState.player;
                     let playerDamage = calculateDamage(playerStats, gameState.currentMonster, true);
                     gameState.currentMonster.hp -= playerDamage.damage;
                     logAction(`You hit ${gameState.currentMonster.name} for ${playerDamage.damage} damage.${playerDamage.isCrit ? ' (CRIT!)' : ''}`, 'log-player', 'battle');
                     
-                    handlePostPlayerAttackSkills(playerStats, playerDamage);
+                    handlePostPlayerAttackSkills(playerStats, playerDamage, 0);
 
                     if (gameState.currentMonster.hp <= 0) { monsterDefeated(); return; }
                     
                     if (gameState.currentMonster.missNextAttack) {
-                        logAction(`${gameState.currentMonster.name}'s attack was nullified by a time distortion!`, 'log-skill', 'battle');
+                        logAction(`${gameState.currentMonster.name}'s attack was nullified!`, 'log-skill', 'battle');
                         gameState.currentMonster.missNextAttack = false;
                     } else if (gameState.playerTemp.guaranteedEvasion) {
                         logAction(`You phase through the attack, taking no damage!`, 'log-skill', 'battle');
                         gameState.playerTemp.guaranteedEvasion = false;
                     } else {
                         let monsterDamage = calculateDamage(gameState.currentMonster, playerStats, false);
-                        
                         let wasBlocked = false;
-                        if(player.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
+                        if(p.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
                             wasBlocked = true;
-                            if(player.activeSkills.includes('Holy Shield')) {
+                            if(p.activeSkills.includes('Holy Shield')) {
                                 const healAmount = Math.round(playerStats.hp * 0.05);
-                                player.currentHp = Math.min(playerStats.hp, player.currentHp + healAmount);
+                                p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
                                 logAction(`You blocked the attack with your Holy Shield, healing for ${healAmount} HP!`, 'log-skill', 'battle');
                             } else {
                                 logAction(`You blocked the attack with Aegis Block!`, 'log-skill', 'battle');
                             }
-
-                            if(player.activeSkills.includes('Stand Firm')) {
+                            if(p.activeSkills.includes('Stand Firm')) {
                                 gameState.playerTemp.standFirmTurns = 3;
                                 logAction(`You Stand Firm, bolstering your defense!`, 'log-skill', 'battle');
                             }
-                            if(player.activeSkills.includes('Divine Retribution')) {
+                            if(p.activeSkills.includes('Divine Retribution')) {
                                 const retaliateDmg = Math.round(playerStats.def);
                                 gameState.currentMonster.hp -= retaliateDmg;
                                 logAction(`Your shield erupts with holy light, dealing ${retaliateDmg} damage!`, 'log-skill', 'battle');
@@ -1411,10 +1574,16 @@
                             monsterDamage.damage = 0;
                         }
 
-                        if (player.activeSkills.includes('Thornmail') && gameState.playerTemp.standFirmTurns > 0 && !wasBlocked) {
+                        if (p.activeSkills.includes('Thornmail') && gameState.playerTemp.standFirmTurns > 0 && !wasBlocked) {
                             const reflectDmg = Math.round(monsterDamage.preMitigationDamage * 0.20);
                             gameState.currentMonster.hp -= reflectDmg;
                             logAction(`Your Thornmail reflects ${reflectDmg} damage!`, 'log-skill', 'battle');
+                        }
+                        
+                        if (playerStats.reflectDamage > 0 && !wasBlocked) {
+                            const reflectDmg = Math.round(monsterDamage.preMitigationDamage * playerStats.reflectDamage);
+                            gameState.currentMonster.hp -= reflectDmg;
+                            logAction(`Your set reflects ${reflectDmg} damage!`, 'log-skill', 'battle');
                         }
 
                         gameState.player.currentHp -= monsterDamage.damage;
@@ -1429,26 +1598,37 @@
                     const p = gameState.player;
                     const monster = gameState.currentMonster;
                     
-                    // --- HIT CHANCE CLAMPING ---
-                    const MIN_HIT_CHANCE = 0.25; // 25% minimum chance to hit
-                    const MAX_HIT_CHANCE = 0.95; // 95% maximum chance to hit
-
-                    const defenderEvasion = isPlayerAttacker ? (monster.evasion || 0) : (defender.evasion || 0);
+                    const MIN_HIT_CHANCE = 0.25, MAX_HIT_CHANCE = 0.95;
+                    const defenderEvasion = isPlayerAttacker ? (defender.evasion || 0) : (defender.evasion || 0);
                     const attackerAccuracy = attacker.accuracy || 0;
-
                     let hitChance = 0.90 + attackerAccuracy - defenderEvasion;
                     hitChance = Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
 
                     if (Math.random() > hitChance) {
-                        logAction(`${isPlayerAttacker ? 'Your' : (attacker.name + "'s")} attack was evaded!`, 'log-system', 'battle');
+                        if (isPlayerAttacker) {
+                            logAction(`Your attack was evaded!`, 'log-system', 'battle');
+                        } else {
+                            logAction(`${attacker.name}'s attack was evaded!`, 'log-system', 'battle');
+                            if (defender.evasionGrantsAtk) {
+                                const bonus = defender.evasionGrantsAtk;
+                                if (gameState.playerTemp.evasionAtkBuffStacks < bonus.maxStacks) {
+                                    gameState.playerTemp.evasionAtkBuffStacks++;
+                                }
+                                gameState.playerTemp.evasionAtkBuffDuration = bonus.duration;
+                                logAction(`Storm-Chaser set grants you a surge of power! (Stack: ${gameState.playerTemp.evasionAtkBuffStacks})`, 'log-skill', 'battle');
+                            }
+                        }
                         return { damage: 0, isCrit: false, preMitigationDamage: 0 };
                     }
-                    // --- END HIT CHANCE ---
 
                     let isCrit = false;
                     if (isPlayerAttacker) {
                         gameState.playerTemp.attacksSinceLastFocus++;
-                        if (p.activeSkills.includes('Focus') && gameState.playerTemp.attacksSinceLastFocus >= 5) {
+                        if (attacker.firstAttackCrit && !gameState.playerTemp.firstAttackCritUsed) {
+                            isCrit = true;
+                            gameState.playerTemp.firstAttackCritUsed = true;
+                            logAction('Phantom\'s Mirage guarantees a critical hit!', 'log-skill', 'battle');
+                        } else if (p.activeSkills.includes('Focus') && gameState.playerTemp.attacksSinceLastFocus >= 5) {
                              isCrit = true;
                              gameState.playerTemp.attacksSinceLastFocus = 0;
                              logAction('Focus guarantees a critical hit!', 'log-skill', 'battle');
@@ -1458,7 +1638,12 @@
                             logAction('Shadow Step guarantees a critical hit!', 'log-skill', 'battle');
                         }
                     }
-                    if(!isCrit) isCrit = Math.random() < (attacker.critChance || 0);
+                    if(!isCrit) {
+                        isCrit = Math.random() < (attacker.critChance || 0);
+                    }
+                    if (!isPlayerAttacker && defender.immuneToCrits) {
+                        isCrit = false;
+                    }
 
                     let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
                     if (isCrit && isPlayerAttacker && p.activeSkills.includes('Lethal Precision') && gameState.playerTemp.attacksSinceLastFocus === 0) {
@@ -1467,46 +1652,52 @@
 
                     let baseDamage = (attacker.atk || 0);
                     
-                    let defenderDef = isPlayerAttacker ? (monster.def || 0) : (defender.def || 0);
-                    if (isPlayerAttacker && monster.debuffs['Sunder']) {
-                        defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
-                    }
-                     if (isPlayerAttacker && monster.debuffs['Apocalypse']) {
-                        defenderDef *= (1 - 0.15);
-                    }
-
+                    let defenderDef = isPlayerAttacker ? (defender.def || 0) : (defender.def || 0);
+                    if (isPlayerAttacker && monster && monster.debuffs['Sunder']) defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
+                    if (isPlayerAttacker && monster && monster.debuffs['Apocalypse']) defenderDef *= (1 - 0.15);
+                    if (isPlayerAttacker && monster && monster.debuffs['LowerDef']) defenderDef *= (1 - monster.debuffs['LowerDef'].percent);
+                    if (isPlayerAttacker && isCrit && attacker.critIgnoresDef) defenderDef *= (1 - attacker.critIgnoresDef);
+                    
                     let damageMultiplier = 1.0;
+                    if (isPlayerAttacker && attacker.executeDmg && (monster.hp / monster.maxHp <= attacker.executeDmg.hpThreshold)) {
+                        damageMultiplier += attacker.executeDmg.dmgBonus;
+                    }
                     if (isPlayerAttacker) {
-                        let executeThreshold = 0.2;
-                        let executeBonus = 0.5;
-                        if (p.activeSkills.includes('Cull the Weak')) {
-                            executeThreshold = 0.3;
-                            executeBonus = 1.0;
-                        }
-                        if (p.activeSkills.includes('Execute') && monster.hp / monster.maxHp <= executeThreshold) {
-                            damageMultiplier += executeBonus;
-                        }
+                        let executeThreshold = 0.2, executeBonus = 0.5;
+                        if (p.activeSkills.includes('Cull the Weak')) { executeThreshold = 0.3; executeBonus = 1.0; }
+                        if (p.activeSkills.includes('Execute') && monster.hp / monster.maxHp <= executeThreshold) damageMultiplier += executeBonus;
                     }
                     
-                    const preMitigationDamage = baseDamage * critMultiplier * damageMultiplier;
-                    const damageReduction = 1 - (defenderDef / (defenderDef + 100));
-                    let finalDamage = Math.round(preMitigationDamage * damageReduction);
+                    const preMitigationDamage = baseDamage * critMultiplier;
+                    const damageReduction = 1 - (defenderDef / (defenderDef + 100 + (baseDamage / 10)));
+                    let finalDamage = Math.round(preMitigationDamage * damageReduction * damageMultiplier);
+
+                    if (isPlayerAttacker && attacker.bonusCurrentHpDamage) {
+                        const bonusDmg = Math.round(defender.hp * attacker.bonusCurrentHpDamage);
+                        finalDamage += bonusDmg;
+                        logAction(`Dragon-Slayer set burns for ${bonusDmg} bonus damage!`, 'log-skill', 'battle');
+                    }
 
                     return { damage: Math.max(1, finalDamage), isCrit: isCrit, preMitigationDamage: preMitigationDamage };
                 }
 
-                function handlePostPlayerAttackSkills(playerStats, playerDamage) {
+                function handlePostPlayerAttackSkills(playerStats, playerDamage, skillDamage) {
                     const p = gameState.player;
                     const monster = gameState.currentMonster;
+                    const totalDamage = playerDamage.damage + skillDamage;
                     
-                    // Lifesteal
-                    if (p.activeSkills.includes('Unyielding Assault') && gameState.playerTemp.battleRushTurns > 0) {
-                        const lifestealAmount = Math.round(playerDamage.damage * 0.10);
-                        p.currentHp = Math.min(playerStats.hp, p.currentHp + lifestealAmount);
-                        logAction(`Unyielding Assault heals you for ${lifestealAmount} HP.`, 'log-skill', 'battle');
+                    let totalLifesteal = playerStats.lifesteal || 0;
+                    if (skillDamage > 0) totalLifesteal += (playerStats.skillLifesteal || 0);
+                    if (p.activeSkills.includes('Unyielding Assault') && gameState.playerTemp.battleRushTurns > 0) totalLifesteal += 0.10;
+
+                    if (totalLifesteal > 0 && totalDamage > 0) {
+                        const healAmount = Math.round(totalDamage * totalLifesteal);
+                        p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
+                        logAction(`Lifesteal heals you for ${healAmount} HP.`, 'log-skill', 'battle');
                     }
 
-                    // Chance-based procs
+                    if (skillDamage > 0) return; // Don't proc on-hit effects from skill damage
+
                     if (p.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
                         const secondShotDmg = Math.round(playerDamage.damage * 0.6);
                         monster.hp -= secondShotDmg;
@@ -1514,64 +1705,61 @@
                     }
                     if (p.activeSkills.includes('Shadow Step') && Math.random() < 0.1) {
                         gameState.playerTemp.guaranteedCrit = true;
-                        if (p.activeSkills.includes('Invisibility')) {
-                            gameState.playerTemp.guaranteedEvasion = true;
-                        }
+                        if (p.activeSkills.includes('Invisibility')) gameState.playerTemp.guaranteedEvasion = true;
                     }
                     if (p.activeSkills.includes('Battle Rush') && Math.random() < 0.2) {
                         gameState.playerTemp.battleRushTurns = 3;
                         logAction('Battle Rush grants you a surge of power!', 'log-skill', 'battle');
                     }
 
-                    // Debuff applications
+                    if (playerDamage.isCrit && playerStats.dotOnCrit) {
+                        const dot = playerStats.dotOnCrit;
+                        monster.debuffs['Poison'] = { damage: Math.round(playerStats.atk * dot.damagePercent), duration: dot.duration };
+                        logAction('Viper\'s Embrace poisons the enemy!', 'log-skill', 'battle');
+                    }
+                    if (playerStats.lowerEnemyDefOnHit && Math.random() < playerStats.lowerEnemyDefOnHit.chance) {
+                        const debuff = playerStats.lowerEnemyDefOnHit;
+                        monster.debuffs['LowerDef'] = { percent: debuff.percent, duration: debuff.duration };
+                        logAction('Warlord\'s Onslaught shatters enemy armor!', 'log-skill', 'battle');
+                    }
+                    if (playerStats.stunOnHit && Math.random() < playerStats.stunOnHit.chance) {
+                        monster.missNextAttack = true;
+                        logAction('Chronomancer\'s Paradox stuns the enemy!', 'log-skill', 'battle');
+                    }
+
                     if (playerDamage.isCrit && p.activeSkills.includes('Bleed')) {
                         const maxStacks = p.activeSkills.includes('Hemorrhage') ? 3 : 1;
-                        let logMsg;
-                        
                         if (!monster.debuffs['Bleed']) {
                             monster.debuffs['Bleed'] = { damage: Math.round(playerStats.atk * 0.3), duration: 3, stacks: 1 };
-                            logMsg = 'Your critical hit causes the enemy to Bleed!';
+                            logAction('Your critical hit causes the enemy to Bleed!', 'log-skill', 'battle');
                         } else {
-                            monster.debuffs['Bleed'].duration = 3; // ALWAYS refresh duration
-                            if (monster.debuffs['Bleed'].stacks < maxStacks) {
-                                monster.debuffs['Bleed'].stacks++;
-                                logMsg = 'Your critical hit adds a stack and refreshes Bleed!';
-                            } else {
-                                logMsg = 'Your critical hit refreshes Bleed!';
-                            }
+                            monster.debuffs['Bleed'].duration = 3;
+                            if (monster.debuffs['Bleed'].stacks < maxStacks) monster.debuffs['Bleed'].stacks++;
                         }
-                        logAction(logMsg, 'log-skill', 'battle');
                     }
 
                     if (p.activeSkills.includes('Sunder') && Math.random() < 0.25) {
                         const maxStacks = p.activeSkills.includes('Armor Shatter') ? 3 : 1;
-                        if (!monster.debuffs['Sunder']) {
-                            monster.debuffs['Sunder'] = { duration: 5, stacks: 1 };
-                            logAction('You Sunder the enemy\'s armor!', 'log-skill', 'battle');
-                        } else if (monster.debuffs['Sunder'].stacks < maxStacks) {
-                            monster.debuffs['Sunder'].stacks++;
-                            monster.debuffs['Sunder'].duration = 5;
-                            logAction('You apply another stack of Sunder!', 'log-skill', 'battle');
-                        } else {
-                            monster.debuffs['Sunder'].duration = 5; // Refresh
-                        }
+                        if (!monster.debuffs['Sunder']) monster.debuffs['Sunder'] = { duration: 5, stacks: 1 };
+                        else if (monster.debuffs['Sunder'].stacks < maxStacks) monster.debuffs['Sunder'].stacks++;
+                        monster.debuffs['Sunder'].duration = 5;
                     }
 
-                    // Wizard skills
                     let arcanePowerProc = false;
-                    let arcanePowerChance = 0;
-                    if(p.activeSkills.includes('High Voltage')) arcanePowerChance = 0.15;
-                    else if (p.activeSkills.includes('Arcane Power')) arcanePowerChance = 0.10;
-                    
+                    let arcanePowerChance = p.activeSkills.includes('High Voltage') ? 0.15 : (p.activeSkills.includes('Arcane Power') ? 0.10 : 0);
                     if (arcanePowerChance > 0 && Math.random() < arcanePowerChance) {
                         arcanePowerProc = true;
                         let arcaneDmg = playerStats.atk * (p.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
-                        if (p.activeSkills.includes('Chain Lightning')) {
-                            arcaneDmg += playerStats.atk * 1.5;
-                        }
+                        if (p.activeSkills.includes('Chain Lightning')) arcaneDmg += playerStats.atk * 1.5;
                         arcaneDmg = Math.round(arcaneDmg);
                         monster.hp -= arcaneDmg;
                         logAction(`Arcane Power erupts for ${arcaneDmg} bonus damage!`, 'log-skill', 'battle');
+                        handlePostPlayerAttackSkills(playerStats, playerDamage, arcaneDmg);
+                        if (playerStats.doubleCastChance && Math.random() < playerStats.doubleCastChance) {
+                             monster.hp -= arcaneDmg;
+                             logAction(`Celestial Fabric causes the spell to echo for another ${arcaneDmg} damage!`, 'log-skill', 'battle');
+                             handlePostPlayerAttackSkills(playerStats, playerDamage, arcaneDmg);
+                        }
                     }
                     if(arcanePowerProc && p.activeSkills.includes('Combustion')) {
                         let burnDmg = playerStats.atk * (p.activeSkills.includes('Avatar') ? 1.0 : 0.5);
@@ -1580,110 +1768,98 @@
                         logAction('The enemy is engulfed in magical flames!', 'log-skill', 'battle');
                     }
 
-                    let soulDrainChance = 0;
-                    if(p.activeSkills.includes('Devour Soul')) soulDrainChance = 0.08;
-                    else if (p.activeSkills.includes('Soul Drain')) soulDrainChance = 0.05;
-
+                    let soulDrainChance = p.activeSkills.includes('Devour Soul') ? 0.08 : (p.activeSkills.includes('Soul Drain') ? 0.05 : 0);
                     if (soulDrainChance > 0 && Math.random() < soulDrainChance) {
                         let drainDmg = playerStats.atk * 1.5;
-                        if (p.activeSkills.includes('Annihilate')) {
-                            drainDmg += monster.maxHp * 0.05;
-                        }
+                        if (p.activeSkills.includes('Annihilate')) drainDmg += monster.maxHp * 0.05;
                         drainDmg = Math.round(drainDmg);
                         monster.hp -= drainDmg;
-                        
-                        let healPercent = p.activeSkills.includes('Devour Soul') ? 0.75 : 0.50;
-                        const healAmount = Math.round(drainDmg * healPercent);
-                        p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
-                        logAction(`Soul Drain deals ${drainDmg} damage and heals you for ${healAmount}!`, 'log-skill', 'battle');
-
+                        logAction(`Soul Drain deals ${drainDmg} damage!`, 'log-skill', 'battle');
+                        handlePostPlayerAttackSkills(playerStats, playerDamage, drainDmg);
                         if (p.activeSkills.includes('Time Warp')) {
-                            let missChance = p.activeSkills.includes('Paradox') ? 1.0 : 0.5;
-                            if (Math.random() < missChance) {
-                                monster.missNextAttack = true;
-                            }
+                            if (Math.random() < (p.activeSkills.includes('Paradox') ? 1.0 : 0.5)) monster.missNextAttack = true;
+                        }
+                        if (playerStats.doubleCastChance && Math.random() < playerStats.doubleCastChance) {
+                             monster.hp -= drainDmg;
+                             logAction(`Celestial Fabric causes the spell to echo for another ${drainDmg} damage!`, 'log-skill', 'battle');
+                             handlePostPlayerAttackSkills(playerStats, playerDamage, drainDmg);
                         }
                     }
                 }
 
                 function handleBuffsAndDebuffs() {
-                    const p = gameState.player;
-                    const monster = gameState.currentMonster;
-                    const playerStats = getPlayerTotalStats();
-
-                    // Player buffs
                     if(gameState.playerTemp.standFirmTurns > 0) gameState.playerTemp.standFirmTurns--;
                     if(gameState.playerTemp.battleRushTurns > 0) gameState.playerTemp.battleRushTurns--;
+                    if(gameState.playerTemp.evasionAtkBuffDuration > 0) gameState.playerTemp.evasionAtkBuffDuration--;
+                    else gameState.playerTemp.evasionAtkBuffStacks = 0;
 
-                    // Monster debuffs
+                    const monster = gameState.currentMonster;
                     for (const key in monster.debuffs) {
                         const debuff = monster.debuffs[key];
                         if (debuff.duration > 0) {
-                            // DoT effects
                             if (key === 'Bleed') {
                                 let bleedDmg = debuff.damage * debuff.stacks;
-                                if (p.activeSkills.includes('Exsanguinate') && Math.random() < playerStats.critChance) {
-                                    bleedDmg = Math.round(bleedDmg * playerStats.critDmg);
+                                if (gameState.player.activeSkills.includes('Exsanguinate') && Math.random() < getPlayerTotalStats().critChance) {
+                                    bleedDmg = Math.round(bleedDmg * getPlayerTotalStats().critDmg);
                                     logAction(`Bleed critically strikes for ${bleedDmg} damage!`, 'log-skill', 'battle');
                                 } else {
                                     logAction(`Bleed deals ${bleedDmg} damage.`, 'log-monster', 'battle');
                                 }
                                 monster.hp -= bleedDmg;
                             }
-                             if (key === 'Combustion') {
+                             if (key === 'Combustion' || key === 'Poison') {
                                 monster.hp -= debuff.damage;
-                                logAction(`Combustion burns for ${debuff.damage} damage.`, 'log-monster', 'battle');
+                                logAction(`${key} burns for ${debuff.damage} damage.`, 'log-monster', 'battle');
                             }
                             debuff.duration--;
                         }
-                        if (debuff.duration <= 0) {
-                            delete monster.debuffs[key];
-                        }
+                        if (debuff.duration <= 0) delete monster.debuffs[key];
                     }
                 }
 
                 function monsterDefeated() {
                     logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system', "event");
+                    const playerStats = getPlayerTotalStats();
+                    if (playerStats.killRestoresHp && gameState.currentMonster.hp <= 0) { // Check if kill was by skill
+                         const healAmount = Math.round(playerStats.hp * playerStats.killRestoresHp);
+                         gameState.player.currentHp = Math.min(playerStats.hp, gameState.player.currentHp + healAmount);
+                         logAction(`Void-Drinker set restores ${healAmount} HP on kill.`, 'log-skill', 'event');
+                    }
 
                     const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
                     const xpRebirthBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
                     const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
 
                     let xpShopBoostMultiplier = 1;
-                    let xpLogMessage = '';
                     if (gameState.activeBoosts.xp && gameState.activeBoosts.xp.fightsRemaining > 0) {
                         xpShopBoostMultiplier = gameState.activeBoosts.xp.multiplier;
                         gameState.activeBoosts.xp.fightsRemaining--;
-                        xpLogMessage = ` (x${xpShopBoostMultiplier} Boost!)`;
-                        if (gameState.activeBoosts.xp.fightsRemaining <= 0) {
-                            gameState.activeBoosts.xp = null;
-                            logAction('Your XP Boost has expired.', 'log-boost', "event");
-                        }
+                        if (gameState.activeBoosts.xp.fightsRemaining <= 0) gameState.activeBoosts.xp = null;
                     }
-
                     const xpGained = Math.round(gameState.currentMonster.xp * xpRebirthBonus * xpShopBoostMultiplier);
-
                     gameState.gold += goldGained;
                     gameState.player.xp += xpGained;
-                    logAction(`You gained ${goldGained} gold and ${xpGained} XP.${xpLogMessage}`, 'log-drop', "event");
+                    logAction(`You gained ${goldGained} gold and ${xpGained} XP.`, 'log-drop', "event");
 
-                    if (Math.random() < gameState.currentMonster.dropChance) {
-                        generateItemDrop(gameState.currentMonster);
-                    }
+                    if (Math.random() < gameState.currentMonster.dropChance) generateItemDrop(gameState.currentMonster);
 
                     gameState.kills++;
                     if (gameState.currentMonster.monsterType === 'boss') {
                         gameState.wave++;
+                        if (gameState.wave > gameState.maxWaveReached) gameState.maxWaveReached = gameState.wave;
                         gameState.kills = 0;
                         UIElements.challengeBossBtn.disabled = true;
+                        gameState.totalBossesDefeatedInRun++;
+                        weakenFinalBoss();
+                        logAction(`The Chronos Tyrant feels a tremor of weakness...`, 'log-system', "event");
+                        if (gameState.wave === 35 && !gameState.finalBossDefeated) {
+                            challengeFinalBoss();
+                            return;
+                        }
                     }
 
                     if (gameState.kills >= 10 && gameState.currentMonster.monsterType !== 'boss') UIElements.challengeBossBtn.disabled = false;
-                    
-                    while (gameState.player.xp >= gameState.player.xpToNextLevel) {
-                        levelUp();
-                    }
-
+                    while (gameState.player.xp >= gameState.player.xpToNextLevel) levelUp();
                     spawnMonster();
                 }
 
@@ -1711,73 +1887,50 @@
 
                 function getRarityProbabilities(monsterType) {
                     switch (monsterType) {
-                        case 'regular':
-                            return { N: 0.80, R: 0.17, SR: 0.025, SSR: 0.005, UR: 0, LR: 0 };
-                        case 'mutant':
-                            return { N: 0.647, R: 0.30, SR: 0.04, SSR: 0.01, UR: 0.003, LR: 0 };
-                        case 'elite':
-                            return { N: 0.459, R: 0.40, SR: 0.10, SSR: 0.03, UR: 0.01, LR: 0.001 };
-                        case 'boss':
-                            return { N: 0.10, R: 0.60, SR: 0.20, SSR: 0.075, UR: 0.02, LR: 0.005 };
-                        default:
-                            return { N: 1.0, R: 0, SR: 0, SSR: 0, UR: 0, LR: 0 };
+                        case 'regular': return { N: 0.80, R: 0.17, SR: 0.025, SSR: 0.005, UR: 0, LR: 0 };
+                        case 'mutant': return { N: 0.647, R: 0.30, SR: 0.04, SSR: 0.01, UR: 0.003, LR: 0 };
+                        case 'elite': return { N: 0.459, R: 0.40, SR: 0.10, SSR: 0.03, UR: 0.01, LR: 0.001 };
+                        case 'boss': return { N: 0.10, R: 0.60, SR: 0.20, SSR: 0.075, UR: 0.02, LR: 0.005 };
+                        default: return { N: 1.0, R: 0, SR: 0, SSR: 0, UR: 0, LR: 0 };
                     }
                 }
-
 
                 function generateItemDrop(monster) {
                     if (gameState.inventory.length >= gameState.maxInventorySize) {
                         logAction('Inventory is full!', 'log-system', "event"); return;
                     }
 
-                    const classChoices = ['Warrior', 'Rogue', 'Wizard'];
-                    const classForDrop = classChoices[Math.floor(Math.random() * classChoices.length)];
+                    const classForDrop = ['Warrior', 'Rogue', 'Wizard'][Math.floor(Math.random() * 3)];
                     const itemType = itemData.types[Math.floor(Math.random() * itemData.types.length)];
-
                     const probs = getRarityProbabilities(monster.monsterType);
                     const rand = Math.random();
-                    let cumulativeProb = 0;
-                    let rarityKey = 'N'; // Default
+                    let cumulativeProb = 0, rarityKey = 'N';
                     for (const rarity in probs) {
-                        if (rand < (cumulativeProb += probs[rarity])) {
-                            rarityKey = rarity;
-                            break;
-                        }
+                        if (rand < (cumulativeProb += probs[rarity])) { rarityKey = rarity; break; }
                     }
 
                     const rarityInfo = itemData.rarities[rarityKey];
                     const waveScale = 1 + Math.log10(gameState.wave || 1);
-                    const SET_ITEM_CHANCE = 0.10;
+                    const SET_ITEM_CHANCE = 0.15; // 15% chance for a drop of appropriate rarity to be a set item
 
                     const newItem = {
-                        id: Date.now() + Math.random(),
-                        type: itemType,
-                        rarity: rarityKey,
-                        classReq: classForDrop,
-                        bonusStats: {},
-                        setName: null,
-                        enhancementLevel: 0,
-                        enhancementBonusStats: {},
+                        id: Date.now() + Math.random(), type: itemType, rarity: rarityKey,
+                        classReq: classForDrop, bonusStats: {}, setName: null,
+                        enhancementLevel: 0, enhancementBonusStats: {},
                     };
-
-                    for(const statName in STAT_NAMES) {
-                        newItem.enhancementBonusStats[statName] = 0;
-                    }
+                    for(const statName in STAT_NAMES) newItem.enhancementBonusStats[statName] = 0;
 
                     let itemName;
-                    if (['SR', 'SSR', 'UR', 'LR'].includes(rarityKey) && Math.random() < SET_ITEM_CHANCE) {
-                        const possibleSets = Object.keys(itemSets).filter(name => itemSets[name].class === classForDrop);
-                        if (possibleSets.length > 0) {
-                            const selectedSetName = possibleSets[Math.floor(Math.random() * possibleSets.length)];
-                            newItem.setName = selectedSetName;
-                            const setItemNames = itemSets[selectedSetName].items;
-                            itemName = setItemNames[Math.floor(Math.random() * setItemNames.length)];
-                        }
+                    const possibleSets = Object.keys(itemSets).filter(name => itemSets[name].class === classForDrop && itemSets[name].rarity === rarityKey);
+                    if (possibleSets.length > 0 && Math.random() < SET_ITEM_CHANCE) {
+                        const selectedSetName = possibleSets[Math.floor(Math.random() * possibleSets.length)];
+                        newItem.setName = selectedSetName;
+                        const setItemNames = itemSets[selectedSetName].items;
+                        itemName = setItemNames[Math.floor(Math.random() * setItemNames.length)];
                     }
 
                     if (!newItem.setName) {
-                        const possibleNames = itemData.names[itemType][classForDrop];
-                        const baseName = possibleNames[Math.floor(Math.random() * possibleNames.length)];
+                        const baseName = itemData.names[itemType][classForDrop][Math.floor(Math.random() * itemData.names[itemType][classForDrop].length)];
                         const prefix = itemData.names.prefixes.Balanced[Math.floor(Math.random() * itemData.names.prefixes.Balanced.length)];
                         itemName = `${prefix} ${baseName}`;
                     }
@@ -1785,37 +1938,22 @@
 
                     const calculateStatValue = (stat) => {
                         let value;
-                        if (['critChance', 'critDmg'].includes(stat)) {
-                            value = (Math.random() * 0.03 + 0.005) * rarityInfo.statMod * waveScale;
-                        } else {
-                            value = Math.round((Math.random() * 3 + 1) * rarityInfo.statMod * waveScale);
-                        }
+                        if (['critChance', 'critDmg'].includes(stat)) value = (Math.random() * 0.03 + 0.005) * rarityInfo.statMod * waveScale;
+                        else value = Math.round((Math.random() * 3 + 1) * rarityInfo.statMod * waveScale);
                         return value;
                     };
 
-                    let coreStat = null;
-                    if (newItem.type === 'weapon') coreStat = (newItem.classReq === 'Wizard') ? 'int' : 'str';
-                    else if (newItem.type === 'body') coreStat = 'def';
-                    else if (newItem.type === 'legs') coreStat = 'con';
-
-                    let baseStatPool = shuffleArray([...itemData.bonusStatPool]);
-                    baseStatPool = baseStatPool.filter(s => s !== coreStat);
-
-                    if (coreStat) {
-                        newItem[coreStat] = calculateStatValue(coreStat);
-                    }
+                    let coreStat = (newItem.type === 'weapon') ? (newItem.classReq === 'Wizard' ? 'int' : 'str') : (newItem.type === 'body' ? 'def' : 'con');
+                    let baseStatPool = shuffleArray([...itemData.bonusStatPool]).filter(s => s !== coreStat);
+                    if (coreStat) newItem[coreStat] = calculateStatValue(coreStat);
                     
-                    const generatedBaseStats = [];
                     const baseStatsToGenerate = rarityInfo.baseStatCount - (coreStat ? 1 : 0);
                     for (let i = 0; i < baseStatsToGenerate; i++) {
                         if (baseStatPool.length === 0) break;
-                        const stat = baseStatPool.pop();
-                        newItem[stat] = calculateStatValue(stat);
-                        generatedBaseStats.push(stat);
+                        newItem[baseStatPool.pop()] = calculateStatValue(baseStatPool[baseStatPool.length - 1]);
                     }
 
-                    let bonusStatPool = shuffleArray([...itemData.bonusStatPool]);
-                    bonusStatPool = bonusStatPool.filter(s => s !== coreStat && !generatedBaseStats.includes(s));
+                    let bonusStatPool = shuffleArray([...itemData.bonusStatPool]).filter(s => !newItem[s]);
                     for (let i = 0; i < rarityInfo.bonusStats; i++) {
                         if (bonusStatPool.length === 0) break;
                         const stat = bonusStatPool.pop();
@@ -1823,25 +1961,25 @@
                     }
 
                     gameState.inventory.push(newItem);
-                    const color = rarityInfo.color;
-                    logAction(`You found a [<span style="color:${color}; font-weight: bold;">${rarityKey}</span>] <span style="color:${color}">${newItem.name}</span>!`, 'log-drop', "event");
+                    logAction(`You found a [<span style="color:${rarityInfo.color}; font-weight: bold;">${rarityKey}</span>] <span style="color:${rarityInfo.color}">${newItem.name}</span>!`, 'log-drop', "event");
                     updateInventoryUI();
                 }
 
                 function spawnMonster(isBoss = false) {
                     gameState.isRunning = true;
+                    // Reset combat-specific temp flags
+                    gameState.playerTemp.firstAttackCritUsed = false;
+                    gameState.playerTemp.evasionAtkBuffStacks = 0;
+                    gameState.playerTemp.evasionAtkBuffDuration = 0;
+
                     let monsterTemplate;
                     if (isBoss) {
                         monsterTemplate = monsters.bosses[(gameState.wave - 1) % monsters.bosses.length];
                     } else {
                         const rand = Math.random();
-                        if (gameState.wave > 3 && rand < 0.15) {
-                            monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
-                        } else if (gameState.wave > 1 && rand < 0.30) {
-                            monsterTemplate = monsters.mutant[Math.floor(Math.random() * monsters.mutant.length)];
-                        } else {
-                            monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
-                        }
+                        if (gameState.wave > 3 && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
+                        else if (gameState.wave > 1 && rand < 0.30) monsterTemplate = monsters.mutant[Math.floor(Math.random() * monsters.mutant.length)];
+                        else monsterTemplate = monsters.regular[Math.floor(Math.random() * monsters.regular.length)];
                     }
 
                     const hpScale = Math.pow(1.20, gameState.wave - 1);
@@ -1851,17 +1989,11 @@
 
                     gameState.currentMonster = {
                         ...monsterTemplate,
-                        hp: Math.round(monsterTemplate.baseHp * hpScale),
-                        maxHp: Math.round(monsterTemplate.baseHp * hpScale),
-                        atk: Math.round(monsterTemplate.baseAtk * statScale),
-                        def: Math.round(monsterTemplate.baseDef * statScale),
-                        evasion: monsterTemplate.baseEvasion + (gameState.wave * 0.001),
-                        accuracy: 0,
-                        gold: Math.round(monsterTemplate.gold * goldScale),
-                        xp: Math.round(monsterTemplate.xp * xpScale),
-                        isBoss: isBoss,
-                        debuffs: {},
-                        missNextAttack: false,
+                        hp: Math.round(monsterTemplate.baseHp * hpScale), maxHp: Math.round(monsterTemplate.baseHp * hpScale),
+                        atk: Math.round(monsterTemplate.baseAtk * statScale), def: Math.round(monsterTemplate.baseDef * statScale),
+                        evasion: monsterTemplate.baseEvasion + (gameState.wave * 0.001), accuracy: 0,
+                        gold: Math.round(monsterTemplate.gold * goldScale), xp: Math.round(monsterTemplate.xp * xpScale),
+                        isBoss: isBoss, debuffs: {}, missNextAttack: false,
                     };
                     logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system', "event");
                     updateAllUIs();
@@ -1870,17 +2002,12 @@
                 function getAvailablePromotion(player) {
                     const baseClassInfo = classes[player.baseClassName];
                     if (!baseClassInfo || !baseClassInfo.promotions) return null;
-
                     const promotionTiers = Object.keys(baseClassInfo.promotions).sort((a, b) => a - b);
-
                     for (const tierLevel of promotionTiers) {
                         if (player.level >= tierLevel) {
                             const tier = baseClassInfo.promotions[tierLevel];
-                            if (Array.isArray(tier) && player.className === player.baseClassName) {
-                                return { level: tierLevel, choices: tier };
-                            } else if (typeof tier === 'object' && tier[player.className]) {
-                                return { level: tierLevel, choices: tier[player.className] };
-                            }
+                            if (Array.isArray(tier) && player.className === player.baseClassName) return { level: tierLevel, choices: tier };
+                            else if (typeof tier === 'object' && tier[player.className]) return { level: tierLevel, choices: tier[player.className] };
                         }
                     }
                     return null;
@@ -1888,28 +2015,21 @@
 
                 function levelUp() {
                     const p = gameState.player;
-                    
                     p.xp -= p.xpToNextLevel;
                     p.level++;
                     p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45));
-                    
                     const pointsGained = Math.floor(Math.random() * 3) + 5;
                     p.statPoints += pointsGained;
 
                     let growth = { ...classes[p.baseClassName].growth };
                     const promoAdjust = promotionGrowthAdjustments[p.className];
                     if (promoAdjust) {
-                        for (const stat in promoAdjust) {
-                            growth[stat] = (growth[stat] || 0) + promoAdjust[stat];
-                        }
+                        for (const stat in promoAdjust) growth[stat] = (growth[stat] || 0) + promoAdjust[stat];
                     }
-                    for (const stat in growth) {
-                        p.baseStats[stat] += growth[stat];
-                    }
+                    for (const stat in growth) p.baseStats[stat] += growth[stat];
 
                     p.currentHp = getPlayerTotalStats().hp;
                     logAction(`LEVEL UP! You are now level ${p.level}. Gained ${pointsGained} stat points.`, 'log-system', "event");
-                    logAction('Health fully restored!', 'log-system', "event");
                     if (p.level >= 70) UIElements.rebirthBtn.style.display = 'block';
 
                     if (!p.promotionPending) {
@@ -1927,9 +2047,7 @@
                     gameState.isRunning = false;
                     UIElements.promotionDescription.textContent = 'Select a promotion to learn more.';
                     UIElements.confirmPromotionBtn.disabled = true;
-                    
-                    const promotionChoices = UIElements.promotionChoices;
-                    promotionChoices.innerHTML = '';
+                    UIElements.promotionChoices.innerHTML = '';
 
                     choices.forEach(choice => {
                         const btn = document.createElement('button');
@@ -1939,15 +2057,13 @@
                             gameState.playerTemp.promotionSelection = choice;
                             let description = promotionInfo[choice]?.description || 'No information available.';
                             const skill = promotionSkills[choice];
-                            if(skill) {
-                                description += `<br><br><strong>New Skill: ${skill.name}</strong> - <em>${skill.description}</em>`;
-                            }
+                            if(skill) description += `<br><br><strong>New Skill: ${skill.name}</strong> - <em>${skill.description}</em>`;
                             UIElements.promotionDescription.innerHTML = description;
-                            promotionChoices.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+                            UIElements.promotionChoices.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             UIElements.confirmPromotionBtn.disabled = false;
                         };
-                        promotionChoices.appendChild(btn);
+                        UIElements.promotionChoices.appendChild(btn);
                     });
 
                     UIElements.confirmPromotionBtn.onclick = () => {
@@ -1956,13 +2072,11 @@
                             gameState.player.className = selection;
                             gameState.player.promotionPending = false;
                             gameState.player.pendingPromotionChoices = null;
-
                             const skill = promotionSkills[selection];
                             if(skill && !gameState.player.activeSkills.includes(skill.name)) {
                                 gameState.player.activeSkills.push(skill.name);
                                 logAction(`You have learned the skill: <span class="log-skill">${skill.name}</span>!`, 'log-system', "event");
                             }
-
                             logAction(`You have been promoted to ${gameState.player.className}!`, 'log-system', "event");
                             gameState.player.currentHp = getPlayerTotalStats().hp;
                             UIElements.promotionModal.style.display = 'none';
@@ -1970,7 +2084,6 @@
                             updateAllUIs();
                         }
                     };
-                    
                     UIElements.promotionModal.style.display = 'flex';
                 }
 
@@ -1997,10 +2110,8 @@
                     }
                     UIElements.waveCounter.textContent = gameState.wave; UIElements.killCounter.textContent = gameState.kills;
                     UIElements.rebirthPoints.textContent = gameState.rebirth.points; UIElements.rebirthAtk.textContent = gameState.rebirth.bonuses.atk;
-                    UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def;
-                    UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
-                    UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold;
-                    UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
+                    UIElements.rebirthDef.textContent = gameState.rebirth.bonuses.def; UIElements.rebirthHp.textContent = gameState.rebirth.bonuses.hp;
+                    UIElements.rebirthGold.textContent = gameState.rebirth.bonuses.gold; UIElements.rebirthXp.textContent = gameState.rebirth.bonuses.xp;
 
                     const xpBoost = gameState.activeBoosts.xp;
                     if (xpBoost && xpBoost.fightsRemaining > 0) {
@@ -2027,6 +2138,20 @@
                     const boost3xCost = 600 * gameState.wave;
                     UIElements.buyXpBoost3x.textContent = `Buy (${boost3xCost}G)`;
                     UIElements.buyXpBoost3x.disabled = gameState.gold < boost3xCost || !!gameState.activeBoosts.xp;
+                }
+
+                function updateFinalBossButton() {
+                    const btn = UIElements.challengeFinalBossBtn;
+                    if (gameState.maxWaveReached >= 2 && !gameState.finalBossDefeated) {
+                        btn.style.display = 'block';
+                        const boss = gameState.finalBoss;
+                        if (boss) {
+                            const hpDisplay = boss.hp > 1000000 ? `${(boss.hp / 1000000).toFixed(2)}M` : Math.round(boss.hp);
+                            btn.innerHTML = `Challenge ${boss.name}<br>(HP: ${hpDisplay})`;
+                        }
+                    } else {
+                        btn.style.display = 'none';
+                    }
                 }
 
                 function updatePointInvestmentUI() {
@@ -2095,11 +2220,8 @@
                     const allocation = gameState.playerTemp.pointAllocation;
                     const totalPending = Object.values(allocation).reduce((a, b) => a + b, 0);
 
-                    if (amount > 0 && gameState.player.statPoints - totalPending > 0) {
-                        allocation[stat]++;
-                    } else if (amount < 0 && allocation[stat] > 0) {
-                        allocation[stat]--;
-                    }
+                    if (amount > 0 && gameState.player.statPoints - totalPending > 0) allocation[stat]++;
+                    else if (amount < 0 && allocation[stat] > 0) allocation[stat]--;
                     updateAllUIs();
                 }
 
@@ -2107,11 +2229,8 @@
                     if (!gameState.player) return;
                     const allocation = gameState.playerTemp.pointAllocation;
                     const totalToSpend = Object.values(allocation).reduce((a, b) => a + b, 0);
-
                     if (totalToSpend > 0 && gameState.player.statPoints >= totalToSpend) {
-                        for (const stat in allocation) {
-                            gameState.player.investedStats[stat] += allocation[stat];
-                        }
+                        for (const stat in allocation) gameState.player.investedStats[stat] += allocation[stat];
                         gameState.player.statPoints -= totalToSpend;
                         logAction(`Invested ${totalToSpend} points.`, 'log-system', "event");
                         resetPointInvestment();
@@ -2119,12 +2238,9 @@
                 }
 
                 function resetPointInvestment() {
-                    for (const stat in gameState.playerTemp.pointAllocation) {
-                        gameState.playerTemp.pointAllocation[stat] = 0;
-                    }
+                    for (const stat in gameState.playerTemp.pointAllocation) gameState.playerTemp.pointAllocation[stat] = 0;
                     updateAllUIs();
                 }
-
 
                 function updateInventoryUI() {
                     const list = UIElements.inventoryList;
@@ -2200,32 +2316,23 @@
                     }
 
                     panel.style.display = 'flex';
-                    // Find the skill data for all active skills
                     const activeSkillData = Object.values(promotionSkills).filter(skill => gameState.player.activeSkills.includes(skill.name));
-                    
                     activeSkillData.forEach(skillData => {
                         const skillDiv = document.createElement('div');
                         skillDiv.className = 'skill-entry';
-                        skillDiv.innerHTML = `
-                            <strong>${skillData.name}</strong>
-                            <p>${skillData.description}</p>
-                        `;
+                        skillDiv.innerHTML = `<strong>${skillData.name}</strong><p>${skillData.description}</p>`;
                         display.appendChild(skillDiv);
                     });
                 }
 
                 function handleTooltipToggle(event, item, isEquipped) {
                     event.stopPropagation();
-                    if (activeTooltip.itemId === item.id) {
-                        hideTooltip();
-                    } else {
-                        showTooltip(event.currentTarget, item, isEquipped);
-                    }
+                    if (activeTooltip.itemId === item.id) hideTooltip();
+                    else showTooltip(event.currentTarget, item, isEquipped);
                 }
 
                 function showTooltip(targetElement, item, isEquipped) {
                     hideTooltip(); 
-                    
                     activeTooltip.target = targetElement;
                     activeTooltip.itemId = item.id;
                     
@@ -2239,49 +2346,30 @@
                     const buildStatString = (stat, baseValue) => {
                         const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
                         if (baseValue === 0 && enhancementBonus === 0) return '';
-
                         const totalValue = baseValue + enhancementBonus;
                         const isPercent = ['critChance', 'critDmg'].includes(stat);
-                        let displayString;
-
-                        if (isPercent) {
-                            displayString = `+${(totalValue * 100).toFixed(1)}%`;
-                            if (enhancementBonus > 0) {
-                                displayString += ` (<span class="enhancement-bonus">+${(enhancementBonus * 100).toFixed(1)}%</span>)`;
-                            }
-                        } else {
-                            displayString = `+${Math.round(totalValue)}`;
-                            if (enhancementBonus > 0) {
-                                displayString += ` (<span class="enhancement-bonus">+${Math.round(enhancementBonus)}</span>)`;
-                            }
+                        let displayString = isPercent ? `+${(totalValue * 100).toFixed(1)}%` : `+${Math.round(totalValue)}`;
+                        if (enhancementBonus > 0) {
+                            displayString += ` (<span class="enhancement-bonus">+${isPercent ? (enhancementBonus * 100).toFixed(1) + '%' : Math.round(enhancementBonus)}</span>)`;
                         }
                         return `${STAT_NAMES[stat]}: ${displayString}<br>`;
                     };
 
-                    let baseStatContent = '';
-                    let bonusStatContent = '';
-
+                    let baseStatContent = '', bonusStatContent = '';
                     for (const stat in STAT_NAMES) {
-                        if (item[stat] && typeof item[stat] === 'number') {
-                            baseStatContent += buildStatString(stat, item[stat]);
-                        } else if (item.bonusStats && item.bonusStats[stat]) {
-                            bonusStatContent += buildStatString(stat, item.bonusStats[stat]);
-                        }
+                        if (item[stat] && typeof item[stat] === 'number') baseStatContent += buildStatString(stat, item[stat]);
+                        else if (item.bonusStats && item.bonusStats[stat]) bonusStatContent += buildStatString(stat, item.bonusStats[stat]);
                     }
-                    
                     content += baseStatContent;
-                    if (bonusStatContent) {
-                        content += `---- (Bonus) ----<br>${bonusStatContent}`;
-                    }
-
+                    if (bonusStatContent) content += `---- (Bonus) ----<br>${bonusStatContent}`;
 
                     if (item.setName) {
-                        content += `----<br><strong>${item.setName}</strong><br>`;
+                        content += `----<br><strong>${item.setName} (${itemSets[item.setName].rarity})</strong><br>`;
                         const setInfo = itemSets[item.setName];
-                        const equippedCount = gameState.inventory.filter(i => i.setName === item.setName && Object.values(gameState.equipment).includes(i.id)).length;
+                        const playerStats = getPlayerTotalStats();
+                        const equippedCount = playerStats.activeSets[item.setName] || 0;
                         for (const count in setInfo.bonuses) {
-                            const bonusIsActive = equippedCount >= count;
-                            content += `<span style="color: ${bonusIsActive ? 'var(--set-bonus-active)' : 'var(--disabled-text-color)'};">${setInfo.bonuses[count].description}</span><br>`;
+                            content += `<span style="color: ${equippedCount >= count ? 'var(--set-bonus-active)' : 'var(--disabled-text-color)'};">${setInfo.bonuses[count].description}</span><br>`;
                         }
                     }
                     
@@ -2290,46 +2378,37 @@
                         const futureStats = getPlayerTotalStats(item);
                         let comparisonContent = '----<br><strong>Comparison:</strong><br>';
                         let hasComparison = false;
-
                         for (const stat in DISPLAY_STATS) {
                             const diff = futureStats[stat] - currentStats[stat];
                             if (Math.abs(diff) < 0.0001) continue;
-                            
                             hasComparison = true;
                             const isPercent = ['accuracy', 'evasion', 'critChance', 'critDmg'].includes(stat);
                             let diffDisplay = isPercent ? `${(diff * 100).toFixed(1)}%` : `${Math.round(diff)}`;
                             if (diff > 0) diffDisplay = `+${diffDisplay}`;
-
-                            const symbol = diff > 0 ? '▲' : '▼';
                             const className = diff > 0 ? 'stat-increase' : 'stat-decrease';
-                            
-                            comparisonContent += `${DISPLAY_STATS[stat]}: <span class="${className}">${symbol}${diffDisplay}</span><br>`;
+                            comparisonContent += `${DISPLAY_STATS[stat]}: <span class="${className}">${diff > 0 ? '▲' : '▼'}${diffDisplay}</span><br>`;
                         }
                         if (hasComparison) content += comparisonContent;
                     }
 
                     content += `----<br>Sell Value: ${itemData.rarities[item.rarity].value}G`;
                     tooltip.innerHTML = content;
-
                     tooltip.style.display = 'block';
                     const targetRect = targetElement.getBoundingClientRect();
                     const tooltipRect = tooltip.getBoundingClientRect();
-                    let top = targetRect.bottom + 5;
-                    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+                    let top = targetRect.bottom + 5, left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
                     if (top + tooltipRect.height > window.innerHeight) top = targetRect.top - tooltipRect.height - 5;
                     if (left < 0) left = 5;
                     if (left + tooltipRect.width > window.innerWidth) left = window.innerWidth - tooltipRect.width - 5;
                     tooltip.style.top = `${top}px`;
                     tooltip.style.left = `${left}px`;
-                    
                     setTimeout(() => window.addEventListener('click', handleDocumentClickForTooltip), 0);
                 }
 
                 function hideTooltip() {
                     if (activeTooltip.target) {
                         UIElements.globalTooltip.style.display = 'none';
-                        activeTooltip.target = null;
-                        activeTooltip.itemId = null;
+                        activeTooltip.target = null; activeTooltip.itemId = null;
                         window.removeEventListener('click', handleDocumentClickForTooltip);
                     }
                 }
@@ -2342,7 +2421,7 @@
 
                 function equipItem(itemToEquip) {
                     if (itemToEquip.classReq !== gameState.player.baseClassName) {
-                        logAction(`Cannot equip: ${itemToEquip.name}. Requires ${itemToEquip.classReq} class.`, 'log-error', "event");
+                        logAction(`Cannot equip: Requires ${itemToEquip.classReq} class.`, 'log-error', "event");
                         return;
                     }
                     gameState.equipment[itemToEquip.type] = itemToEquip.id;
@@ -2366,10 +2445,9 @@
                     if (Object.values(gameState.equipment).includes(item.id)) {
                         logAction("Cannot sell an equipped item.", 'log-error', "event"); return;
                     }
-                    const sellValue = itemData.rarities[item.rarity].value;
-                    gameState.gold += sellValue;
+                    gameState.gold += itemData.rarities[item.rarity].value;
                     gameState.inventory.splice(itemIndex, 1);
-                    logAction(`Sold <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> for ${sellValue}G.`, 'log-system', "event");
+                    logAction(`Sold <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> for ${itemData.rarities[item.rarity].value}G.`, 'log-system', "event");
                     hideTooltip();
                     updateAllUIs();
                 }
@@ -2378,27 +2456,19 @@
                     const p = document.createElement('p');
                     p.innerHTML = message;
                     if (typeClass) p.classList.add(typeClass);
-
                     const targetLog = logType === 'battle' ? UIElements.battleLog : UIElements.eventLog;
                     targetLog.appendChild(p);
                     targetLog.scrollTop = targetLog.scrollHeight;
                 }
 
-                function updateAllUIs() { updateUI(); updateInventoryUI(); updateEquipmentUI(); updatePointInvestmentUI(); updateSkillUI(); updateBlacksmithUI();}
+                function updateAllUIs() { 
+                    updateUI(); updateInventoryUI(); updateEquipmentUI(); 
+                    updatePointInvestmentUI(); updateSkillUI(); updateBlacksmithUI();
+                    updateFinalBossButton();
+                }
 
                 function resetTransientData() {
-                    gameState.playerTemp = {
-                        pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
-                        classSelection: null,
-                        promotionSelection: null,
-                        blacksmithSelection: null,
-                        lastEnhancementResult: null,
-                        standFirmTurns: 0,
-                        battleRushTurns: 0,
-                        guaranteedCrit: false,
-                        guaranteedEvasion: false,
-                        attacksSinceLastFocus: 0,
-                    };
+                    gameState.playerTemp = getDefaultGameState().playerTemp;
                     if (gameState.currentMonster) {
                         gameState.currentMonster.debuffs = {};
                         gameState.currentMonster.missNextAttack = false;
@@ -2411,8 +2481,7 @@
                     const rebirthData = gameState.rebirth;
                     gameState = getDefaultGameState();
                     gameState.rebirth = rebirthData;
-                    UIElements.eventLog.innerHTML = '';
-                    UIElements.battleLog.innerHTML = '';
+                    UIElements.eventLog.innerHTML = ''; UIElements.battleLog.innerHTML = '';
                     logAction('The world is born anew. Choose your class.', 'log-system', "event");
                     UIElements.rebirthBtn.style.display = 'none';
                     UIElements.classSelectionModal.style.display = 'flex';
@@ -2439,14 +2508,13 @@
                 function investRebirthPoint(stat) {
                     if (gameState.rebirth.points > 0) {
                         gameState.rebirth.points--;
-                        if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 1;
-                        else gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : 1);
+                        gameState.rebirth.bonuses[stat] += (stat === 'hp' ? 5 : (['gold', 'xp'].includes(stat) ? 1 : 1));
                         updateAllUIs();
                     }
                 }
 
                 function sellItemsByRarity(rarity) {
-                    let soldCount = 0; let goldEarned = 0;
+                    let soldCount = 0, goldEarned = 0;
                     const equippedIds = Object.values(gameState.equipment);
                     const itemsToKeep = gameState.inventory.filter(item => {
                         if (item.rarity === rarity && !equippedIds.includes(item.id)) {
@@ -2468,8 +2536,7 @@
                     const totalStats = getPlayerTotalStats();
                     if (gameState.gold >= cost && gameState.player.currentHp < totalStats.hp) {
                         gameState.gold -= cost;
-                        const healAmount = totalStats.hp * (percent / 100);
-                        gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + healAmount);
+                        gameState.player.currentHp = Math.min(totalStats.hp, gameState.player.currentHp + (totalStats.hp * (percent / 100)));
                         gameState.potionCosts[`p${percent}`] = Math.round(cost * 1.03);
                         logAction(`You drink a potion, restoring health.`, 'log-system', "event");
                         updateUI();
@@ -2477,31 +2544,23 @@
                 }
 
                 function buyXpBoost(multiplier) {
-                    const baseCost = multiplier === 2 ? 250 : 600;
-                    const cost = baseCost * gameState.wave;
-
+                    const cost = (multiplier === 2 ? 250 : 600) * gameState.wave;
                     if (gameState.gold >= cost && !gameState.activeBoosts.xp) {
                         gameState.gold -= cost;
-                        gameState.activeBoosts.xp = {
-                            multiplier: multiplier,
-                            fightsRemaining: 100
-                        };
+                        gameState.activeBoosts.xp = { multiplier: multiplier, fightsRemaining: 100 };
                         logAction(`Purchased a x${multiplier} XP Boost for 100 fights!`, 'log-boost', "event");
                         updateAllUIs();
                     }
                 }
 
-                // --- BLACKSMITH (REWORKED) ---
                 function updateBlacksmithUI() {
                     const selector = UIElements.blacksmithItemSelector;
                     selector.innerHTML = '';
-
                     ['weapon', 'body', 'legs'].forEach(type => {
                         const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
                         const slot = document.createElement('div');
                         slot.className = 'blacksmith-slot';
                         slot.dataset.type = type;
-                        
                         if (item) {
                             const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
                             slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
@@ -2509,30 +2568,22 @@
                             slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
                             slot.style.color = 'var(--disabled-text-color)';
                         }
-                        
-                        if (gameState.playerTemp.blacksmithSelection === type) {
-                            slot.classList.add('selected');
-                        }
-
+                        if (gameState.playerTemp.blacksmithSelection === type) slot.classList.add('selected');
                         slot.onclick = () => selectBlacksmithItem(type);
                         selector.appendChild(slot);
                     });
-
                     updateEnhancementPanel();
                 }
 
                 function selectBlacksmithItem(type) {
                     gameState.playerTemp.blacksmithSelection = type;
-                    gameState.playerTemp.lastEnhancementResult = null; // Clear last result on new selection
+                    gameState.playerTemp.lastEnhancementResult = null;
                     updateBlacksmithUI();
                 }
 
                 function getEnhancementCost(item) {
                     if (!item) return 0;
-                    const baseCost = 50;
-                    const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
-                    const levelMod = Math.pow(1.4, (item.enhancementLevel || 0));
-                    return Math.round(baseCost * rarityMod * levelMod);
+                    return Math.round(50 * itemData.rarities[item.rarity].enhanceCostMod * Math.pow(1.4, (item.enhancementLevel || 0)));
                 }
 
                 function updateEnhancementPanel() {
@@ -2542,10 +2593,7 @@
                     const selectedType = gameState.playerTemp.blacksmithSelection;
                     const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
 
-                    if (!item) {
-                        panel.style.display = 'none';
-                        return;
-                    }
+                    if (!item) { panel.style.display = 'none'; return; }
                     panel.style.display = 'block';
 
                     const cost = getEnhancementCost(item);
@@ -2553,34 +2601,22 @@
                     const MAX_ENHANCEMENT = 10;
                     const lastResult = gameState.playerTemp.lastEnhancementResult;
 
-                    let infoHTML = `
-                        <p style="text-align:center;"><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
-                        <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
-                        <hr style="border-color: var(--border-color);">
-                    `;
+                    let infoHTML = `<p style="text-align:center;"><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
+                                    <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
+                                    <hr style="border-color: var(--border-color);">`;
                     
-                    const statPool = [];
-                    for (const stat in STAT_NAMES) {
-                        if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
-                            statPool.push(stat);
-                        }
-                    }
+                    const statPool = Object.keys(STAT_NAMES).filter(stat => item[stat] && typeof item[stat] === 'number');
 
                     if (currentLevel >= MAX_ENHANCEMENT) {
                         infoHTML += `<p style="text-align:center;">Max Level Reached</p>`;
                         btn.disabled = true;
                     } else if (statPool.length > 0) {
                         statPool.forEach(stat => {
-                            const baseValue = (item[stat] || 0) /*+ (item.bonusStats?.[stat] || 0)*/;
-                            const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
-                            const totalValue = baseValue + enhancementBonus;
+                            const totalValue = (item[stat] || 0) + (item.enhancementBonusStats?.[stat] || 0);
                             const isPercent = ['critChance', 'critDmg'].includes(stat);
                             const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
-
                             let statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} -> ?`;
-                            if (lastResult && lastResult.stat === stat) {
-                                statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} <span class="stat-increase"><-- Just Enhanced!</span>`;
-                            }
+                            if (lastResult && lastResult.stat === stat) statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} <span class="stat-increase"><-- Just Enhanced!</span>`;
                             infoHTML += `${statLine}</p>`;
                         });
                         infoHTML += `<hr style="border-color: var(--border-color);"><p style="text-align:center;">Cost: <span style="color: var(--gold-color);">${cost}G</span></p>`;
@@ -2589,7 +2625,6 @@
                         infoHTML += `<p style="text-align:center;">This item has no stats to enhance.</p>`;
                         btn.disabled = true;
                     }
-                    
                     infoDiv.innerHTML = infoHTML;
                 }
 
@@ -2599,67 +2634,37 @@
                     if (!item) return;
 
                     const currentLevel = item.enhancementLevel || 0;
-                    const MAX_ENHANCEMENT = 10;
-                    if (currentLevel >= MAX_ENHANCEMENT) {
-                        logAction("This item is already at max enhancement level.", "log-error", "event");
-                        return;
-                    }
+                    if (currentLevel >= 10) return;
 
                     const cost = getEnhancementCost(item);
-                    if (gameState.gold < cost) {
-                        logAction('Not enough gold to enhance.', 'log-error', "event");
-                        return;
-                    }
+                    if (gameState.gold < cost) return;
                     
-                    const statPool = [];
-                    for (const stat in STAT_NAMES) {
-                        if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
-                            statPool.push(stat);
-                        }
-                    }
-
-                    if (statPool.length === 0) {
-                        logAction("This item has no stats to enhance.", "log-error", "event");
-                        return;
-                    }
+                    const statPool = Object.keys(STAT_NAMES).filter(stat => item[stat] && typeof item[stat] === 'number');
+                    if (statPool.length === 0) return;
                     
                     gameState.gold -= cost;
-
                     const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
-                    let increase = 0;
-                    let isPercent = false;
+                    let increase = 0, isPercent = false;
 
-                    if (statToEnhance === 'critChance') {
-                        increase = 0.003; isPercent = true;
-                    } else if (statToEnhance === 'critDmg') {
-                        increase = 0.01; isPercent = true;
-                    } else {
-                        const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0)*/;
-                        increase = 1 + Math.round(baseValue * 0.10);
-                    }
+                    if (statToEnhance === 'critChance') { increase = 0.003; isPercent = true; }
+                    else if (statToEnhance === 'critDmg') { increase = 0.01; isPercent = true; }
+                    else increase = 1 + Math.round((item[statToEnhance] || 0) * 0.10);
                     
                     item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
                     item.enhancementLevel = currentLevel + 1;
-                    
                     gameState.playerTemp.lastEnhancementResult = { stat: statToEnhance };
-
-                    const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
-                    logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${displayIncrease}.`, 'log-system', "event");
                     
+                    logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`}.`, 'log-system', "event");
                     updateAllUIs();
                 }
-
 
                 function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item)); }
                 function deepMerge(target, source) {
                     let output = { ...target };
                     if (isObject(target) && isObject(source)) {
                         Object.keys(source).forEach(key => {
-                            if (isObject(source[key]) && key in target && isObject(target[key])) {
-                                output[key] = deepMerge(target[key], source[key]);
-                            } else {
-                                output[key] = source[key];
-                            }
+                            if (isObject(source[key]) && key in target && isObject(target[key])) output[key] = deepMerge(target[key], source[key]);
+                            else output[key] = source[key];
                         });
                     }
                     return output;
@@ -2674,37 +2679,28 @@
                             document.querySelectorAll('.tab-content').forEach(content => {
                                 content.classList.toggle('active', content.id === `tab-content-${tabId}`);
                             });
-                            if (tabId === 'blacksmith') {
-                                updateBlacksmithUI();
-                            }
+                            if (tabId === 'blacksmith') updateBlacksmithUI();
                         });
                     });
                 }
                 
                 function setupClassSelectionEvents() {
                     const choiceButtons = UIElements.classSelectionChoices.querySelectorAll('button');
-                    
                     choiceButtons.forEach(btn => {
                         btn.addEventListener('click', () => {
                             const className = btn.dataset.class;
                             gameState.playerTemp.classSelection = className;
                             UIElements.classDescription.textContent = classes[className].description;
-                            
                             choiceButtons.forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
-                            
                             UIElements.confirmClassBtn.disabled = false;
                         });
                     });
-
                     UIElements.confirmClassBtn.addEventListener('click', () => {
-                        if (gameState.playerTemp.classSelection) {
-                            selectClass(gameState.playerTemp.classSelection);
-                        }
+                        if (gameState.playerTemp.classSelection) selectClass(gameState.playerTemp.classSelection);
                     });
                 }
 
-                // --- EVENT LISTENERS ---
                 UIElements.manualSaveBtn.onclick = manualSave;
                 UIElements.manualLoadBtn.onclick = manualLoad;
                 UIElements.closeSaveModalBtn.onclick = () => { UIElements.manualSaveModal.style.display = 'none'; };
@@ -2716,6 +2712,7 @@
                     UIElements.challengeBossBtn.disabled = true;
                     updateUI();
                 };
+                UIElements.challengeFinalBossBtn.onclick = challengeFinalBoss;
                 UIElements.buyPotion25.onclick = () => buyPotion(25);
                 UIElements.buyPotion50.onclick = () => buyPotion(50);
                 UIElements.buyPotion75.onclick = () => buyPotion(75);
