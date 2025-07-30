@@ -91,7 +91,6 @@
             gap: 10px;
         }
 
-        /* MODIFICATION: Removed margin-top: auto. The flex-grow on panels above will now handle positioning. */
         #system-panel {
             /* margin-top: auto; */
         }
@@ -110,22 +109,19 @@
             padding: 15px;
         }
 
-        /* MODIFICATION: Added rules to make specific sidebar panels grow to fill vertical space */
         #invest-points-panel,
         #equipment-panel,
         #skill-panel {
             flex-grow: 1;
-            min-height: 0; /* Crucial for proper flexbox sizing and scrolling */
+            min-height: 0;
         }
 
-        /* MODIFICATION: Make the body of the growing panels also grow and become scrollable */
         #invest-points-panel .panel-body,
         #equipment-panel .panel-body,
         #skill-panel .panel-body {
             flex-grow: 1;
             overflow-y: auto;
         }
-
 
         .stat-bar {
             background-color: #0a0a0a;
@@ -177,7 +173,7 @@
         }
 
         .activity-log-container {
-            height: 200px; /* Fixed height for the log content area */
+            height: 200px;
             overflow-y: auto;
             border: 1px solid #000;
             padding: 10px;
@@ -353,7 +349,6 @@
         .log-error { color: #ff6b6b; font-weight: bold; }
         .log-skill { color: #61afef; font-weight: bold; }
         .log-boost { color: var(--boost-color); font-weight: bold; }
-
 
         .point-investment-stat,
         .rebirth-stat {
@@ -568,22 +563,82 @@
             margin: 5px 0;
         }
 
-        /* NEW LOG CONTAINER STYLES */
+        /* Log Container Styles */
         .log-area-container {
             display: flex;
             gap: 15px;
             flex-grow: 1;
-            min-height: 0; /* Critical for flexbox scrolling */
+            min-height: 0;
         }
 
         .log-area-container .panel {
-            flex: 1; /* Each log panel takes up half the space */
+            flex: 1;
         }
         
         .win-screen {
             text-align: center;
             padding: 50px;
             width: 100%;
+        }
+
+        /* Info Modal Styles */
+        .info-modal-content {
+            max-width: 700px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-tab-buttons {
+            display: flex;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-tab-button {
+            flex: 1;
+            background-color: var(--panel-bg-color);
+            border: none;
+            color: var(--text-color);
+            padding: 12px 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .info-tab-button.active {
+            border-bottom-color: var(--selection-color);
+            background-color: var(--header-bg-color);
+        }
+        .info-tab-button:hover:not(.active) {
+            background-color: #2a2a2a;
+        }
+
+        .info-tab-content-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            text-align: left;
+            background-color: #0a0a0a;
+            border-radius: 3px;
+            margin-top: 15px;
+        }
+        
+        .info-tab-content { display: none; }
+        .info-tab-content.active { display: block; }
+        .info-tab-content h3 { color: var(--gold-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .info-tab-content p { line-height: 1.6; }
+        .info-tab-content ul { list-style-type: square; padding-left: 20px; }
+        .info-tab-content strong { color: #ffffff; }
+        .info-tab-content .stat-name { font-weight: bold; }
+        .info-tab-content table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .info-tab-content th, .info-tab-content td { border: 1px solid var(--border-color); padding: 8px; text-align: center; }
+        .info-tab-content th { background-color: var(--header-bg-color); }
+
+        #close-info-modal-btn {
+            margin-top: 20px;
+            flex-shrink: 0;
         }
 
         @media (max-width: 900px) {
@@ -613,7 +668,6 @@
                 margin-bottom: 0;
             }
 
-            /* Stack logs on smaller screens */
             .log-area-container {
                 flex-direction: column;
             }
@@ -658,7 +712,6 @@
                     <div>Crit DMG: <span id="player-crit-dmg">150%</span></div>
                 </div>
             </div>
-            <!-- MODIFICATION: Added ID for CSS targeting -->
             <div class="panel" id="invest-points-panel">
                 <div class="panel-header">Invest Points</div>
                 <div class="panel-body" id="point-investment-display">
@@ -669,7 +722,6 @@
                     <button id="reset-invest-btn" class="button-secondary">Reset</button>
                 </div>
             </div>
-            <!-- MODIFICATION: Added ID for CSS targeting -->
             <div class="panel" id="equipment-panel">
                 <div class="panel-header">Equipment</div>
                 <div class="panel-body" id="equipment-display"></div>
@@ -681,6 +733,7 @@
             <div class="panel" id="system-panel">
                 <div class="panel-header">System</div>
                 <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="game-info-btn">Game Info</button>
                     <button id="manual-save-btn">Export Save</button>
                     <button id="manual-load-btn">Import Save</button>
                     <hr style="border-color: var(--border-color);">
@@ -701,7 +754,6 @@
                     </div>
                     <div>Wave: <span id="wave-counter">1</span> | Kills: <span id="kill-counter">0</span></div>
                     <button id="challenge-boss-btn" disabled>Challenge Boss</button>
-                    <!-- FINAL BOSS SYSTEM: Added button -->
                     <button id="challenge-final-boss-btn" class="button-final-boss" style="display: none;">Challenge Final Boss</button>
                 </div>
             </div>
@@ -770,13 +822,9 @@
                     </div>
                     <div id="tab-content-blacksmith" class="tab-content">
                         <h3>Enhance Equipment</h3>
-                        <div id="blacksmith-item-selector">
-                            <!-- JS will populate this -->
-                        </div>
+                        <div id="blacksmith-item-selector"></div>
                         <div id="blacksmith-enhancement-panel" style="display: none;">
-                            <div id="enhancement-info">
-                                <!-- JS will populate this -->
-                            </div>
+                            <div id="enhancement-info"></div>
                             <button id="enhance-item-btn" style="text-align:center;">Enhance</button>
                         </div>
                     </div>
@@ -793,7 +841,6 @@
                 </div>
             </div>
             
-            <!-- NEW LOG AREA -->
             <div class="log-area-container">
                 <div class="panel" style="flex-grow: 1;">
                     <div class="panel-header">Event Log</div>
@@ -844,6 +891,29 @@
                 <button id="close-save-modal-btn">Close</button>
             </div>
         </div>
+        
+        <div id="info-modal" class="modal">
+            <div class="modal-content info-modal-content">
+                <h2>Game Information</h2>
+                <div class="info-tab-buttons">
+                    <button class="info-tab-button active" data-infotab="stats">Stats</button>
+                    <button class="info-tab-button" data-infotab="items">Items</button>
+                    <button class="info-tab-button" data-infotab="combat">Combat</button>
+                    <button class="info-tab-button" data-infotab="classes">Classes</button>
+                    <button class="info-tab-button" data-infotab="rebirth">Rebirth</button>
+                    <button class="info-tab-button" data-infotab="drops">Drop Rates</button>
+                </div>
+                <div class="info-tab-content-container">
+                    <div id="info-tab-stats" class="info-tab-content active"></div>
+                    <div id="info-tab-items" class="info-tab-content"></div>
+                    <div id="info-tab-combat" class="info-tab-content"></div>
+                    <div id="info-tab-classes" class="info-tab-content"></div>
+                    <div id="info-tab-rebirth" class="info-tab-content"></div>
+                    <div id="info-tab-drops" class="info-tab-content"></div>
+                </div>
+                <button id="close-info-modal-btn">Close</button>
+            </div>
+        </div>
 
         <!-- Global Tooltip -->
         <div id="global-tooltip"></div>
@@ -870,12 +940,11 @@
                     atk: 'ATK', def: 'DEF', hp: 'HP', accuracy: 'Accuracy', evasion: 'Evasion', critChance: 'Crit Chance', critDmg: 'Crit DMG'
                 };
 
-                // FINAL BOSS SYSTEM: Added boss base stats
                 const FINAL_BOSS_BASE_STATS = {
                     name: "The Chronos Tyrant",
-                    hp: 25000000, // 25 Million HP
-                    atk: 75000,   // 75k Attack
-                    def: 150000,  // 150k Defense
+                    hp: 25000000,
+                    atk: 75000,
+                    def: 150000,
                     gold: 5000000,
                     xp: 0 
                 };
@@ -889,7 +958,6 @@
                         maxInventorySize: 20,
                         rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
                         activeBoosts: { xp: null },
-                        // FINAL BOSS SYSTEM: Added state properties
                         maxWaveReached: 1,
                         finalBoss: null,
                         finalBossDefeated: false,
@@ -900,13 +968,11 @@
                             promotionSelection: null,
                             blacksmithSelection: null,
                             lastEnhancementResult: null,
-                            // Buffs and skill trackers
                             standFirmTurns: 0,
                             battleRushTurns: 0,
                             guaranteedCrit: false,
                             guaranteedEvasion: false,
                             attacksSinceLastFocus: 0,
-                            // New state for set bonuses
                             firstAttackCritUsed: false,
                             evasionAtkBuffStacks: 0,
                             evasionAtkBuffDuration: 0,
@@ -967,9 +1033,7 @@
                     'Mage': { int: 1, str: 1, dex: -1 }, 'Sorcerer': { int: 1, dex: 1, str: -1 }
                 };
 
-
                 const promotionSkills = {
-                    // Warrior Path
                     'Knight': { name: 'Aegis Block', description: '15% chance to block all incoming damage.' },
                     'Paladin': { name: 'Holy Shield', description: 'Aegis Block now also heals you for 5% of your Max HP.' },
                     'Holy Knight': { name: 'Divine Retribution', description: 'Holy Shield now also retaliates for 100% of your DEF as Holy damage.' },
@@ -980,7 +1044,6 @@
                     'Executioner': { name: 'Cull the Weak', description: 'Execute threshold increased to 30% HP and bonus damage increased to 100%.' },
                     'Warlord': { name: 'Battle Rush', description: 'Attacks have a 20% chance to grant +20% ATK for 3 seconds.' },
                     'Conqueror': { name: 'Unyielding Assault', description: 'Battle Rush now also grants 10% Lifesteal.' },
-                    // Rogue Path
                     'Assassin': { name: 'Bleed', description: 'Critical hits cause the enemy to bleed for 30% of your ATK each second for 3 seconds.' },
                     'Shadow': { name: 'Shadow Step', description: 'Attacks have a 10% chance to grant a guaranteed critical hit on your next attack.' },
                     'Phantom': { name: 'Invisibility', description: 'Shadow Step now grants a guaranteed crit and 100% evasion for your next attack.' },
@@ -991,7 +1054,6 @@
                     'Deadeye': { name: 'Lethal Precision', description: 'Guaranteed criticals from Focus deal +50% critical damage.' },
                     'Pathfinder': { name: 'Sunder', description: 'Attacks have a 25% chance to reduce enemy DEF by 10% for 5 seconds.' },
                     'Trailblazer': { name: 'Armor Shatter', description: 'Sunder now stacks up to 3 times and also reduces enemy ATK by 5%.' },
-                    // Wizard Path
                     'Mage': { name: 'Arcane Power', description: 'Attacks have a 10% chance to unleash a spell for 250% of your ATK as bonus damage.' },
                     'Archmage': { name: 'High Voltage', description: 'Arcane Power proc chance increased to 15% and damage to 300%.' },
                     'Grand Magus': { name: 'Chain Lightning', description: 'Arcane Power hits now explode, dealing an additional 150% ATK damage.' },
@@ -1070,7 +1132,6 @@
                 };
 
                 const itemSets = {
-                    // --- SSR Sets ---
                     "Stalwart Guard's Battlegear": {
                         class: "Warrior", rarity: "SSR", items: ["Stalwart Guard's Helm", "Stalwart Guard's Plate", "Stalwart Guard's Greaves"],
                         bonuses: { 2: { def: 75, description: "2pc: +75 DEF" }, 3: { hpPercent: 0.10, description: "3pc: +10% Max HP" } }
@@ -1095,7 +1156,6 @@
                         class: "Wizard", rarity: "SSR", items: ["Mana-Weaver's Hood", "Mana-Weaver's Vestments", "Mana-Weaver's Treads"],
                         bonuses: { 2: { int: 50, description: "2pc: +50 INT" }, 3: { lifesteal: 0.05, description: "3pc: Gain 5% Lifesteal." } }
                     },
-                    // --- UR Sets ---
                     "Aegis of the Unbreakable": {
                         class: "Warrior", rarity: "UR", items: ["Unbreakable Helm", "Unbreakable Chestplate", "Unbreakable Sabatons"],
                         bonuses: { 2: { hpPercent: 0.15, description: "2pc: +15% Max HP" }, 3: { reflectDamage: 0.10, description: "3pc: Reflect 10% of damage taken." } }
@@ -1120,7 +1180,6 @@
                         class: "Wizard", rarity: "UR", items: ["Paradox Hood", "Paradox Vestments", "Paradox Treads"],
                         bonuses: { 2: { int: 100, description: "2pc: +100 INT" }, 3: { stunOnHit: { chance: 0.10 }, description: "3pc: Attacks have a 10% chance to stun the enemy for 1 turn." } }
                     },
-                    // --- LR Sets ---
                     "Colossus's Earth-Shattering Plate": {
                         class: "Warrior", rarity: "LR", items: ["Helm of the Colossus", "Aegis of the Colossus", "Greaves of the Colossus"],
                         bonuses: { 2: { hpPercent: 0.25, def: 150, description: "2pc: +25% Max HP & +150 DEF" }, 3: { immuneToCrits: true, description: "3pc: You are immune to enemy critical hits." } }
@@ -1190,6 +1249,9 @@
                     blacksmithEnhancementPanel: document.getElementById('blacksmith-enhancement-panel'),
                     enhancementInfo: document.getElementById('enhancement-info'),
                     enhanceItemBtn: document.getElementById('enhance-item-btn'),
+                    gameInfoBtn: document.getElementById('game-info-btn'),
+                    infoModal: document.getElementById('info-modal'),
+                    closeInfoModalBtn: document.getElementById('close-info-modal-btn'),
                 };
 
                 function weakenFinalBoss() {
@@ -1397,6 +1459,7 @@
                 function initializeGame() {
                     setupTabs();
                     setupClassSelectionEvents();
+                    setupInfoModal();
                     if (loadFromLocalStorage()) {
                         UIElements.classSelectionModal.style.display = 'none';
                         startGame();
@@ -1496,7 +1559,7 @@
                                     if (bonusStat === 'description') continue;
                                     if (bonusStat === 'hpPercent') hpPercentBonus += setInfo.bonuses[i][bonusStat];
                                     else if (finalStats[bonusStat] !== undefined) finalStats[bonusStat] += setInfo.bonuses[i][bonusStat];
-                                    else finalStats[bonusStat] = setInfo.bonuses[i][bonusStat]; // For new unique bonuses
+                                    else finalStats[bonusStat] = setInfo.bonuses[i][bonusStat];
                                 }
                             }
                         }
@@ -1696,7 +1759,7 @@
                         logAction(`Lifesteal heals you for ${healAmount} HP.`, 'log-skill', 'battle');
                     }
 
-                    if (skillDamage > 0) return; // Don't proc on-hit effects from skill damage
+                    if (skillDamage > 0) return;
 
                     if (p.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
                         const secondShotDmg = Math.round(playerDamage.damage * 0.6);
@@ -1820,7 +1883,7 @@
                 function monsterDefeated() {
                     logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system', "event");
                     const playerStats = getPlayerTotalStats();
-                    if (playerStats.killRestoresHp && gameState.currentMonster.hp <= 0) { // Check if kill was by skill
+                    if (playerStats.killRestoresHp && gameState.currentMonster.hp <= 0) {
                          const healAmount = Math.round(playerStats.hp * playerStats.killRestoresHp);
                          gameState.player.currentHp = Math.min(playerStats.hp, gameState.player.currentHp + healAmount);
                          logAction(`Void-Drinker set restores ${healAmount} HP on kill.`, 'log-skill', 'event');
@@ -1911,7 +1974,7 @@
 
                     const rarityInfo = itemData.rarities[rarityKey];
                     const waveScale = 1 + Math.log10(gameState.wave || 1);
-                    const SET_ITEM_CHANCE = 0.15; // 15% chance for a drop of appropriate rarity to be a set item
+                    const SET_ITEM_CHANCE = 0.15;
 
                     const newItem = {
                         id: Date.now() + Math.random(), type: itemType, rarity: rarityKey,
@@ -1967,7 +2030,6 @@
 
                 function spawnMonster(isBoss = false) {
                     gameState.isRunning = true;
-                    // Reset combat-specific temp flags
                     gameState.playerTemp.firstAttackCritUsed = false;
                     gameState.playerTemp.evasionAtkBuffStacks = 0;
                     gameState.playerTemp.evasionAtkBuffDuration = 0;
@@ -2699,6 +2761,116 @@
                     UIElements.confirmClassBtn.addEventListener('click', () => {
                         if (gameState.playerTemp.classSelection) selectClass(gameState.playerTemp.classSelection);
                     });
+                }
+
+                function setupInfoModal() {
+                    const infoTabs = {
+                        stats: document.getElementById('info-tab-stats'),
+                        items: document.getElementById('info-tab-items'),
+                        combat: document.getElementById('info-tab-combat'),
+                        classes: document.getElementById('info-tab-classes'),
+                        rebirth: document.getElementById('info-tab-rebirth'),
+                        drops: document.getElementById('info-tab-drops'),
+                    };
+
+                    infoTabs.stats.innerHTML = `
+                        <h3>Stats & Attributes</h3>
+                        <p>Your character's power is determined by core stats that you can invest points into. These stats influence your combat attributes.</p>
+                        <ul>
+                            <li><span class="stat-name" style="color: var(--stat-str);">STR (Strength):</span> Primarily increases <strong>ATK</strong> for Warriors and Rogues.</li>
+                            <li><span class="stat-name" style="color: var(--stat-int);">INT (Intelligence):</span> Primarily increases <strong>ATK</strong> for Wizards.</li>
+                            <li><span class="stat-name" style="color: var(--stat-con);">CON (Constitution):</span> Increases your maximum <strong>HP</strong>.</li>
+                            <li><span class="stat-name" style="color: var(--stat-def);">DEF (Defense):</span> Increases your <strong>Defense</strong>, reducing incoming damage.</li>
+                            <li><span class="stat-name" style="color: var(--stat-dex);">DEX (Dexterity):</span> Increases your <strong>Accuracy</strong>, improving your chance to hit enemies.</li>
+                            <li><span class="stat-name" style="color: var(--stat-agl);">AGL (Agility):</span> Increases your <strong>Evasion</strong>, improving your chance to dodge enemy attacks.</li>
+                        </ul>
+                        <p>You also have secondary stats like <strong>Crit Chance</strong> and <strong>Crit Damage</strong> which can be improved through gear, skills, and point investment.</p>
+                    `;
+
+                    infoTabs.items.innerHTML = `
+                        <h3>Item System</h3>
+                        <p>Items are dropped by monsters and are crucial for your progression. They come in various rarities, each providing better stats.</p>
+                        <ul>
+                            ${Object.entries(itemData.rarities).map(([rarity, data]) => `<li><strong style="color: ${data.color};">[${rarity}]</strong>: ${rarity} items provide a significant boost in power.</li>`).join('')}
+                        </ul>
+                        <h3>Enhancement</h3>
+                        <p>At the <strong>Blacksmith</strong>, you can spend Gold to enhance your equipped items up to <strong>+10</strong>. Each level randomly increases one of the item's base stats.</p>
+                        <h3>Item Sets</h3>
+                        <p>High-rarity items (SSR, UR, LR) can be part of a set. Equipping multiple items from the same set will grant powerful unique bonuses. Check an item's tooltip to see its set information.</p>
+                    `;
+                    
+                    infoTabs.combat.innerHTML = `
+                        <h3>Combat Mechanics</h3>
+                        <p>Combat is automated. Your character and the monster take turns attacking each other.</p>
+                        <ul>
+                            <li><strong>Hit Chance:</strong> Your chance to hit an enemy is based on your <strong>Accuracy</strong> versus the enemy's <strong>Evasion</strong>. There is always at least a 25% chance to hit and at most a 95% chance.</li>
+                            <li><strong>Damage:</strong> Your <strong>ATK</strong> is compared against the enemy's <strong>DEF</strong> to determine damage. High defense can significantly reduce incoming damage.</li>
+                            <li><strong>Critical Hits:</strong> Based on your <strong>Crit Chance</strong>, your attacks can become critical hits, dealing bonus damage based on your <strong>Crit Damage</strong> stat.</li>
+                            <li><strong>Skills & Buffs:</strong> Many skills and set bonuses trigger automatically during combat, providing buffs, dealing extra damage, or applying debuffs to the enemy.</li>
+                        </ul>
+                    `;
+
+                    infoTabs.classes.innerHTML = `
+                        <h3>Classes & Promotions</h3>
+                        <p>You begin by choosing one of three base classes: <strong>Warrior</strong>, <strong>Rogue</strong>, or <strong>Wizard</strong>.</p>
+                        <p>As you reach certain level milestones (20, 40, and 70), you will be offered a <strong>Class Promotion</strong>. Each promotion allows you to specialize your character down a specific path, unlocking new, powerful passive skills.</p>
+                        <p>For example, a Warrior can choose to become a defensive Knight or an offensive Berserker. These choices determine your character's future growth and abilities.</p>
+                        <p>New skills are added to the "Active Skills" panel on the left after you promote.</p>
+                    `;
+
+                    infoTabs.rebirth.innerHTML = `
+                        <h3>Rebirth System</h3>
+                        <p>Once you reach <strong>Level 70</strong>, you unlock the ability to Rebirth. This is the main prestige system of the game.</p>
+                        <p>When you rebirth:</p>
+                        <ul>
+                            <li>Your character's level, gold, items, and wave progress are reset.</li>
+                            <li>You are returned to the class selection screen to start a new run.</li>
+                            <li>You earn <strong>Rebirth Points</strong> based on your level and the highest wave you reached.</li>
+                        </ul>
+                        <p>Rebirth Points are permanent and can be spent in the Rebirth tab to buy powerful, permanent bonuses that apply to all future runs, such as increased ATK, HP, Gold gain, and XP gain. This allows you to progress further and faster with each new life.</p>
+                    `;
+
+                    const dropProbs = getRarityProbabilities('regular');
+                    infoTabs.drops.innerHTML = `
+                        <h3>Item Drop Rates</h3>
+                        <p>The chance of getting higher rarity items increases as you face tougher monsters. The table below shows the approximate probability for an item of a specific rarity to drop, given that a drop occurs.</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Rarity</th>
+                                    <th>Regular</th>
+                                    <th>Mutant</th>
+                                    <th>Elite</th>
+                                    <th>Boss</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            ${Object.keys(dropProbs).map(rarity => `
+                                <tr>
+                                    <td><strong style="color: ${itemData.rarities[rarity].color};">[${rarity}]</strong></td>
+                                    <td>${(getRarityProbabilities('regular')[rarity] * 100).toFixed(1)}%</td>
+                                    <td>${(getRarityProbabilities('mutant')[rarity] * 100).toFixed(1)}%</td>
+                                    <td>${(getRarityProbabilities('elite')[rarity] * 100).toFixed(1)}%</td>
+                                    <td>${(getRarityProbabilities('boss')[rarity] * 100).toFixed(1)}%</td>
+                                </tr>
+                            `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    document.querySelectorAll('.info-tab-button').forEach(button => {
+                        button.addEventListener('click', () => {
+                            document.querySelectorAll('.info-tab-button').forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+                            const tabId = button.getAttribute('data-infotab');
+                            document.querySelectorAll('.info-tab-content').forEach(content => {
+                                content.classList.toggle('active', content.id === `info-tab-${tabId}`);
+                            });
+                        });
+                    });
+
+                    UIElements.gameInfoBtn.onclick = () => { UIElements.infoModal.style.display = 'flex'; };
+                    UIElements.closeInfoModalBtn.onclick = () => { UIElements.infoModal.style.display = 'none'; };
                 }
 
                 UIElements.manualSaveBtn.onclick = manualSave;
