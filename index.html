@@ -913,20 +913,19 @@
                         </div>
                     </div>
                     <div id="tab-content-rebirth" class="tab-content">
-                        <div class="rebirth-points"
-                            style="color: var(--rebirth-color); font-weight: bold; font-size: 1.5em; text-align: center; margin-bottom: 15px;">
-                            Points: <span id="rebirth-points">0</span></div>
+                        <div class="rebirth-points" ...>
+                            Points: <span id="rebirth-points">0</span>
+                        </div>
                         <div class="rebirth-stat"><span>ATK Bonus: +<span id="rebirth-atk"
-                                    class="rebirth-value">0</span></span><button data-rebirth="atk">+</button></div>
+                                    class="rebirth-value">0</span>%</span><button data-rebirth="atk">+</button></div>
                         <div class="rebirth-stat"><span>DEF Bonus: +<span id="rebirth-def"
-                                    class="rebirth-value">0</span></span><button data-rebirth="def">+</button></div>
+                                    class="rebirth-value">0</span>%</span><button data-rebirth="def">+</button></div>
                         <div class="rebirth-stat"><span>HP Bonus: +<span id="rebirth-hp"
-                                    class="rebirth-value">0</span></span><button data-rebirth="hp">+</button></div>
+                                    class="rebirth-value">0</span>%</span><button data-rebirth="hp">+</button></div>
                         <div class="rebirth-stat"><span>Gold Bonus: +<span id="rebirth-gold"
                                     class="rebirth-value">0</span>%</span><button data-rebirth="gold">+</button></div>
                         <div class="rebirth-stat"><span>XP Bonus: +<span id="rebirth-xp"
-                                    class="rebirth-value">0</span>%</span><button data-rebirth="xp">+</button>
-                        </div>
+                                    class="rebirth-value">0</span>%</span><button data-rebirth="xp">+</button></div>
                     </div>
                 </div>
             </div>
@@ -1032,7 +1031,7 @@
 
             const FINAL_BOSS_BASE_STATS = {
                 name: "The Chronos Tyrant",
-                hp: 250000,
+                hp: 300000,
                 atk: 75000,
                 def: 150000,
                 gold: 50000,
@@ -1656,9 +1655,9 @@
                 }
 
                 const primaryStat = classes[p.baseClassName].primaryStat;
-                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
-                finalStats.def = (finalStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
-                finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
+                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * ((1 + gameState.rebirth.atk) || 0);
+                finalStats.def = (finalStats.def || 0) * ((1 + gameState.rebirth.def) || 0);
+                finalStats.hp = 50 + ((finalStats.con || 0) * 5) * ((1 + gameState.rebirth.hp) || 0);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
@@ -2679,7 +2678,7 @@
                 }
                 if (!confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) return;
 
-                const pointsGained = Math.floor(Math.pow(gameState.wave, 1.2) / 10) + Math.floor(gameState.player.level / 10);
+                const pointsGained = Math.floor(Math.pow(player.level / 20, 1.5));
                 logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
 
                 const oldRebirth = { ...gameState.rebirth };
@@ -2702,8 +2701,9 @@
             function spendRebirthPoint(stat) {
                 if (gameState.rebirth.points > 0) {
                     gameState.rebirth.points--;
-                    if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 5;
-                    else gameState.rebirth.bonuses[stat] += 1;
+                    // if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 0.01;
+                    // else 
+                    gameState.rebirth.bonuses[stat] += 1;
                     updateAllUIs();
                 }
             }
@@ -2983,7 +2983,7 @@
     <h3>Rebirth Points</h3>
     <p>These points are permanent and can be spent in the Rebirth tab to gain powerful, permanent bonuses that apply to all future runs. These bonuses are essential for progressing to higher waves and defeating stronger enemies.</p>
     <ul>
-    <li><strong>ATK/DEF/HP Bonus:</strong> Flat additions to your core combat stats.</li>
+    <li><strong>ATK/DEF/HP Bonus:</strong> Percentage increases to your core combat stats.</li>
     <li><strong>Gold/XP Bonus:</strong> Percentage increases to your Gold and XP gains, speeding up future runs.</li>
     </ul>
     <p>Rebirthing is the key to long-term power growth!</p>
