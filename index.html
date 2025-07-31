@@ -1655,9 +1655,9 @@
                 }
 
                 const primaryStat = classes[p.baseClassName].primaryStat;
-                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
-                finalStats.def = (finalStats.def || 0) * (1 + gameState.rebirth.bonuses.def);
-                finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (1 + gameState.rebirth.bonuses.hp);
+                finalStats.atk = Math.pow(rawStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
+                finalStats.def = (rawStats.def || 0) * (1 + gameState.rebirth.bonuses.def);
+                finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (1 + gameState.rebirth.bonuses.hp);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
