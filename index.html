@@ -1370,10 +1370,6 @@
                     logAction("You have already defeated the final boss.", 'log-system', "event");
                     return;
                 }
-                if (gameState.player.currentHp <= 0) {
-                    logAction("You must be at full health to challenge the final boss!", 'log-error', "event");
-                    return;
-                }
 
                 logAction(`You challenge the mighty ${gameState.finalBoss.name}!`, 'log-system', "event");
                 clearInterval(gameInterval);
@@ -3048,7 +3044,12 @@
                 UIElements.manualSaveBtn.addEventListener('click', manualSave);
                 UIElements.manualLoadBtn.addEventListener('click', manualLoad);
                 UIElements.closeSaveModalBtn.addEventListener('click', () => UIElements.manualSaveModal.style.display = 'none');
-                UIElements.challengeBossBtn.addEventListener('click', () => spawnMonster(true));
+                UIElements.challengeBossBtn.onclick = () => {
+                    spawnMonster(true);
+                    gameState.player.currentHp = getPlayerTotalStats().hp;
+                    UIElements.challengeBossBtn.disabled = true;
+                    updateUI();
+                };
                 UIElements.challengeFinalBossBtn.addEventListener('click', challengeFinalBoss);
                 UIElements.sellNBtn.addEventListener('click', () => sellByRarity('N'));
                 UIElements.sellRBtn.addEventListener('click', () => sellByRarity('R'));
