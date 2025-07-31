@@ -1655,9 +1655,9 @@
                 }
 
                 const primaryStat = classes[p.baseClassName].primaryStat;
-                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
-                finalStats.def = (finalStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
-                finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
+                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
+                finalStats.def = (finalStats.def || 0) + (1 + gameState.rebirth.bonuses.def);
+                finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (1 + gameState.rebirth.bonuses.hp);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
@@ -1978,8 +1978,8 @@
                     logAction(`Void-Drinker set restores ${healAmount} HP on kill.`, 'log-skill', 'event');
                 }
 
-                const goldBonus = 1 + (gameState.rebirth.bonuses.gold / 100);
-                const xpRebirthBonus = 1 + (gameState.rebirth.bonuses.xp / 100);
+                const goldBonus = 1 + gameState.rebirth.bonuses.gold;
+                const xpRebirthBonus = 1 + gameState.rebirth.bonuses.xp;
                 const goldGained = Math.round(gameState.currentMonster.gold * goldBonus);
 
                 let xpShopBoostMultiplier = 1;
@@ -2703,7 +2703,7 @@
                     gameState.rebirth.points--;
                     // if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 0.01;
                     // else 
-                    gameState.rebirth.bonuses[stat] += 1;
+                    gameState.rebirth.bonuses[stat] += 0.01;
                     updateAllUIs();
                 }
             }
