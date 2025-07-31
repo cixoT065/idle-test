@@ -787,12 +787,13 @@
             <div class="panel" id="combat-stats-panel">
                 <div class="panel-header">Combat Stats</div>
                 <div class="panel-body stats-grid">
-                    <div>ATK (STR/INT): <span id="player-atk">10</span></div>
+                    <div>ATK (STR): <span id="player-atk">10</span></div>
                     <div>DEF (DEF): <span id="player-def">5</span></div>
                     <div>Accuracy (DEX): <span id="player-accuracy">5%</span></div>
                     <div>Evasion (AGL): <span id="player-evasion">5%</span></div>
                     <div>Crit Chance: <span id="player-crit-chance">5%</span></div>
                     <div>Crit DMG: <span id="player-crit-dmg">150%</span></div>
+                    <div>True DMG(INT): <span id="player-true-dmg">1%</span></div>
                 </div>
             </div>
             <div class="panel" id="invest-points-panel">
@@ -1093,7 +1094,7 @@
                 'Wizard': {
                     primaryStat: 'int',
                     description: 'A master of arcane arts, dealing massive damage with powerful spells. Fragile but deadly.',
-                    base: { hp: 80, str: 2, con: 4, def: 2, dex: 6, agl: 3, int: 12, critChance: 0.07, critDmg: 1.6 },
+                    base: { hp: 80, str: 8, con: 4, def: 2, dex: 6, agl: 3, int: 12, critChance: 0.07, critDmg: 1.6 },
                     growth: { str: 0, con: 1, def: 0.5, dex: 1, agl: 0.5, int: 3, critChance: 0.0007, critDmg: 0 },
                     promotions: { 20: ['Mage', 'Sorcerer'], 40: { 'Mage': ['Archmage', 'Elementalist'], 'Sorcerer': ['Warlock', 'Chronomancer'] }, 70: { 'Archmage': ['Grand Magus'], 'Elementalist': ['Avatar'], 'Warlock': ['Demonologist'], 'Chronomancer': ['Time Lord'] } }
                 },
@@ -1307,6 +1308,7 @@
                 playerXpText: document.getElementById('player-xp-text'), playerXpFill: document.getElementById('player-xp-fill'),
                 playerAtk: document.getElementById('player-atk'), playerDef: document.getElementById('player-def'),
                 playerCritChance: document.getElementById('player-crit-chance'), playerCritDmg: document.getElementById('player-crit-dmg'),
+                playerTrueDmg: document.getElementById('player-true-dmg'),
                 playerEvasion: document.getElementById('player-evasion'), playerAccuracy: document.getElementById('player-accuracy'),
                 playerGold: document.getElementById('player-gold'), monsterName: document.getElementById('monster-name'),
                 monsterHpText: document.getElementById('monster-hp-text'), monsterHpFill: document.getElementById('monster-hp-fill'),
@@ -1592,11 +1594,30 @@
                 startGame();
             }
 
+            // NEW: Constants for the Dual Contribution stat system
+            const STAT_CONTRIBUTIONS = {
+                // How much a stat contributes to the "Attack Power" pool
+                atk: {
+                    primary: 1.0,   // 1 point of contribution from your main stat
+                    secondary: 0.1 // 0.25 points of contribution from your off-stat
+                },
+                // Universal bonus from STR
+                defPerStr: 0.5,     // 0.5 flat DEF for every 1 point of STR, for all classes
+
+                // Universal bonus from INT (True Damage %)
+                trueDmgPerInt: {
+                    'Wizard': 0.08, // 0.2% True Damage per point of INT
+                    'Warrior': 0.015, // 0.08% True Damage per point of INT
+                    'Rogue': 0.010  // 0.08% True Damage per point of INT
+                }
+            };
+
             function getPlayerTotalStats(hypotheticalItem = null) {
                 if (!gameState.player) return {};
                 const p = gameState.player;
                 const rawStats = { lifesteal: 0, skillLifesteal: 0 };
 
+                // ... (The first part of the function that calculates rawStats remains exactly the same) ...
                 for (const statName in STAT_NAMES) {
                     rawStats[statName] = 0;
                 }
@@ -1636,8 +1657,10 @@
                 }
 
                 let hpPercentBonus = 0;
-                const finalStats = { ...rawStats, hp: 0, atk: 0, def: 0, accuracy: 0, evasion: 0, activeSets: {} };
+                // Initialize finalStats with the new property for the percentage string
+                const finalStats = { ...rawStats, hp: 0, atk: 0, def: 0, accuracy: 0, evasion: 0, activeSets: {}, trueDmgBonus: 0, trueDmgBonusPercent: '0.0%' };
 
+                // ... (The set bonus loop remains the same) ...
                 for (const setName in equippedSets) {
                     const setInfo = itemSets[setName];
                     const count = equippedSets[setName];
@@ -1654,15 +1677,38 @@
                     }
                 }
 
-                const primaryStat = classes[p.baseClassName].primaryStat;
-                finalStats.atk = Math.pow(rawStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
-                finalStats.def = (rawStats.def || 0) * (1 + gameState.rebirth.bonuses.def);
+                // --- MAJOR CHANGES START HERE ---
+
+                const primaryStatName = 'str';
+                const secondaryStatName = primaryStatName === 'str' ? 'int' : 'str';
+                const statcontributions = classes[p.baseClassName] === 'Wizard' ? STAT_CONTRIBUTIONS.atk.secondary : STAT_CONTRIBUTIONS.atk.primary;
+
+                const primaryContribution = (rawStats[primaryStatName] || 0) * statcontributions;
+                // const secondaryContribution = (rawStats[secondaryStatName] || 0) * STAT_CONTRIBUTIONS.atk.secondary;
+                const totalAttackPower = primaryContribution;
+
+                finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
+
+                const defFromStr = (rawStats.str || 0) * STAT_CONTRIBUTIONS.defPerStr;
+                finalStats.def = ((rawStats.def || 0) + defFromStr) * (1 + gameState.rebirth.bonuses.def);
+
+                // --- NEW LOGIC FOR TRUE DAMAGE PERCENTAGE ---
+                const trueDmgRate = STAT_CONTRIBUTIONS.trueDmgPerInt[p.baseClassName] || 0;
+
+                // 1. Calculate the decimal value for combat calculations
+                finalStats.trueDmgBonus = (rawStats.int || 0) * trueDmgRate;
+
+                // 2. NEW: Calculate the formatted string for UI display
+                finalStats.trueDmgBonusPercent = (finalStats.trueDmgBonus * 100).toFixed(1) + '%';
+                // --- END OF NEW LOGIC ---
+
                 finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (1 + gameState.rebirth.bonuses.hp);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
                 if (hpPercentBonus > 0) finalStats.hp *= (1 + hpPercentBonus);
 
+                // ... (The temporary buff section remains the same) ...
                 if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
                     const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
                     finalStats.atk *= (1 + (Math.floor(missingHpPercent / 0.1) * 0.08));
@@ -1678,6 +1724,8 @@
 
                 return finalStats;
             }
+
+
 
             function gameLoop() {
                 if (!gameState.isRunning || !gameState.player || !gameState.currentMonster) return;
@@ -1820,9 +1868,24 @@
                     if (p.activeSkills.includes('Execute') && monster.hp / monster.maxHp <= executeThreshold) damageMultiplier += executeBonus;
                 }
 
+                // --- CHANGES START HERE ---
+
+                // This calculation now represents the "Normal Damage" component
                 const preMitigationDamage = baseDamage * critMultiplier;
                 const damageReduction = 1 - (defenderDef / (defenderDef + 100 + (baseDamage / 10)));
                 let finalDamage = Math.round(preMitigationDamage * damageReduction * damageMultiplier);
+
+                // NEW: Calculate and add the "True Damage" from INT
+                if (isPlayerAttacker && attacker.trueDmgBonus > 0) {
+                    // True damage is based on the raw base damage, ignoring crits and multipliers, to keep it consistent.
+                    const trueDamage = Math.round(baseDamage * attacker.trueDmgBonus);
+                    if (trueDamage > 0) {
+                        finalDamage += trueDamage;
+                        logAction(`Your INT grants <span style="color: #8888FF;">${trueDamage}</span> true damage, ignoring defense!`, 'log-skill', 'battle');
+                    }
+                }
+
+                // --- CHANGES END HERE ---
 
                 if (isPlayerAttacker && attacker.bonusCurrentHpDamage) {
                     const bonusDmg = Math.round(defender.hp * attacker.bonusCurrentHpDamage);
@@ -2305,6 +2368,7 @@
                 UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
                 UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
                 UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
+                UIElements.playerTrueDmg.textContent = `${(totalStats.trueDmgBonus * 100).toFixed(0)}%`;
                 UIElements.playerGold.textContent = gameState.gold;
 
                 if (gameState.currentMonster) {
@@ -2687,7 +2751,7 @@
                     // gameState = getDefaultGameState();
                     // gameState.rebirth = oldRebirth;
                     // gameState.rebirth.points += pointsGained;
-                    
+
 
                     // UIElements.classSelectionModal.style.display = 'flex';
                     // UIElements.rebirthBtn.style.display = 'none';
@@ -2930,27 +2994,29 @@
             function populateStatsInfo() {
                 const content = document.getElementById('info-tab-stats');
                 content.innerHTML = `
-    <h3>Primary Stats</h3>
-    <p>These are the core stats you invest points into. They form the foundation of your character's power.</p>
-    <ul>
-    <li><strong class="stat-name" style="color:var(--stat-str)">STR (Strength):</strong> Primarily increases ATK for Warriors and Rogues.</li>
+<h3>Primary Stats</h3>
+<p>These are the core stats you invest points into. They form the foundation of your character's power.</p>
+<ul>
+    <li><strong class="stat-name" style="color:var(--stat-str)">STR (Strength):</strong> The primary source of ATK for Warriors and Rogues. Also provides a smaller ATK bonus to Wizards and increases DEF for all classes.</li>
     <li><strong class="stat-name" style="color:var(--stat-con)">CON (Constitution):</strong> Increases your maximum HP.</li>
     <li><strong class="stat-name" style="color:var(--stat-def)">DEF (Defense):</strong> Increases your DEF, reducing damage taken.</li>
     <li><strong class="stat-name" style="color:var(--stat-dex)">DEX (Dexterity):</strong> Increases your Accuracy, making your attacks less likely to miss.</li>
     <li><strong class="stat-name" style="color:var(--stat-agl)">AGL (Agility):</strong> Increases your Evasion, making you more likely to dodge enemy attacks.</li>
-    <li><strong class="stat-name" style="color:var(--stat-int)">INT (Intelligence):</strong> Primarily increases ATK for Wizards.</li>
-    </ul>
-    <h3>Secondary Stats</h3>
-    <p>These stats are derived from your primary stats and equipment. They directly affect your performance in combat.</p>
-    <ul>
-    <li><strong class="stat-name">ATK (Attack):</strong> Your total damage output before enemy defense is calculated. Scales non-linearly with your primary damage stat (STR or INT).</li>
+    <li><strong class="stat-name" style="color:var(--stat-int)">INT (Intelligence):</strong> The primary source of ATK for Wizards. Also provides a smaller ATK bonus to Warriors/Rogues and grants all classes bonus True Damage that ignores enemy defense.</li>
+</ul>
+
+<h3>Secondary Stats</h3>
+<p>These stats are derived from your primary stats and equipment. They directly affect your performance in combat.</p>
+<ul>
+    <li><strong class="stat-name">ATK (Attack):</strong> Your total damage output. Scales with both STR and INT, with your class's primary stat providing the largest bonus.</li>
     <li><strong class="stat-name">DEF (Defense):</strong> Your total damage reduction. Higher DEF means you take less damage.</li>
     <li><strong class="stat-name">HP (Health Points):</strong> Your life force. If it reaches zero, you are defeated.</li>
     <li><strong class="stat-name">Accuracy:</strong> Your chance to hit an enemy. Countered by the enemy's Evasion.</li>
     <li><strong class="stat-name">Evasion:</strong> Your chance to dodge an incoming attack. Countered by the enemy's Accuracy.</li>
     <li><strong class="stat-name">Crit Chance:</strong> The probability of your attack being a critical hit, dealing bonus damage.</li>
     <li><strong class="stat-name">Crit DMG:</strong> The damage multiplier applied when you land a critical hit.</li>
-    </ul>
+    <li><strong class="stat-name" style="color:#8888FF">True Damage:</strong> Bonus damage that ignores all enemy defense, derived from your INT. Crucial for defeating heavily armored foes.</li>
+</ul>
     `;
             }
 
