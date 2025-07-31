@@ -2155,7 +2155,8 @@
                 const baseStatsToGenerate = rarityInfo.baseStatCount - (coreStat ? 1 : 0);
                 for (let i = 0; i < baseStatsToGenerate; i++) {
                     if (baseStatPool.length === 0) break;
-                    newItem[baseStatPool.pop()] = calculateStatValue(baseStatPool[baseStatPool.length - 1]);
+                    const statToGenerate = baseStatPool.pop(); // Store the popped stat
+                    newItem[statToGenerate] = calculateStatValue(statToGenerate); // Use it for both
                 }
 
                 let bonusStatPool = shuffleArray([...itemData.bonusStatPool]).filter(s => !newItem[s]);
