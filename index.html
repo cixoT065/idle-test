@@ -821,7 +821,7 @@
                     <button id="manual-load-btn">Import Save</button>
                     <hr style="border-color: var(--border-color);">
                     <button id="new-game-btn" class="button-danger">New Game</button>
-                    <button id="rebirth-btn" class="button-danger" style="display: none;">Rebirth</button>
+                    <button id="rebirth-btn" class="button-danger" style="display: block;">Rebirth</button>
                 </div>
             </div>
         </div>
@@ -1578,7 +1578,7 @@
                 gameState.player = {
                     name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
                     className: className, baseClassName: className,
-                    level: 1, xp: 0, xpToNextLevel: 40,
+                    level: 70, xp: 0, xpToNextLevel: 40,
                     statPoints: 5,
                     baseStats: { ...classInfo.base },
                     investedStats: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
@@ -2235,7 +2235,6 @@
 
                 p.currentHp = getPlayerTotalStats().hp;
                 logAction(`LEVEL UP! You are now level ${p.level}. Gained ${pointsGained} stat points.`, 'log-system', "event");
-                if (p.level >= 70) UIElements.rebirthBtn.style.display = 'block';
 
                 if (!p.promotionPending) {
                     const availablePromotion = getAvailablePromotion(p);
@@ -2678,23 +2677,34 @@
                     return;
                 }
                 if (confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) {
-                    const pointsGained = Math.floor(Math.pow(player.level / 20, 1.5));
+                    const pointsGained = Math.floor(Math.pow(gameState.player.level / 20, 1.5));
                     logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
 
                     const oldRebirth = { ...gameState.rebirth };
                     const oldMaxWave = gameState.maxWaveReached;
                     const oldFinalBossDefeated = gameState.finalBossDefeated;
+                    // localStorage.removeItem(SAVE_KEY);
+                    // gameState = getDefaultGameState();
+                    // gameState.rebirth = oldRebirth;
+                    // gameState.rebirth.points += pointsGained;
+                    
 
+                    // UIElements.classSelectionModal.style.display = 'flex';
+                    // UIElements.rebirthBtn.style.display = 'none';
+                    // clearInterval(gameInterval);
+                    // clearInterval(autoSaveInterval);
+                    // updateAllUIs();
+
+                    clearInterval(gameInterval); clearInterval(autoSaveInterval);
+                    localStorage.removeItem(SAVE_KEY);
+                    const rebirthData = gameState.rebirth;
+                    rebirthData.points += pointsGained;
                     gameState = getDefaultGameState();
-                    gameState.rebirth = oldRebirth;
-                    gameState.rebirth.points += pointsGained;
+                    gameState.rebirth = rebirthData;
                     gameState.maxWaveReached = oldMaxWave;
                     gameState.finalBossDefeated = oldFinalBossDefeated;
-
+                    logAction(`You have been reborn! Gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
                     UIElements.classSelectionModal.style.display = 'flex';
-                    UIElements.rebirthBtn.style.display = 'none';
-                    clearInterval(gameInterval);
-                    clearInterval(autoSaveInterval);
                     updateAllUIs();
                 }
             }
