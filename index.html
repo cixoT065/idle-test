@@ -1031,7 +1031,7 @@
 
             const FINAL_BOSS_BASE_STATS = {
                 name: "The Chronos Tyrant",
-                hp: 300000,
+                hp: 450000,
                 atk: 75000,
                 def: 150000,
                 gold: 50000,
@@ -1655,9 +1655,9 @@
                 }
 
                 const primaryStat = classes[p.baseClassName].primaryStat;
-                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) * ((1 + gameState.rebirth.atk) || 0);
-                finalStats.def = (finalStats.def || 0) * ((1 + gameState.rebirth.def) || 0);
-                finalStats.hp = 50 + ((finalStats.con || 0) * 5) * ((1 + gameState.rebirth.hp) || 0);
+                finalStats.atk = Math.pow(finalStats[primaryStat] || 1, PRIMARY_STAT_POWER_CURVE) + (gameState.rebirth.bonuses.atk || 0);
+                finalStats.def = (finalStats.def || 0) + (gameState.rebirth.bonuses.def || 0);
+                finalStats.hp = 50 + ((finalStats.con || 0) * 5) + (gameState.rebirth.bonuses.hp || 0);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
@@ -2983,7 +2983,7 @@
     <h3>Rebirth Points</h3>
     <p>These points are permanent and can be spent in the Rebirth tab to gain powerful, permanent bonuses that apply to all future runs. These bonuses are essential for progressing to higher waves and defeating stronger enemies.</p>
     <ul>
-    <li><strong>ATK/DEF/HP Bonus:</strong> Percentage increases to your core combat stats.</li>
+    <li><strong>ATK/DEF/HP Bonus:</strong> Flat additions to your core combat stats.</li>
     <li><strong>Gold/XP Bonus:</strong> Percentage increases to your Gold and XP gains, speeding up future runs.</li>
     </ul>
     <p>Rebirthing is the key to long-term power growth!</p>
