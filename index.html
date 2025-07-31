@@ -2677,26 +2677,26 @@
                     logAction('You must be at least level 70 to rebirth.', 'log-error', "event");
                     return;
                 }
-                if (!confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) return;
+                if (confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) {
+                    const pointsGained = Math.floor(Math.pow(player.level / 20, 1.5));
+                    logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
 
-                const pointsGained = Math.floor(Math.pow(player.level / 20, 1.5));
-                logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
+                    const oldRebirth = { ...gameState.rebirth };
+                    const oldMaxWave = gameState.maxWaveReached;
+                    const oldFinalBossDefeated = gameState.finalBossDefeated;
 
-                const oldRebirth = { ...gameState.rebirth };
-                const oldMaxWave = gameState.maxWaveReached;
-                const oldFinalBossDefeated = gameState.finalBossDefeated;
+                    gameState = getDefaultGameState();
+                    gameState.rebirth = oldRebirth;
+                    gameState.rebirth.points += pointsGained;
+                    gameState.maxWaveReached = oldMaxWave;
+                    gameState.finalBossDefeated = oldFinalBossDefeated;
 
-                gameState = getDefaultGameState();
-                gameState.rebirth = oldRebirth;
-                gameState.rebirth.points += pointsGained;
-                gameState.maxWaveReached = oldMaxWave;
-                gameState.finalBossDefeated = oldFinalBossDefeated;
-
-                UIElements.classSelectionModal.style.display = 'flex';
-                UIElements.rebirthBtn.style.display = 'none';
-                clearInterval(gameInterval);
-                clearInterval(autoSaveInterval);
-                updateAllUIs();
+                    UIElements.classSelectionModal.style.display = 'flex';
+                    UIElements.rebirthBtn.style.display = 'none';
+                    clearInterval(gameInterval);
+                    clearInterval(autoSaveInterval);
+                    updateAllUIs();
+                }
             }
 
             function spendRebirthPoint(stat) {
