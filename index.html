@@ -906,9 +906,13 @@
                     </div>
                     <div id="tab-content-blacksmith" class="tab-content">
                         <h3>Enhance Equipment</h3>
-                        <div id="blacksmith-item-selector"></div>
+                        <div id="blacksmith-item-selector">
+                            <!-- JS will populate this -->
+                        </div>
                         <div id="blacksmith-enhancement-panel" style="display: none;">
-                            <div id="enhancement-info"></div>
+                            <div id="enhancement-info">
+                                <!-- JS will populate this -->
+                            </div>
                             <button id="enhance-item-btn" style="text-align:center;">Enhance</button>
                         </div>
                     </div>
@@ -2729,123 +2733,158 @@
             function updateBlacksmithUI() {
                 const selector = UIElements.blacksmithItemSelector;
                 selector.innerHTML = '';
-                gameState.playerTemp.blacksmithSelection = null;
-                UIElements.blacksmithEnhancementPanel.style.display = 'none';
 
                 ['weapon', 'body', 'legs'].forEach(type => {
                     const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
-                    const slotDiv = document.createElement('div');
-                    slotDiv.className = 'blacksmith-slot';
-                    slotDiv.dataset.type = type;
+                    const slot = document.createElement('div');
+                    slot.className = 'blacksmith-slot';
+                    slot.dataset.type = type;
+
                     if (item) {
                         const enhancementText = (item.enhancementLevel || 0) > 0 ? ` +${item.enhancementLevel}` : '';
-                        slotDiv.innerHTML = `<span style="color:${itemData.rarities[item.rarity].color}">${item.name}${enhancementText}</span>`;
-                        slotDiv.onclick = () => selectBlacksmithItem(type);
+                        slot.innerHTML = `<span style="color: ${itemData.rarities[item.rarity].color};">${item.name}${enhancementText}</span>`;
                     } else {
-                        slotDiv.textContent = `[Empty ${type}]`;
-                        slotDiv.classList.add('disabled');
+                        slot.innerHTML = `[${type.charAt(0).toUpperCase() + type.slice(1)} Slot]`;
+                        slot.style.color = 'var(--disabled-text-color)';
                     }
-                    selector.appendChild(slotDiv);
+
+                    if (gameState.playerTemp.blacksmithSelection === type) {
+                        slot.classList.add('selected');
+                    }
+
+                    slot.onclick = () => selectBlacksmithItem(type);
+                    selector.appendChild(slot);
                 });
+
+                updateEnhancementPanel();
             }
 
             function selectBlacksmithItem(type) {
                 gameState.playerTemp.blacksmithSelection = type;
-                document.querySelectorAll('.blacksmith-slot').forEach(el => {
-                    el.classList.toggle('selected', el.dataset.type === type);
-                });
-                updateEnhancementPanel();
+                gameState.playerTemp.lastEnhancementResult = null; // Clear last result on new selection
+                updateBlacksmithUI();
+            }
+
+            function getEnhancementCost(item) {
+                if (!item) return 0;
+                const baseCost = 50;
+                const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
+                const levelMod = Math.pow(1.4, (item.enhancementLevel || 0));
+                return Math.round(baseCost * rarityMod * levelMod);
             }
 
             function updateEnhancementPanel() {
-                const type = gameState.playerTemp.blacksmithSelection;
-                if (!type) {
-                    UIElements.blacksmithEnhancementPanel.style.display = 'none';
-                    return;
-                }
-                const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
-                if (!item) {
-                    UIElements.blacksmithEnhancementPanel.style.display = 'none';
-                    return;
-                }
-
                 const panel = UIElements.blacksmithEnhancementPanel;
-                const info = UIElements.enhancementInfo;
+                const infoDiv = UIElements.enhancementInfo;
                 const btn = UIElements.enhanceItemBtn;
-                const level = item.enhancementLevel || 0;
-                const rarityInfo = itemData.rarities[item.rarity];
+                const selectedType = gameState.playerTemp.blacksmithSelection;
+                const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
 
-                const cost = Math.round(Math.pow(level + 1, 2.5) * 20 * rarityInfo.enhanceCostMod);
-                const successChance = Math.max(0.1, 1 - (level * 0.05));
-
-                info.innerHTML = `
-    <p><strong>Item:</strong> <span style="color:${rarityInfo.color}">${item.name}</span></p>
-    <p><strong>Current Level:</strong> +${level}</p>
-    <p><strong>Next Level:</strong> +${level + 1}</p>
-    <p><strong>Success Chance:</strong> ${(successChance * 100).toFixed(0)}%</p>
-    <p><strong>Enhancement Cost:</strong> ${cost}G</p>
-    `;
-                if (gameState.playerTemp.lastEnhancementResult) {
-                    const resultText = gameState.playerTemp.lastEnhancementResult.success ?
-                        '<span style="color:var(--stat-increase-color)">SUCCESS</span>' :
-                        '<span style="color:var(--stat-decrease-color)">FAILURE</span>';
-                    info.innerHTML += `<p><strong>Last Attempt:</strong> ${resultText}</p>`;
-                }
-
-                btn.textContent = `Enhance (${cost}G)`;
-                btn.disabled = gameState.gold < cost;
-                panel.style.display = 'block';
-            }
-
-            function enhanceItem() {
-                const type = gameState.playerTemp.blacksmithSelection;
-                if (!type) return;
-                const item = gameState.inventory.find(i => i.id === gameState.equipment[type]);
-                if (!item) return;
-
-                const level = item.enhancementLevel || 0;
-                const rarityInfo = itemData.rarities[item.rarity];
-                const cost = Math.round(Math.pow(level + 1, 2.5) * 20 * rarityInfo.enhanceCostMod);
-                if (gameState.gold < cost) return;
-
-                gameState.gold -= cost;
-                const successChance = Math.max(0.1, 1 - (level * 0.05));
-                const success = Math.random() < successChance;
-
-                if (success) {
-                    item.enhancementLevel++;
-                    logAction(`Successfully enhanced ${item.name} to +${item.enhancementLevel}!`, 'log-system', "event");
-                    recalculateEnhancementBonuses(item);
-                } else {
-                    logAction(`Enhancement for ${item.name} failed.`, 'log-error', "event");
-                }
-                gameState.playerTemp.lastEnhancementResult = { success: success };
-                updateAllUIs();
-            }
-
-            function recalculateEnhancementBonuses(item) {
-                const level = item.enhancementLevel;
-                if (level === 0) {
-                    for (const stat in item.enhancementBonusStats) item.enhancementBonusStats[stat] = 0;
+                if (!item) {
+                    panel.style.display = 'none';
                     return;
                 }
+                panel.style.display = 'block';
 
-                const rarityInfo = itemData.rarities[item.rarity];
-                const waveScale = 1 + Math.log10(gameState.wave || 1);
-                const enhancementPower = Math.pow(level, 1.5);
+                const cost = getEnhancementCost(item);
+                const currentLevel = item.enhancementLevel || 0;
+                const MAX_ENHANCEMENT = 10;
+                const lastResult = gameState.playerTemp.lastEnhancementResult;
 
+                let infoHTML = `
+                        <p style="text-align:center;"><strong style="color: ${itemData.rarities[item.rarity].color};">${item.name} (${item.rarity})</strong></p>
+                        <p>Enhancement: <strong>+${currentLevel} -> +${currentLevel >= MAX_ENHANCEMENT ? currentLevel : '?'}</strong></p>
+                        <hr style="border-color: var(--border-color);">
+                    `;
+
+                const statPool = [];
                 for (const stat in STAT_NAMES) {
-                    const baseValue = (item[stat] || 0) + (item.bonusStats[stat] || 0);
-                    if (baseValue > 0) {
-                        let bonus;
-                        if (['critChance', 'critDmg'].includes(stat)) {
-                            bonus = baseValue * 0.1 * enhancementPower;
-                        } else {
-                            bonus = Math.round(baseValue * 0.08 * enhancementPower);
-                        }
-                        item.enhancementBonusStats[stat] = bonus;
+                    if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
+                        statPool.push(stat);
                     }
                 }
+
+                if (currentLevel >= MAX_ENHANCEMENT) {
+                    infoHTML += `<p style="text-align:center;">Max Level Reached</p>`;
+                    btn.disabled = true;
+                } else if (statPool.length > 0) {
+                    statPool.forEach(stat => {
+                        const baseValue = (item[stat] || 0) /*+ (item.bonusStats?.[stat] || 0)*/;
+                        const enhancementBonus = item.enhancementBonusStats?.[stat] || 0;
+                        const totalValue = baseValue + enhancementBonus;
+                        const isPercent = ['critChance', 'critDmg'].includes(stat);
+                        const displayValue = isPercent ? `${(totalValue * 100).toFixed(1)}%` : Math.round(totalValue);
+
+                        let statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} -> ?`;
+                        if (lastResult && lastResult.stat === stat) {
+                            statLine = `<p>${STAT_NAMES[stat]}: ${displayValue} <span class="stat-increase"><-- Just Enhanced!</span>`;
+                        }
+                        infoHTML += `${statLine}</p>`;
+                    });
+                    infoHTML += `<hr style="border-color: var(--border-color);"><p style="text-align:center;">Cost: <span style="color: var(--gold-color);">${cost}G</span></p>`;
+                    btn.disabled = gameState.gold < cost;
+                } else {
+                    infoHTML += `<p style="text-align:center;">This item has no stats to enhance.</p>`;
+                    btn.disabled = true;
+                }
+
+                infoDiv.innerHTML = infoHTML;
+            }
+
+            function enhanceSelectedItem() {
+                const selectedType = gameState.playerTemp.blacksmithSelection;
+                const item = gameState.inventory.find(i => i.id === gameState.equipment[selectedType]);
+                if (!item) return;
+
+                const currentLevel = item.enhancementLevel || 0;
+                const MAX_ENHANCEMENT = 10;
+                if (currentLevel >= MAX_ENHANCEMENT) {
+                    logAction("This item is already at max enhancement level.", "log-error", "event");
+                    return;
+                }
+
+                const cost = getEnhancementCost(item);
+                if (gameState.gold < cost) {
+                    logAction('Not enough gold to enhance.', 'log-error', "event");
+                    return;
+                }
+
+                const statPool = [];
+                for (const stat in STAT_NAMES) {
+                    if ((item[stat] && typeof item[stat] === 'number') /*|| (item.bonusStats && item.bonusStats[stat])*/) {
+                        statPool.push(stat);
+                    }
+                }
+
+                if (statPool.length === 0) {
+                    logAction("This item has no stats to enhance.", "log-error", "event");
+                    return;
+                }
+
+                gameState.gold -= cost;
+
+                const statToEnhance = statPool[Math.floor(Math.random() * statPool.length)];
+                let increase = 0;
+                let isPercent = false;
+
+                if (statToEnhance === 'critChance') {
+                    increase = 0.003; isPercent = true;
+                } else if (statToEnhance === 'critDmg') {
+                    increase = 0.01; isPercent = true;
+                } else {
+                    const baseValue = (item[statToEnhance] || 0) /*+ (item.bonusStats?.[statToEnhance] || 0)*/;
+                    increase = 1 + Math.round(baseValue * 0.10);
+                }
+
+                item.enhancementBonusStats[statToEnhance] = (item.enhancementBonusStats[statToEnhance] || 0) + increase;
+                item.enhancementLevel = currentLevel + 1;
+
+                gameState.playerTemp.lastEnhancementResult = { stat: statToEnhance };
+
+                const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
+                logAction(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${STAT_NAMES[statToEnhance]} increased by ${displayIncrease}.`, 'log-system', "event");
+
+                updateAllUIs();
             }
 
             function setupInfoModal() {
@@ -3064,7 +3103,7 @@
                 UIElements.buyPotion100.addEventListener('click', () => buyPotion(100));
                 UIElements.buyXpBoost2x.addEventListener('click', () => buyXpBoost(2));
                 UIElements.buyXpBoost3x.addEventListener('click', () => buyXpBoost(3));
-                UIElements.enhanceItemBtn.addEventListener('click', enhanceItem);
+                UIElements.enhanceItemBtn.addEventListener('click', enhanceSelectedItem);
             }
 
             function updateAllUIs() {
@@ -3074,6 +3113,7 @@
                 updateEquipmentUI();
                 updateSkillUI();
                 updateFinalBossButton();
+                updateBlacksmithUI();
             }
 
             function resetTransientData() {
