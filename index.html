@@ -1087,7 +1087,7 @@
                 'Rogue': {
                     primaryStat: 'str',
                     description: 'A swift attacker specializing in high damage and critical hits. Relies on evasion to survive.',
-                    base: { hp: 90, str: 12, con: 5, def: 3, dex: 8, agl: 6, int: 1, critChance: 0.10, critDmg: 1.75 },
+                    base: { hp: 90, str: 8, con: 5, def: 3, dex: 12, agl: 6, int: 1, critChance: 0.10, critDmg: 1.75 },
                     growth: { str: 2, con: 1, def: 0.5, dex: 2, agl: 1, int: 0, critChance: 0.001, critDmg: 0 },
                     promotions: { 20: ['Assassin', 'Ranger'], 40: { 'Assassin': ['Shadow', 'Reaper'], 'Ranger': ['Sharpshooter', 'Pathfinder'] }, 70: { 'Shadow': ['Phantom'], 'Reaper': ['Soul Carver'], 'Sharpshooter': ['Deadeye'], 'Pathfinder': ['Trailblazer'] } }
                 },
@@ -1829,7 +1829,7 @@
                 // UPDATED ATTACK CALCULATION
                 const strContrib = (rawStats.str || 0) * STAT_CONTRIBUTIONS.atk.strContribution[p.baseClassName];
                 const intContrib = (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.intContribution[p.baseClassName];
-                const dexContrib= (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.dexContribution[p.baseClassName];
+                const dexContrib= (rawStats.dex || 0) * STAT_CONTRIBUTIONS.atk.dexContribution[p.baseClassName];
                 const totalAttackPower = strContrib + intContrib + dexContrib;
 
                 finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
