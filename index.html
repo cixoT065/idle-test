@@ -1712,6 +1712,11 @@
                         'Warrior': 0.1,
                         'Rogue': 0.85,
                         'Wizard': 0.15
+                    },
+                    aglContribution: {
+                        'Warrior': 0.2,
+                        'Rogue': 0.85,
+                        'Wizard': 0.3
                     }
                 },
                 // Universal DEF bonus from STR
@@ -1829,8 +1834,9 @@
                 // UPDATED ATTACK CALCULATION
                 const strContrib = (rawStats.str || 0) * STAT_CONTRIBUTIONS.atk.strContribution[p.baseClassName];
                 const intContrib = (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.intContribution[p.baseClassName];
-                const dexContrib= (rawStats.dex || 0) * STAT_CONTRIBUTIONS.atk.dexContribution[p.baseClassName];
-                const totalAttackPower = strContrib + intContrib + dexContrib;
+                const dexContrib = (rawStats.dex || 0) * STAT_CONTRIBUTIONS.atk.dexContribution[p.baseClassName];
+                const aglContrib = (rawStats.agl || 0) * STAT_CONTRIBUTIONS.atk.aglContribution[p.baseClassName];
+                const totalAttackPower = strContrib + intContrib + dexContrib + aglContrib;
 
                 finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
 
@@ -3377,7 +3383,7 @@
     <li><strong class="stat-name" style="color:var(--stat-con)">CON (Constitution):</strong> Increases your maximum HP.</li>
     <li><strong class="stat-name" style="color:var(--stat-def)">DEF (Defense):</strong> Increases your DEF, reducing damage taken.</li>
     <li><strong class="stat-name" style="color:var(--stat-dex)">DEX (Dexterity):</strong> Increases your Accuracy, making your attacks less likely to miss. Primary damage stat for Rogues (85%) and Warriors (10%). Wizards gain minor ATK (15%).</li>
-    <li><strong class="stat-name" style="color:var(--stat-agl)">AGL (Agility):</strong> Increases your Evasion, making you more likely to dodge enemy attacks.</li>
+    <li><strong class="stat-name" style="color:var(--stat-agl)">AGL (Agility):</strong> Increases your Evasion, making you more likely to dodge enemy attacks. Primary damage stat for Rogues (85%) and Warriors (20%). Wizards gain minor ATK (30%).</li>
     <li><strong class="stat-name" style="color:var(--stat-int)">INT (Intelligence):</strong> Primary damage stat for Wizards (80%). Warriors (10%) and Rogues (15%) gain minor ATK. Grants True Damage: Wizards (+1.5%/pt), Rogues (+0.4%/pt), Warriors (+0.3%/pt). Soft cap at 50%, hard cap at 80%.</li>
 </ul>
 
