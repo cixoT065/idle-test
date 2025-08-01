@@ -2329,8 +2329,7 @@
                 p.xp -= p.xpToNextLevel;
                 p.level++;
                 p.xpToNextLevel = Math.round(38 * Math.pow(p.level, 1.45));
-                const pointsGained = Math.floor(Math.random() * 3) + 5;
-                p.statPoints += pointsGained;
+                p.statPoints += 5;
 
                 let growth = { ...classes[p.baseClassName].growth };
                 const promoAdjust = promotionGrowthAdjustments[p.className];
