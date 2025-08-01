@@ -1128,36 +1128,136 @@
             };
 
             const promotionSkills = {
-                'Knight': { name: 'Aegis Block', description: '15% chance to block all incoming damage.' },
-                'Paladin': { name: 'Holy Shield', description: 'Aegis Block now also heals you for 5% of your Max HP.' },
-                'Holy Knight': { name: 'Divine Retribution', description: 'Holy Shield now also retaliates for 100% of your DEF as Holy damage.' },
-                'Guardian': { name: 'Stand Firm', description: 'Aegis Block now also grants +30% DEF for 3 seconds.' },
-                'Aegis': { name: 'Thornmail', description: 'Stand Firm now also reflects 20% of pre-mitigation damage back to the attacker.' },
-                'Berserker': { name: 'Frenzy', description: 'Gain +8% ATK for every 10% of missing health.' },
-                'Slayer': { name: 'Execute', description: 'Attacks against enemies below 20% HP deal 50% more damage.' },
-                'Executioner': { name: 'Cull the Weak', description: 'Execute threshold increased to 30% HP and bonus damage increased to 100%.' },
-                'Warlord': { name: 'Battle Rush', description: 'Attacks have a 20% chance to grant +20% ATK for 3 seconds.' },
-                'Conqueror': { name: 'Unyielding Assault', description: 'Battle Rush now also grants 10% Lifesteal.' },
-                'Assassin': { name: 'Bleed', description: 'Critical hits cause the enemy to bleed for 30% of your ATK each second for 3 seconds.' },
-                'Shadow': { name: 'Shadow Step', description: 'Attacks have a 10% chance to grant a guaranteed critical hit on your next attack.' },
-                'Phantom': { name: 'Invisibility', description: 'Shadow Step now grants a guaranteed crit and 100% evasion for your next attack.' },
-                'Reaper': { name: 'Hemorrhage', description: 'Bleed can now stack up to 3 times.' },
-                'Soul Carver': { name: 'Exsanguinate', description: 'Bleed damage ticks can now critically strike.' },
-                'Ranger': { name: 'Double Shot', description: '15% chance to attack a second time for 60% damage.' },
-                'Sharpshooter': { name: 'Focus', description: 'Every 5th attack is a guaranteed critical hit.' },
-                'Deadeye': { name: 'Lethal Precision', description: 'Guaranteed criticals from Focus deal +50% critical damage.' },
-                'Pathfinder': { name: 'Sunder', description: 'Attacks have a 25% chance to reduce enemy DEF by 10% for 5 seconds.' },
-                'Trailblazer': { name: 'Armor Shatter', description: 'Sunder now stacks up to 3 times and also reduces enemy ATK by 5%.' },
-                'Mage': { name: 'Arcane Power', description: 'Attacks have a 10% chance to unleash a spell for 250% of your ATK as bonus damage.' },
-                'Archmage': { name: 'High Voltage', description: 'Arcane Power proc chance increased to 15% and damage to 300%.' },
-                'Grand Magus': { name: 'Chain Lightning', description: 'Arcane Power hits now explode, dealing an additional 150% ATK damage.' },
-                'Elementalist': { name: 'Combustion', description: 'Arcane Power now also applies a burn for 50% of your ATK for 3 seconds.' },
-                'Avatar': { name: 'Apocalypse', description: 'Combustion burn damage is increased to 100% ATK and also reduces enemy DEF by 15%.' },
-                'Sorcerer': { name: 'Soul Drain', description: 'Attacks have a 5% chance to deal 150% damage and heal you for 50% of the damage dealt.' },
-                'Warlock': { name: 'Devour Soul', description: 'Soul Drain proc chance increased to 8% and heal increased to 75%.' },
-                'Demonologist': { name: 'Annihilate', description: 'Devour Soul now deals bonus damage equal to 5% of the monster\'s max HP.' },
-                'Chronomancer': { name: 'Time Warp', description: 'Soul Drain now also has a 50% chance to make the monster miss its next attack.' },
-                'Time Lord': { name: 'Paradox', description: 'Time Warp now always makes the monster miss its next attack.' }
+                // Knight Path
+                'Knight': {
+                    name: 'Aegis Block',
+                    description: '15% chance to block all incoming damage and gain Shield Charge.'
+                },
+                'Paladin': {
+                    name: 'Holy Shield',
+                    description: 'Aegis Block now heals for 10% of Max HP and Shield Charges grant 15% damage reduction.'
+                },
+                'Holy Knight': {
+                    name: 'Divine Retribution',
+                    description: 'Shield Charges burst for 200% DEF as holy damage when consumed.'
+                },
+                'Guardian': {
+                    name: 'Stand Firm',
+                    description: 'Aegis Block grants +50% DEF for 3 seconds and generates 2 Shield Charges.'
+                },
+                'Aegis': {
+                    name: 'Thornmail',
+                    description: 'Reflects 30% damage when blocking. Shield Charges also grant 10% damage reflection.'
+                },
+
+                // Berserker Path
+                'Berserker': {
+                    name: 'Frenzy',
+                    description: 'Gain +2% ATK and +1% true damage for every 5% missing health.'
+                },
+                'Slayer': {
+                    name: 'Execute',
+                    description: 'Deal 100% more damage to non-boss enemies below 30% HP. Instantly kills non-boss enemies below 15% HP.'
+                },
+                'Executioner': {
+                    name: 'Cull the Weak',
+                    description: 'Execute threshold increased to 40% HP, instant kill at 20% HP.'
+                },
+                'Warlord': {
+                    name: 'Battle Rush',
+                    description: '25% chance on attack to gain +30% ATK and +10% true damage for 3 seconds.'
+                },
+                'Conqueror': {
+                    name: 'Unyielding Assault',
+                    description: 'Battle Rush also grants 10% lifesteal and can stack twice.'
+                },
+
+                // Assassin Path
+                'Assassin': {
+                    name: 'Bleed',
+                    description: 'Critical hits apply bleed for 30% ATK + 1% enemy max HP per second for 3 seconds.'
+                },
+                'Shadow': {
+                    name: 'Shadow Step',
+                    description: '15% chance on attack to guarantee critical and gain 50% evasion for next attack.'
+                },
+                'Phantom': {
+                    name: 'Invisibility',
+                    description: 'Shadow Step grants 100% crit rate and evasion for 2 attacks. First attack deals +100% damage.'
+                },
+                'Reaper': {
+                    name: 'Hemorrhage',
+                    description: 'Bleed stacks up to 5 times and heals you for 15% of bleed damage.'
+                },
+                'Soul Carver': {
+                    name: 'Exsanguinate',
+                    description: 'Bleed ticks can critically strike and spread to a new target on kill.'
+                },
+
+                // Ranger Path
+                'Ranger': {
+                    name: 'Double Shot',
+                    description: '20% chance to attack twice, second hit deals 80% damage with +50% accuracy.'
+                },
+                'Sharpshooter': {
+                    name: 'Focus',
+                    description: 'Every 3rd attack is a guaranteed critical with +30% critical damage.'
+                },
+                'Deadeye': {
+                    name: 'Lethal Precision',
+                    description: 'Focused crits deal +55% critical damage and apply Blind (25% miss) for 3 seconds.'
+                },
+                'Pathfinder': {
+                    name: 'Sunder',
+                    description: '30% chance to reduce enemy DEF by 10% for 5 seconds, stacks 3 times.'
+                },
+                'Trailblazer': {
+                    name: 'Armor Shatter',
+                    description: 'Sunder stacks to 5, reduces ATK by 10%, and spreads on enemy death.'
+                },
+
+                // Mage Path
+                'Mage': {
+                    name: 'Arcane Power',
+                    description: '10% chance to cast a spell for 200% ATK as true damage.'
+                },
+                'Archmage': {
+                    name: 'High Voltage',
+                    description: 'Arcane Power chance increased to 18%, damage to 300% ATK.'
+                },
+                'Grand Magus': {
+                    name: 'Chain Lightning',
+                    description: 'Arcane Power chains to deal 100% ATK bonus damage with 30% true damage conversion.'
+                },
+                'Elementalist': {
+                    name: 'Combustion',
+                    description: 'Arcane Power applies burn for 85% ATK per second for 3 seconds as true damage.'
+                },
+                'Avatar': {
+                    name: 'Apocalypse',
+                    description: 'Combustion damage increased to 120% ATK and reduces enemy stats by 15%.'
+                },
+                // Sorcerer Path
+                'Sorcerer': {
+                    name: 'Reality Break',
+                    description: 'Attacks have 10% chance to deal damage equal to 5% of enemy current HP (max 500% ATK) as true damage.'
+                },
+                'Warlock': {
+                    name: 'Devour Soul',
+                    description: 'Reality Break chance to 15%, also heals for 50% damage dealt.'
+                },
+                'Demonologist': {
+                    name: 'Annihilate',
+                    description: 'Reality Break deals 8% current HP (max 800% ATK), applies Doom (85% ATK true damage/sec for 3s).'
+                },
+                'Chronomancer': {
+                    name: 'Time Warp',
+                    description: 'Reality Break freezes time for 1 turn (enemy skips attack).'
+                },
+                'Time Lord': {
+                    name: 'Paradox',
+                    description: 'All abilities have 20% chance to trigger twice. Time freeze lasts 2 turns.'
+                }
             };
 
             const monsters = {
@@ -1580,7 +1680,7 @@
                 gameState.player = {
                     name: 'Player-' + Math.floor(1000 + Math.random() * 9000),
                     className: className, baseClassName: className,
-                    level: 1, xp: 0, xpToNextLevel: 40,
+                    level: 70, xp: 0, xpToNextLevel: 40,
                     statPoints: 5,
                     baseStats: { ...classInfo.base },
                     investedStats: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
@@ -1654,11 +1754,12 @@
                 const p = gameState.player;
                 const rawStats = { lifesteal: 0, skillLifesteal: 0 };
 
-                // ... (The first part of the function that calculates rawStats remains exactly the same) ...
+                // Initialize all stats
                 for (const statName in STAT_NAMES) {
                     rawStats[statName] = 0;
                 }
 
+                // Calculate raw stats from base + invested
                 for (const statName in rawStats) {
                     if (p.baseStats[statName] !== undefined) rawStats[statName] += p.baseStats[statName];
                     if (p.investedStats[statName]) {
@@ -1694,10 +1795,8 @@
                 }
 
                 let hpPercentBonus = 0;
-                // Initialize finalStats with the new property for the percentage string
-                const finalStats = { ...rawStats, hp: 0, atk: 0, def: 0, accuracy: 0, evasion: 0, activeSets: {}, trueDmgBonus: 0, trueDmgBonusPercent: '0.0%' };
+                const finalStats = { ...rawStats, hp: 0, atk: 0, def: 0, accuracy: 0, evasion: 0, activeSets: {} };
 
-                // ... (The set bonus loop remains the same) ...
                 for (const setName in equippedSets) {
                     const setInfo = itemSets[setName];
                     const count = equippedSets[setName];
@@ -1714,45 +1813,49 @@
                     }
                 }
 
-                // --- MAJOR CHANGES START HERE ---
-
-                // --- UPDATED ATTACK CALCULATION ---
-                const strContrib = (rawStats.str || 0) * STAT_CONTRIBUTIONS.atk.strContribution[p.baseClassName];
-                const intContrib = (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.intContribution[p.baseClassName];
-                const totalAttackPower = strContrib + intContrib;
-
-                finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
-
-                const defFromStr = (rawStats.str || 0) * STAT_CONTRIBUTIONS.defPerStr[p.baseClassName];
-                finalStats.def = ((rawStats.def || 0) + defFromStr) * (1 + gameState.rebirth.bonuses.def);
-
-                // --- UPDATED TRUE DAMAGE CALCULATION ---
-                // Calculate true damage bonus with diminishing returns
-                finalStats.trueDmgBonus = calculateTrueDamageBonus(p.baseClassName, rawStats.int || 0);
-
-                // Format for display
-                finalStats.trueDmgBonusPercent = (finalStats.trueDmgBonus * 100).toFixed(1) + '%';
-                // --- END OF NEW LOGIC ---
-
+                const primaryStat = classes[p.baseClassName].primaryStat;
+                finalStats.def = (rawStats.def || 0) * (1 + gameState.rebirth.bonuses.def);
                 finalStats.hp = 50 + ((rawStats.con || 0) * 5) + (1 + gameState.rebirth.bonuses.hp);
                 finalStats.accuracy = (finalStats.dex || 0) * 0.002;
                 finalStats.evasion += (finalStats.agl || 0) * 0.001;
 
                 if (hpPercentBonus > 0) finalStats.hp *= (1 + hpPercentBonus);
 
-                // ... (The temporary buff section remains the same) ...
+                // UPDATED ATTACK CALCULATION
+                const strContrib = (rawStats.str || 0) * STAT_CONTRIBUTIONS.atk.strContribution[p.baseClassName];
+                const intContrib = (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.intContribution[p.baseClassName];
+                const totalAttackPower = strContrib + intContrib;
+
+                finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
+
+                // Apply Frenzy bonus
                 if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
                     const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
-                    finalStats.atk *= (1 + (Math.floor(missingHpPercent / 0.1) * 0.08));
-                }
-                if (gameState.playerTemp.standFirmTurns > 0 && !hypotheticalItem) finalStats.def *= 1.30;
-                if (gameState.playerTemp.battleRushTurns > 0 && !hypotheticalItem) finalStats.atk *= 1.20;
-                if (gameState.playerTemp.evasionAtkBuffStacks > 0 && !hypotheticalItem) {
-                    const setBonus = finalStats.evasionGrantsAtk;
-                    if (setBonus) finalStats.atk *= (1 + (setBonus.percent * gameState.playerTemp.evasionAtkBuffStacks));
+                    const frenzyAtkBonus = Math.floor(missingHpPercent / 0.05) * 0.02;
+                    finalStats.atk *= (1 + frenzyAtkBonus);
                 }
 
-                if (p.currentHp > finalStats.hp && !hypotheticalItem) p.currentHp = finalStats.hp;
+                // Apply Battle Rush stacks
+                if (gameState.playerTemp.battleRushStacks > 0 && !hypotheticalItem) {
+                    finalStats.atk *= (1 + (0.30 * gameState.playerTemp.battleRushStacks));
+                }
+
+                // Calculate true damage bonus
+                finalStats.trueDmgBonus = calculateTrueDamageBonus(p.baseClassName, rawStats.int || 0);
+
+                // Additional true damage from Frenzy
+                if (p.activeSkills.includes('Frenzy') && !hypotheticalItem) {
+                    const missingHpPercent = 1 - (p.currentHp / finalStats.hp);
+                    const frenzyTrueDmg = Math.floor(missingHpPercent / 0.05) * 0.01;
+                    finalStats.trueDmgBonus = Math.min(finalStats.trueDmgBonus + frenzyTrueDmg, 0.80);
+                }
+
+                // Additional true damage from Battle Rush
+                if (gameState.playerTemp.battleRushStacks > 0 && !hypotheticalItem) {
+                    finalStats.trueDmgBonus = Math.min(finalStats.trueDmgBonus + (0.10 * gameState.playerTemp.battleRushStacks), 0.80);
+                }
+
+                finalStats.trueDmgBonusPercent = (finalStats.trueDmgBonus * 100).toFixed(1) + '%';
 
                 return finalStats;
             }
@@ -1787,6 +1890,27 @@
                     let wasBlocked = false;
                     if (p.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
                         wasBlocked = true;
+                        if (wasBlocked && gameState.playerTemp.shieldCharges > 0 && p.activeSkills.includes('Holy Knight')) {
+                            const shieldBurst = Math.round(playerStats.def * 2.0);
+                            gameState.currentMonster.hp -= shieldBurst;
+                            gameState.playerTemp.shieldCharges--;
+                            logAction(`Divine Retribution bursts for ${shieldBurst} holy damage! (${gameState.playerTemp.shieldCharges} charges remaining)`, 'log-skill', 'battle');
+                        }
+
+                        // Add shield charge damage reduction
+                        if (!wasBlocked && gameState.playerTemp.shieldCharges > 0 && p.activeSkills.includes('Holy Shield')) {
+                            const reduction = 0.15 * gameState.playerTemp.shieldCharges;
+                            monsterDamage.damage = Math.round(monsterDamage.damage * (1 - reduction));
+                            logAction(`Shield Charges reduce damage by ${Math.round(reduction * 100)}%!`, 'log-skill', 'battle');
+                        }
+
+                        // Add shield charge reflection
+                        if (!wasBlocked && gameState.playerTemp.shieldCharges > 0 && p.activeSkills.includes('Thornmail')) {
+                            const reflectPercent = 0.10 * gameState.playerTemp.shieldCharges;
+                            const reflectDmg = Math.round(monsterDamage.preMitigationDamage * reflectPercent);
+                            gameState.currentMonster.hp -= reflectDmg;
+                            logAction(`Shield Charges reflect ${reflectDmg} damage!`, 'log-skill', 'battle');
+                        }
                         if (p.activeSkills.includes('Holy Shield')) {
                             const healAmount = Math.round(playerStats.hp * 0.05);
                             p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
@@ -1836,6 +1960,11 @@
                 let hitChance = 0.90 + attackerAccuracy - defenderEvasion;
                 hitChance = Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
 
+                // Handle blind debuff
+                if (!isPlayerAttacker && monster.debuffs && monster.debuffs['Blind']) {
+                    hitChance *= 0.75; // 25% additional miss chance
+                }
+
                 if (Math.random() > hitChance) {
                     if (isPlayerAttacker) {
                         logAction(`Your attack was evaded!`, 'log-system', 'battle');
@@ -1845,15 +1974,17 @@
                     return { damage: 0, isCrit: false, preMitigationDamage: 0 };
                 }
 
-                // Crit calculation remains the same...
+                // Critical hit calculation
                 let isCrit = false;
                 if (isPlayerAttacker) {
                     gameState.playerTemp.attacksSinceLastFocus++;
+
+                    // Various crit guarantees
                     if (attacker.firstAttackCrit && !gameState.playerTemp.firstAttackCritUsed) {
                         isCrit = true;
                         gameState.playerTemp.firstAttackCritUsed = true;
-                        logAction('Phantom\'s Mirage guarantees a critical hit!', 'log-skill', 'battle');
-                    } else if (p.activeSkills.includes('Focus') && gameState.playerTemp.attacksSinceLastFocus >= 5) {
+                        logAction('Phantom\'s Mirage guarantees a critical hit!', 'log - skill', 'battle');
+                    } else if (p.activeSkills.includes('Focus') && gameState.playerTemp.attacksSinceLastFocus >= 3) {
                         isCrit = true;
                         gameState.playerTemp.attacksSinceLastFocus = 0;
                         logAction('Focus guarantees a critical hit!', 'log-skill', 'battle');
@@ -1862,70 +1993,114 @@
                         gameState.playerTemp.guaranteedCrit = false;
                         logAction('Shadow Step guarantees a critical hit!', 'log-skill', 'battle');
                     }
+
+                    // Invisibility damage bonus
+                    if (gameState.playerTemp.invisibilityStacks > 0) {
+                        gameState.playerTemp.invisibilityStacks--;
+                    }
                 }
+
                 if (!isCrit) {
                     isCrit = Math.random() < (attacker.critChance || 0);
                 }
+
                 if (!isPlayerAttacker && defender.immuneToCrits) {
                     isCrit = false;
                 }
 
                 let critMultiplier = isCrit ? (attacker.critDmg || 1.5) : 1;
-                if (isCrit && isPlayerAttacker && p.activeSkills.includes('Lethal Precision') && gameState.playerTemp.attacksSinceLastFocus === 0) {
-                    critMultiplier += 0.5;
+
+                // Enhanced crit damage for specific skills
+                if (isCrit && isPlayerAttacker) {
+                    if (p.activeSkills.includes('Lethal Precision') && gameState.playerTemp.attacksSinceLastFocus === 0) {
+                        critMultiplier += 0.55;
+                    }
                 }
 
                 // Calculate base attack with crit
                 let calculatedAtk = (attacker.atk || 0) * critMultiplier;
 
-                // Apply any damage multipliers (execute, etc.)
-                let damageMultiplier = 1.0;
-                if (isPlayerAttacker && attacker.executeDmg && (monster.hp / monster.maxHp <= attacker.executeDmg.hpThreshold)) {
-                    damageMultiplier += attacker.executeDmg.dmgBonus;
+                // Invisibility first attack bonus
+                if (isPlayerAttacker && gameState.playerTemp.invisibilityFirstAttack) {
+                    calculatedAtk *= 2.0;
+                    gameState.playerTemp.invisibilityFirstAttack = false;
+                    logAction('Invisible strike deals double damage!', 'log-skill', 'battle');
                 }
-                if (isPlayerAttacker) {
-                    let executeThreshold = 0.2, executeBonus = 0.5;
-                    if (p.activeSkills.includes('Cull the Weak')) { executeThreshold = 0.3; executeBonus = 1.0; }
-                    if (p.activeSkills.includes('Execute') && monster.hp / monster.maxHp <= executeThreshold) damageMultiplier += executeBonus;
+
+                // Apply damage multipliers
+                let damageMultiplier = 1.0;
+
+                // Execute mechanics
+                if (isPlayerAttacker && !defender.monsterType?.includes('boss')) {
+                    let executeThreshold = 0.3, executeBonus = 1.0, instantKillThreshold = 0.15;
+                    if (p.activeSkills.includes('Cull the Weak')) {
+                        executeThreshold = 0.4;
+                        instantKillThreshold = 0.2;
+                    }
+
+                    const hpPercent = monster.hp / monster.maxHp;
+                    if (p.activeSkills.includes('Execute') && hpPercent <= instantKillThreshold) {
+                        logAction(`Execute instantly slays the weakened enemy!`, 'log-skill', 'battle');
+                        return { damage: monster.hp, isCrit: true, preMitigationDamage: monster.hp, instantKill: true };
+                    } else if (p.activeSkills.includes('Execute') && hpPercent <= executeThreshold) {
+                        damageMultiplier += executeBonus;
+                    }
                 }
 
                 calculatedAtk *= damageMultiplier;
 
-                // --- NEW IMPLEMENTATION STARTS HERE ---
-
-                // Calculate true damage based on the calculated attack
+                // Calculate true damage
                 let trueDamage = 0;
                 let normalAtk = calculatedAtk;
 
                 if (isPlayerAttacker && attacker.trueDmgBonus > 0) {
-                    // True damage = calculated atk * true dmg rate
+                    // Base true damage from INT stat
                     trueDamage = Math.round(calculatedAtk * attacker.trueDmgBonus);
-                    // Normal attack = calculated atk - true dmg
+
+                    // Additional true damage from Frenzy
+                    if (p.activeSkills.includes('Frenzy')) {
+                        const missingHpPercent = 1 - (p.currentHp / attacker.hp);
+                        const frenzyTrueDmg = Math.floor(missingHpPercent / 0.05) * 0.01;
+                        trueDamage += Math.round(calculatedAtk * frenzyTrueDmg);
+                    }
+
+                    // Additional true damage from Battle Rush
+                    if (gameState.playerTemp.battleRushTurns > 0) {
+                        trueDamage += Math.round(calculatedAtk * 0.10);
+                    }
+
                     normalAtk = calculatedAtk - trueDamage;
                 }
 
                 // Apply defense reduction only to normal attack
-                let defenderDef = isPlayerAttacker ? (defender.def || 0) : (defender.def || 0);
-                if (isPlayerAttacker && monster && monster.debuffs['Sunder']) defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
-                if (isPlayerAttacker && monster && monster.debuffs['Apocalypse']) defenderDef *= (1 - 0.15);
-                if (isPlayerAttacker && monster && monster.debuffs['LowerDef']) defenderDef *= (1 - monster.debuffs['LowerDef'].percent);
-                if (isPlayerAttacker && isCrit && attacker.critIgnoresDef) defenderDef *= (1 - attacker.critIgnoresDef);
+                let defenderDef = defender.def || 0;
+
+                // Apply debuffs
+                if (isPlayerAttacker && monster && monster.debuffs) {
+                    if (monster.debuffs['Sunder']) {
+                        defenderDef *= (1 - (monster.debuffs['Sunder'].stacks * 0.1));
+                    }
+                    if (monster.debuffs['Apocalypse']) {
+                        defenderDef *= 0.85;
+                    }
+                }
+
+                // Crit ignores defense
+                if (isPlayerAttacker && isCrit && attacker.critIgnoresDef) {
+                    defenderDef *= (1 - attacker.critIgnoresDef);
+                }
 
                 const damageReduction = 1 - (defenderDef / (defenderDef + 100 + (normalAtk / 10)));
                 let mitigatedNormalDamage = Math.round(normalAtk * damageReduction);
 
                 // Total damage = mitigated normal damage + true damage
                 let finalDamage = mitigatedNormalDamage + trueDamage;
-                if (mitigatedNormalDamage <= 0)
-                    mitigatedNormalDamage = 0;
 
                 if (trueDamage > 0) {
                     logAction(`Attack splits into ${mitigatedNormalDamage} normal + <span style="color: #8888FF;">${trueDamage}</span> true damage!`, 'log-skill', 'battle');
                 }
 
-                // --- NEW IMPLEMENTATION ENDS HERE ---
-
-                // Add bonus damage from sets
+                // Reality Break bonus damage
                 if (isPlayerAttacker && attacker.bonusCurrentHpDamage) {
                     const bonusDmg = Math.round(defender.hp * attacker.bonusCurrentHpDamage);
                     finalDamage += bonusDmg;
@@ -1935,7 +2110,7 @@
                 return {
                     damage: Math.max(1, finalDamage),
                     isCrit: isCrit,
-                    preMitigationDamage: calculatedAtk  // Store the calculated attack for other uses
+                    preMitigationDamage: calculatedAtk
                 };
             }
 
@@ -1944,9 +2119,12 @@
                 const monster = gameState.currentMonster;
                 const totalDamage = playerDamage.damage + skillDamage;
 
+                // Handle lifesteal
                 let totalLifesteal = playerStats.lifesteal || 0;
                 if (skillDamage > 0) totalLifesteal += (playerStats.skillLifesteal || 0);
-                if (p.activeSkills.includes('Unyielding Assault') && gameState.playerTemp.battleRushTurns > 0) totalLifesteal += 0.10;
+                if (p.activeSkills.includes('Unyielding Assault') && gameState.playerTemp.battleRushStacks > 0) {
+                    totalLifesteal += 0.1;
+                }
 
                 if (totalLifesteal > 0 && totalDamage > 0) {
                     const healAmount = Math.round(totalDamage * totalLifesteal);
@@ -1954,126 +2132,268 @@
                     logAction(`Lifesteal heals you for ${healAmount} HP.`, 'log-skill', 'battle');
                 }
 
+                // Don't process attack skills for skill damage
                 if (skillDamage > 0) return;
 
-                if (p.activeSkills.includes('Double Shot') && Math.random() < 0.15) {
-                    const secondShotDmg = Math.round(playerDamage.damage * 0.6);
+                // Shield Charge generation for Knights
+                if (p.activeSkills.includes('Aegis Block') && Math.random() < 0.15) {
+                    const charges = p.activeSkills.includes('Stand Firm') ? 2 : 1;
+                    gameState.playerTemp.shieldCharges = (gameState.playerTemp.shieldCharges || 0) + charges;
+                    logAction(`You gain ${charges} Shield Charge${charges > 1 ? 's' : ''}!`, 'log-skill', 'battle');
+                }
+
+                // Double Shot
+                if (p.activeSkills.includes('Double Shot') && Math.random() < 0.20) {
+                    const secondShotDmg = Math.round(playerDamage.damage * 0.8);
                     monster.hp -= secondShotDmg;
                     logAction(`Double Shot hits for an extra ${secondShotDmg} damage!`, 'log-skill', 'battle');
                 }
-                if (p.activeSkills.includes('Shadow Step') && Math.random() < 0.1) {
+
+                // Shadow Step
+                if (p.activeSkills.includes('Shadow Step') && Math.random() < 0.15) {
                     gameState.playerTemp.guaranteedCrit = true;
-                    if (p.activeSkills.includes('Invisibility')) gameState.playerTemp.guaranteedEvasion = true;
-                }
-                if (p.activeSkills.includes('Battle Rush') && Math.random() < 0.2) {
-                    gameState.playerTemp.battleRushTurns = 3;
-                    logAction('Battle Rush grants you a surge of power!', 'log-skill', 'battle');
-                }
-
-                if (playerDamage.isCrit && playerStats.dotOnCrit) {
-                    const dot = playerStats.dotOnCrit;
-                    monster.debuffs['Poison'] = { damage: Math.round(playerStats.atk * dot.damagePercent), duration: dot.duration };
-                    logAction('Viper\'s Embrace poisons the enemy!', 'log-skill', 'battle');
-                }
-                if (playerStats.lowerEnemyDefOnHit && Math.random() < playerStats.lowerEnemyDefOnHit.chance) {
-                    const debuff = playerStats.lowerEnemyDefOnHit;
-                    monster.debuffs['LowerDef'] = { percent: debuff.percent, duration: debuff.duration };
-                    logAction('Warlord\'s Onslaught shatters enemy armor!', 'log-skill', 'battle');
-                }
-                if (playerStats.stunOnHit && Math.random() < playerStats.stunOnHit.chance) {
-                    monster.missNextAttack = true;
-                    logAction('Chronomancer\'s Paradox stuns the enemy!', 'log-skill', 'battle');
+                    if (p.activeSkills.includes('Invisibility')) {
+                        gameState.playerTemp.invisibilityStacks = 2;
+                        gameState.playerTemp.invisibilityFirstAttack = true;
+                        gameState.playerTemp.guaranteedEvasion = true;
+                    }
                 }
 
+                // Battle Rush
+                if (p.activeSkills.includes('Battle Rush') && Math.random() < 0.25) {
+                    const maxStacks = p.activeSkills.includes('Unyielding Assault') ? 2 : 1;
+                    if (!gameState.playerTemp.battleRushStacks) gameState.playerTemp.battleRushStacks = 0;
+                    if (gameState.playerTemp.battleRushStacks < maxStacks) {
+                        gameState.playerTemp.battleRushStacks++;
+                        gameState.playerTemp.battleRushTurns = 3;
+                        logAction(`Battle Rush grants you a surge of power! (Stack ${gameState.playerTemp.battleRushStacks})`, 'log-skill', 'battle');
+                    }
+                }
+
+                // Blind on Lethal Precision crits
+                if (playerDamage.isCrit && p.activeSkills.includes('Lethal Precision') && gameState.playerTemp.attacksSinceLastFocus === 0) {
+                    monster.debuffs['Blind'] = { duration: 3 };
+                    logAction('Your precise shot blinds the enemy!', 'log-skill', 'battle');
+                }
+
+                // Enhanced Bleed mechanics
                 if (playerDamage.isCrit && p.activeSkills.includes('Bleed')) {
-                    const maxStacks = p.activeSkills.includes('Hemorrhage') ? 3 : 1;
+                    const maxStacks = p.activeSkills.includes('Hemorrhage') ? 5 : 1;
+                    const bleedDamage = Math.round(playerStats.atk * 0.3 + monster.maxHp * 0.01);
+
                     if (!monster.debuffs['Bleed']) {
-                        monster.debuffs['Bleed'] = { damage: Math.round(playerStats.atk * 0.3), duration: 3, stacks: 1 };
-                        logAction('Your critical hit causes the enemy to Bleed!', 'log-skill', 'battle');
+                        monster.debuffs['Bleed'] = {
+                            damage: bleedDamage,
+                            duration: 3,
+                            stacks: 1,
+                            canCrit: p.activeSkills.includes('Exsanguinate')
+                        };
+                        logAction('Your critical hit causes deep bleeding!', 'log-skill', 'battle');
                     } else {
                         monster.debuffs['Bleed'].duration = 3;
-                        if (monster.debuffs['Bleed'].stacks < maxStacks) monster.debuffs['Bleed'].stacks++;
+                        if (monster.debuffs['Bleed'].stacks < maxStacks) {
+                            monster.debuffs['Bleed'].stacks++;
+                            logAction(`Bleed intensifies! (${monster.debuffs['Bleed'].stacks} stacks)`, 'log-skill', 'battle');
+                        }
                     }
                 }
 
-                if (p.activeSkills.includes('Sunder') && Math.random() < 0.25) {
-                    const maxStacks = p.activeSkills.includes('Armor Shatter') ? 3 : 1;
-                    if (!monster.debuffs['Sunder']) monster.debuffs['Sunder'] = { duration: 5, stacks: 1 };
-                    else if (monster.debuffs['Sunder'].stacks < maxStacks) monster.debuffs['Sunder'].stacks++;
+                // Sunder mechanics
+                if (p.activeSkills.includes('Sunder') && Math.random() < 0.30) {
+                    const maxStacks = p.activeSkills.includes('Armor Shatter') ? 5 : 3;
+                    if (!monster.debuffs['Sunder']) {
+                        monster.debuffs['Sunder'] = { duration: 5, stacks: 1 };
+                    } else if (monster.debuffs['Sunder'].stacks < maxStacks) {
+                        monster.debuffs['Sunder'].stacks++;
+                    }
                     monster.debuffs['Sunder'].duration = 5;
+
+                    if (p.activeSkills.includes('Armor Shatter')) {
+                        monster.debuffs['WeakenATK'] = { percent: 0.10, duration: 5 };
+                    }
+
+                    logAction(`Armor sundered! (${monster.debuffs['Sunder'].stacks} stacks)`, 'log-skill', 'battle');
                 }
 
+                // Arcane Power / Spell casting
                 let arcanePowerProc = false;
-                let arcanePowerChance = p.activeSkills.includes('High Voltage') ? 0.15 : (p.activeSkills.includes('Arcane Power') ? 0.10 : 0);
+                let arcanePowerChance = p.activeSkills.includes('High Voltage') ? 0.18 :
+                    (p.activeSkills.includes('Arcane Power') ? 0.1 : 0);
+
                 if (arcanePowerChance > 0 && Math.random() < arcanePowerChance) {
                     arcanePowerProc = true;
-                    let arcaneDmg = playerStats.atk * (p.activeSkills.includes('High Voltage') ? 3.0 : 2.5);
-                    if (p.activeSkills.includes('Chain Lightning')) arcaneDmg += playerStats.atk * 1.5;
-                    arcaneDmg = Math.round(arcaneDmg);
-                    monster.hp -= arcaneDmg;
-                    logAction(`Arcane Power erupts for ${arcaneDmg} bonus damage!`, 'log-skill', 'battle');
-                    handlePostPlayerAttackSkills(playerStats, playerDamage, arcaneDmg);
-                    if (playerStats.doubleCastChance && Math.random() < playerStats.doubleCastChance) {
-                        monster.hp -= arcaneDmg;
-                        logAction(`Celestial Fabric causes the spell to echo for another ${arcaneDmg} damage!`, 'log-skill', 'battle');
-                        handlePostPlayerAttackSkills(playerStats, playerDamage, arcaneDmg);
+                    let arcaneDmg = playerStats.atk * (p.activeSkills.includes('High Voltage') ? 3.0 : 2.0);
+
+                    // Apply true damage conversion
+                    let trueDmgPortion = Math.round(arcaneDmg * playerStats.trueDmgBonus);
+                    let normalDmgPortion = arcaneDmg - trueDmgPortion;
+
+                    // Apply defense to normal portion
+                    const damageReduction = 1 - (monster.def / (monster.def + 100 + (normalDmgPortion / 10)));
+                    normalDmgPortion = Math.round(normalDmgPortion * damageReduction);
+
+                    const totalSpellDmg = normalDmgPortion + trueDmgPortion;
+                    monster.hp -= totalSpellDmg;
+
+                    logAction(`Arcane Power erupts for ${normalDmgPortion} + <span style="color: #8888FF;">${trueDmgPortion}</span> true damage!`, 'log-skill', 'battle');
+                    handlePostPlayerAttackSkills(playerStats, playerDamage, totalSpellDmg);
+
+                    // Chain Lightning
+                    if (p.activeSkills.includes('Chain Lightning')) {
+                        let chainDmg = playerStats.atk;
+                        let chainTrueDmg = Math.round(chainDmg * 0.30);
+                        let chainNormalDmg = chainDmg - chainTrueDmg;
+
+                        const chainReduction = 1 - (monster.def / (monster.def + 100 + (chainNormalDmg / 10)));
+                        chainNormalDmg = Math.round(chainNormalDmg * chainReduction);
+
+                        const totalChainDmg = chainNormalDmg + chainTrueDmg;
+                        monster.hp -= totalChainDmg;
+                        logAction(`Chain Lightning arcs for ${chainNormalDmg} + <span style="color: #8888FF;">${chainTrueDmg}</span> true damage!`, 'log-skill', 'battle');
+                    }
+
+                    // Handle Paradox double cast
+                    if (p.activeSkills.includes('Paradox') && Math.random() < 0.25) {
+                        monster.hp -= totalSpellDmg;
+                        logAction(`Paradox causes the spell to echo for another ${totalSpellDmg} damage!`, 'log-skill', 'battle');
+                        handlePostPlayerAttackSkills(playerStats, playerDamage, totalSpellDmg);
                     }
                 }
+
+                // Combustion
                 if (arcanePowerProc && p.activeSkills.includes('Combustion')) {
-                    let burnDmg = playerStats.atk * (p.activeSkills.includes('Avatar') ? 1.0 : 0.5);
-                    monster.debuffs['Combustion'] = { damage: Math.round(burnDmg), duration: 3 };
-                    if (p.activeSkills.includes('Avatar')) monster.debuffs['Apocalypse'] = { duration: 3 };
+                    let burnDmg = playerStats.atk * (p.activeSkills.includes('Avatar') ? 1.2 : .85);
+                    monster.debuffs['Combustion'] = {
+                        damage: Math.round(burnDmg),
+                        duration: 3,
+                        isTrueDamage: true
+                    };
+
+                    if (p.activeSkills.includes('Avatar')) {
+                        monster.debuffs['Apocalypse'] = { duration: 3 };
+                        logAction('Apocalyptic flames reduce enemy power!', 'log-skill', 'battle');
+                    }
+
                     logAction('The enemy is engulfed in magical flames!', 'log-skill', 'battle');
                 }
 
-                let soulDrainChance = p.activeSkills.includes('Devour Soul') ? 0.08 : (p.activeSkills.includes('Soul Drain') ? 0.05 : 0);
-                if (soulDrainChance > 0 && Math.random() < soulDrainChance) {
-                    let drainDmg = playerStats.atk * 1.5;
-                    if (p.activeSkills.includes('Annihilate')) drainDmg += monster.maxHp * 0.05;
-                    drainDmg = Math.round(drainDmg);
-                    monster.hp -= drainDmg;
-                    logAction(`Soul Drain deals ${drainDmg} damage!`, 'log-skill', 'battle');
-                    handlePostPlayerAttackSkills(playerStats, playerDamage, drainDmg);
-                    if (p.activeSkills.includes('Time Warp')) {
-                        if (Math.random() < (p.activeSkills.includes('Paradox') ? 1.0 : 0.5)) monster.missNextAttack = true;
+                // Reality Break
+                let realityBreakChance = p.activeSkills.includes('Devour Soul') ? 0.15 :
+                    (p.activeSkills.includes('Reality Break') ? 0.10 : 0);
+
+                if (realityBreakChance > 0 && Math.random() < realityBreakChance) {
+                    let percentDmg = p.activeSkills.includes('Annihilate') ? 0.08 : 0.05;
+                    let maxDmg = playerStats.atk * (p.activeSkills.includes('Annihilate') ? 8.0 : 5.0);
+                    let realityDmg = Math.min(Math.round(monster.hp * percentDmg), maxDmg);
+
+                    monster.hp -= realityDmg;
+                    logAction(`Reality Break tears through for ${realityDmg} true damage!`, 'log-skill', 'battle');
+
+                    // Heal from Devour Soul
+                    if (p.activeSkills.includes('Devour Soul')) {
+                        const healAmount = Math.round(realityDmg * 0.5);
+                        p.currentHp = Math.min(playerStats.hp, p.currentHp + healAmount);
+                        logAction(`You devour their essence, healing for ${healAmount} HP.`, 'log-skill', 'battle');
                     }
-                    if (playerStats.doubleCastChance && Math.random() < playerStats.doubleCastChance) {
-                        monster.hp -= drainDmg;
-                        logAction(`Celestial Fabric causes the spell to echo for another ${drainDmg} damage!`, 'log-skill', 'battle');
-                        handlePostPlayerAttackSkills(playerStats, playerDamage, drainDmg);
+
+                    // Apply Doom
+                    if (p.activeSkills.includes('Annihilate')) {
+                        monster.debuffs['Doom'] = {
+                            damage: Math.round(playerStats.atk * 0.85),
+                            duration: 3,
+                            isTrueDamage: true
+                        };
+                        logAction('Doom seals the enemy\'s fate!', 'log - skill', 'battle');
+                    }
+
+                    // Time freeze
+                    if (p.activeSkills.includes('Time Warp')) {
+                        const freezeDuration = p.activeSkills.includes('Paradox') ? 2 : 1;
+                        gameState.playerTemp.timeFreezeCounter = freezeDuration;
+                        logAction(`Time freezes for ${freezeDuration} turn${freezeDuration > 1 ? 's' : ''}!`, 'log-skill', 'battle');
+                    }
+
+                    // Handle Paradox double cast
+                    if (p.activeSkills.includes('Paradox') && Math.random() < 0.20) {
+                        monster.hp -= realityDmg;
+                        logAction(`Paradox causes Reality Break to echo for another ${realityDmg} damage!`, 'log-skill', 'battle');
+                        handlePostPlayerAttackSkills(playerStats, playerDamage, realityDmg);
                     }
                 }
             }
 
+
             function handleBuffsAndDebuffs() {
+                // Player buffs
                 if (gameState.playerTemp.standFirmTurns > 0) gameState.playerTemp.standFirmTurns--;
                 if (gameState.playerTemp.battleRushTurns > 0) gameState.playerTemp.battleRushTurns--;
                 if (gameState.playerTemp.evasionAtkBuffDuration > 0) gameState.playerTemp.evasionAtkBuffDuration--;
                 else gameState.playerTemp.evasionAtkBuffStacks = 0;
 
+                // Handle time freeze
+                if (gameState.playerTemp.timeFreezeCounter > 0) {
+                    gameState.playerTemp.timeFreezeCounter--;
+                    gameState.currentMonster.missNextAttack = true;
+                }
+
                 const monster = gameState.currentMonster;
+                const playerStats = getPlayerTotalStats();
+
                 for (const key in monster.debuffs) {
                     const debuff = monster.debuffs[key];
                     if (debuff.duration > 0) {
+                        // Handle different debuff types
                         if (key === 'Bleed') {
                             let bleedDmg = debuff.damage * debuff.stacks;
-                            if (gameState.player.activeSkills.includes('Exsanguinate') && Math.random() < getPlayerTotalStats().critChance) {
-                                bleedDmg = Math.round(bleedDmg * getPlayerTotalStats().critDmg);
+
+                            // Hemorrhage healing
+                            if (gameState.player.activeSkills.includes('Hemorrhage')) {
+                                const healAmount = Math.round(bleedDmg * 0.15);
+                                gameState.player.currentHp = Math.min(playerStats.hp, gameState.player.currentHp + healAmount);
+                            }
+
+                            // Exsanguinate crit chance
+                            if (debuff.canCrit && Math.random() < playerStats.critChance) {
+                                bleedDmg = Math.round(bleedDmg * playerStats.critDmg);
                                 logAction(`Bleed critically strikes for ${bleedDmg} damage!`, 'log-skill', 'battle');
                             } else {
-                                logAction(`Bleed deals ${bleedDmg} damage.`, 'log-monster', 'battle');
+                                logAction(`Bleed deals ${bleedDmg} damage (${debuff.stacks} stacks).`, 'log-monster', 'battle');
                             }
+
                             monster.hp -= bleedDmg;
+
+                            // Exsanguinate spread on kill
+                            if (monster.hp <= 0 && gameState.player.activeSkills.includes('Exsanguinate')) {
+                                // This will be handled in monsterDefeated
+                                gameState.playerTemp.bleedSpreadOnKill = true;
+                            }
                         }
-                        if (key === 'Combustion' || key === 'Poison') {
+
+                        if (key === 'Combustion') {
+                            const dmgText = debuff.isTrueDamage ?
+                                `<span style="color: #8888FF;">${debuff.damage}</span> true` :
+                                debuff.damage;
+                            logAction(`Combustion burns for ${dmgText} damage.`, 'log-monster', 'battle');
                             monster.hp -= debuff.damage;
-                            logAction(`${key} burns for ${debuff.damage} damage.`, 'log-monster', 'battle');
                         }
+
+                        if (key === 'Doom') {
+                            logAction(`Doom tears at reality for <span style="color: #8888FF;">${debuff.damage}</span> true damage.`, 'log-monster', 'battle');
+                            monster.hp -= debuff.damage;
+                        }
+
+                        if (key === 'Poison') {
+                            monster.hp -= debuff.damage;
+                            logAction(`Poison deals ${debuff.damage} damage.`, 'log-monster', 'battle');
+                        }
+
                         debuff.duration--;
                     }
+
                     if (debuff.duration <= 0) delete monster.debuffs[key];
                 }
             }
+
 
             function monsterDefeated() {
                 logAction(`You have defeated the ${gameState.currentMonster.name}!`, 'log-system', "event");
@@ -2306,6 +2626,13 @@
                     gold: Math.round(monsterTemplate.gold * goldScale), xp: Math.round(monsterTemplate.xp * xpScale),
                     isBoss: isBoss, debuffs: {}, missNextAttack: false,
                 };
+
+                gameState.playerTemp.firstAttackCritUsed = false;
+                gameState.playerTemp.attacksSinceLastFocus = 0;
+                if (gameState.playerTemp.invisibilityStacks > 0) {
+                    gameState.playerTemp.invisibilityFirstAttack = true;
+                }
+
                 logAction(`A wild ${gameState.currentMonster.name} appears!`, 'log-system', "event");
                 updateAllUIs();
             }
@@ -2410,7 +2737,7 @@
                 UIElements.playerEvasion.textContent = `${(totalStats.evasion * 100).toFixed(1)}%`;
                 UIElements.playerCritChance.textContent = `${(totalStats.critChance * 100).toFixed(1)}%`;
                 UIElements.playerCritDmg.textContent = `${(totalStats.critDmg * 100).toFixed(0)}%`;
-                UIElements.playerTrueDmg.textContent = `${(totalStats.trueDmgBonus * 100).toFixed(0)}%`;
+                UIElements.playerTrueDmg.textContent = totalStats.trueDmgBonusPercent || '0.0%';
                 UIElements.playerGold.textContent = gameState.gold;
 
                 if (gameState.currentMonster) {
@@ -3234,7 +3561,29 @@
             }
 
             function resetTransientData() {
-                gameState.playerTemp = getDefaultGameState().playerTemp;
+                function resetTransientData() {
+                    gameState.playerTemp = {
+                        pointAllocation: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 },
+                        classSelection: null,
+                        promotionSelection: null,
+                        blacksmithSelection: null,
+                        lastEnhancementResult: null,
+                        standFirmTurns: 0,
+                        battleRushTurns: 0,
+                        battleRushStacks: 0,
+                        guaranteedCrit: false,
+                        guaranteedEvasion: false,
+                        attacksSinceLastFocus: 0,
+                        firstAttackCritUsed: false,
+                        evasionAtkBuffStacks: 0,
+                        evasionAtkBuffDuration: 0,
+                        shieldCharges: 0,
+                        invisibilityStacks: 0,
+                        invisibilityFirstAttack: false,
+                        timeFreezeCounter: 0,
+                        bleedSpreadOnKill: false
+                    };
+                }
                 if (gameState.player) {
                     const totalStats = getPlayerTotalStats();
                     gameState.player.currentHp = totalStats.hp;
