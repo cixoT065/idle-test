@@ -2680,6 +2680,8 @@
                 p.currentHp = getPlayerTotalStats().hp;
                 logAction(`LEVEL UP! You are now level ${p.level}. Gained ${pointsGained} stat points.`, 'log-system', "event");
 
+                checkForPendingActions()
+
                 if (!p.promotionPending) {
                     const availablePromotion = getAvailablePromotion(p);
                     if (availablePromotion) {
