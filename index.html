@@ -1618,16 +1618,16 @@
                 // True damage configuration
                 trueDmg: {
                     base: {
-                        'Wizard': 0.05,    // 5% base true damage
-                        'Warrior': 0.02,   // 2% base true damage
-                        'Rogue': 0.02      // 2% base true damage
+                        'Wizard': 0.02,    // Reduced from 0.05 to 0.02 (2% base)
+                        'Warrior': 0.01,   // Reduced from 0.02 to 0.01 (1% base)
+                        'Rogue': 0.01      // Reduced from 0.02 to 0.01 (1% base)
                     },
                     perInt: {
-                        'Wizard': 0.015,   // +1.5% per INT point
-                        'Warrior': 0.003,  // +0.3% per INT point
-                        'Rogue': 0.004     // +0.4% per INT point
+                        'Wizard': 0.003,   // 0.3% per INT (was 1.5%)
+                        'Warrior': 0.0008, // 0.08% per INT (was 0.3%)
+                        'Rogue': 0.001     // 0.1% per INT (was 0.4%)
                     },
-                    softCap: 0.50,         // Soft cap at 50%
+                    softCap: 0.40,         // Soft cap at 40%
                     hardCap: 0.80          // Hard cap at 80%
                 }
             };
