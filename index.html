@@ -3116,7 +3116,7 @@
                     return;
                 }
                 if (confirm('Are you sure you want to rebirth? You will start over at level 1, but gain Rebirth Points based on your progress.')) {
-                    const pointsGained = Math.floor(Math.pow(gameState.player.level / 20, 1.5));
+                    const pointsGained = Math.floor(Math.pow(gameState.player.level / 20, 2));
                     logAction(`You have been reborn! You gained ${pointsGained} Rebirth Points.`, 'log-system', "event");
 
                     const oldRebirth = { ...gameState.rebirth };
@@ -3153,7 +3153,7 @@
                     gameState.rebirth.points--;
                     // if (['gold', 'xp'].includes(stat)) gameState.rebirth.bonuses[stat] += 0.01;
                     // else 
-                    gameState.rebirth.bonuses[stat] += 0.05;
+                    gameState.rebirth.bonuses[stat] += 0.1;
                     updateAllUIs();
                 }
             }
