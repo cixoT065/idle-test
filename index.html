@@ -1049,7 +1049,7 @@
                     potionCosts: { p25: 20, p50: 35, p75: 50, p100: 65 },
                     inventory: [],
                     equipment: { weapon: null, body: null, legs: null },
-                    maxInventorySize: 20,
+                    maxInventorySize: 80,
                     rebirth: { points: 0, bonuses: { atk: 0, def: 0, hp: 0, gold: 0, xp: 0 } },
                     activeBoosts: { xp: null },
                     maxWaveReached: 1,
@@ -1700,13 +1700,18 @@
                 atk: {
                     strContribution: {
                         'Warrior': 0.9,    // Full benefit from STR
-                        'Rogue': 0.75,     // Slightly less than Warrior
+                        'Rogue': 0.2,     // Slightly less than Warrior
                         'Wizard': 0.15     // Minor benefit from STR
                     },
                     intContribution: {
                         'Warrior': 0.1,    // Minor benefit from INT
                         'Rogue': 0.15,     // Slightly more than Warrior
                         'Wizard': 0.8      // Full benefit from INT
+                    },
+                    dexContribution: {
+                        'Warrior': 0.1,
+                        'Rogue': 0.85,
+                        'Wizard': 0.15
                     }
                 },
                 // Universal DEF bonus from STR
@@ -1824,7 +1829,8 @@
                 // UPDATED ATTACK CALCULATION
                 const strContrib = (rawStats.str || 0) * STAT_CONTRIBUTIONS.atk.strContribution[p.baseClassName];
                 const intContrib = (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.intContribution[p.baseClassName];
-                const totalAttackPower = strContrib + intContrib;
+                const dexContrib= (rawStats.int || 0) * STAT_CONTRIBUTIONS.atk.dexContribution[p.baseClassName];
+                const totalAttackPower = strContrib + intContrib + dexContrib;
 
                 finalStats.atk = Math.pow(totalAttackPower || 1, PRIMARY_STAT_POWER_CURVE) * (1 + gameState.rebirth.bonuses.atk);
 
