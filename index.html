@@ -1972,7 +1972,7 @@
                 const monster = gameState.currentMonster;
 
                 const MIN_HIT_CHANCE = 0.25, MAX_HIT_CHANCE = 0.95;
-                const defenderEvasion = isPlayerAttacker ? (defender.evasion || 0) : (defender.evasion || 0);
+                const defenderEvasion = isPlayerAttacker ? (defender.evasion || 0) : (attacker.evasion || 0);
                 const attackerAccuracy = attacker.accuracy || 0;
                 let hitChance = 0.90 + attackerAccuracy - defenderEvasion;
                 hitChance = Math.max(MIN_HIT_CHANCE, Math.min(MAX_HIT_CHANCE, hitChance));
