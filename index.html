@@ -2441,6 +2441,7 @@
                 gameState.kills++;
                 if (gameState.currentMonster.monsterType === 'boss') {
                     gameState.wave++;
+                    if(gameState.wave > 35) gameState.wave = 35;
                     if (gameState.wave > gameState.maxWaveReached) gameState.maxWaveReached = gameState.wave;
                     gameState.kills = 0;
                     UIElements.challengeBossBtn.disabled = true;
@@ -2622,7 +2623,10 @@
 
                 let monsterTemplate;
                 if (isBoss) {
-                    monsterTemplate = monsters.bosses[(gameState.wave - 1) % monsters.bosses.length];
+                    if (gameState.wave === 35)
+                        challengeFinalBoss();
+                    else
+                        monsterTemplate = monsters.bosses[(gameState.wave - 1) % monsters.bosses.length];
                 } else {
                     const rand = Math.random();
                     if (gameState.wave > 3 && rand < 0.15) monsterTemplate = monsters.elite[Math.floor(Math.random() * monsters.elite.length)];
@@ -2801,6 +2805,7 @@
             function updateFinalBossButton() {
                 const btn = UIElements.challengeFinalBossBtn;
                 if (gameState.maxWaveReached >= 2 && !gameState.finalBossDefeated) {
+                    
                     btn.style.display = 'block';
                     const boss = gameState.finalBoss;
                     if (boss) {
