@@ -1188,7 +1188,7 @@
                 },
                 'Reaper': {
                     name: 'Hemorrhage',
-                    description: 'Bleed stacks up to 5 times and heals you for 15% of bleed damage.'
+                    description: 'Bleed stacks up to 5 times and heals you for 5% of bleed damage.'
                 },
                 'Soul Carver': {
                     name: 'Exsanguinate',
@@ -2365,7 +2365,7 @@
 
                             // Hemorrhage healing
                             if (gameState.player.activeSkills.includes('Hemorrhage')) {
-                                const healAmount = Math.round(bleedDmg * 0.15);
+                                const healAmount = Math.round(bleedDmg * 0.5);
                                 gameState.player.currentHp = Math.min(playerStats.hp, gameState.player.currentHp + healAmount);
                             }
 
@@ -2695,6 +2695,7 @@
                         showPromotionModal(availablePromotion.choices);
                     }
                 }
+                checkForPendingActions()
                 updateAllUIs();
             }
 
