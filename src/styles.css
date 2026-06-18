@@ -404,6 +404,19 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--p
   filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.55));
   user-select: none;
 }
+/* Generated FFBE-style single-frame portraits (motion comes from the state machine). */
+.fighter-portrait {
+  width: 136px;
+  height: 144px;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+  user-select: none;
+  animation: idle-bob 2.6s ease-in-out infinite;
+}
+.fighter.enemy .fighter-portrait { animation-delay: -1.3s; }
 /* Idle: cycle the 4-frame sheet (sheet is 4x the display width). */
 .fighter-sprite.idle-anim {
   background-size: 448px 112px;
@@ -425,20 +438,45 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--p
   text-align: center;
   line-height: 1.3;
 }
-.fighter.player.attacking { transform: translateX(40px); }
-.fighter.enemy.attacking { transform: translateX(-40px); }
-.fighter.hit .fighter-emoji,
-.fighter.hit .fighter-sprite { animation: hit-shake 0.26s ease; }
-.fighter.hit::before {
-  content: '';
+/* Ground shadow under each fighter */
+.fighter-shadow {
   position: absolute;
-  top: -6px; left: 50%;
-  width: 90px; height: 90px;
+  bottom: 26px; left: 50%;
+  width: 78px; height: 14px;
   transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), transparent 70%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 85, 106, 0.45), transparent 70%);
   z-index: -1;
+  pointer-events: none;
 }
+
+/* --- Player animation states (faces right) --- */
+.fighter.player.anim-attack { animation: p-attack 0.42s ease; }
+.fighter.player.anim-crit { animation: p-crit 0.52s ease; }
+.fighter.player.anim-cast { animation: p-cast 0.82s ease; }
+.fighter.player.anim-whiff { animation: p-whiff 0.46s ease; }
+.fighter.player.anim-victory { animation: p-victory 0.7s ease; }
+.fighter.player.anim-defeat { animation: p-defeat 0.8s ease forwards; }
+.fighter.player.anim-cast .fighter-sprite { filter: drop-shadow(0 0 14px rgba(120, 180, 255, 0.9)); }
+
+/* --- Enemy animation states (faces left) --- */
+.fighter.enemy.anim-attack { animation: e-attack 0.42s ease; }
+.fighter.enemy.anim-whiff { animation: e-whiff 0.4s ease; }
+.fighter.enemy.anim-dying { animation: e-dying 0.6s ease forwards; }
+.fighter.enemy.anim-enter { animation: e-enter 0.42s ease; }
+.fighter.enemy.is-bossfoe .fighter-emoji,
+.fighter.enemy.is-bossfoe .fighter-portrait { filter: drop-shadow(0 0 16px rgba(224, 85, 106, 0.85)); }
+.fighter.enemy.is-champion .fighter-emoji,
+.fighter.enemy.is-champion .fighter-portrait { filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.95)); }
+.fighter.enemy.is-bossfoe .fighter-portrait { width: 150px; height: 156px; }
+
+/* Hit reaction: wrapper recoils, sprite/emoji flashes (placed last so it wins) */
+.fighter.player.anim-hurt { animation: p-hurt 0.3s ease; }
+.fighter.enemy.anim-hurt { animation: e-hurt 0.34s ease; }
+.fighter.anim-hurt .fighter-sprite,
+.fighter.anim-hurt .fighter-emoji,
+.fighter.anim-hurt .fighter-portrait { animation: hit-flash 0.3s ease; }
+
 .vs { font-size: 22px; color: var(--muted-color); opacity: 0.45; }
 
 /* Reserved-height combat rows: kept a constant height whether or not they have
@@ -471,31 +509,203 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--p
 
 .damage-float {
   position: absolute;
-  top: 46px;
+  top: 44px;
   font-weight: 800;
   font-size: 19px;
   text-shadow: 0 2px 4px #000;
   pointer-events: none;
-  z-index: 3;
-  animation: float-up 0.85s ease-out forwards;
+  z-index: 4;
+  animation: float-up 0.9s ease-out forwards;
 }
-.damage-float.enemy { right: 16%; color: #ffd6d6; }
-.damage-float.player { left: 16%; color: #ff9c9c; }
+.damage-float.enemy { right: 18%; color: #ffd6d6; }
+.damage-float.player { left: 18%; color: #ff9c9c; }
+.damage-float.heal { color: #7fd48a; }
+.damage-float.crit {
+  font-size: 30px;
+  color: #ffd34d;
+  text-shadow: 0 0 12px rgba(255, 180, 0, 0.9), 0 2px 4px #000;
+  animation: float-crit 0.95s ease-out forwards;
+}
 
-@keyframes idle-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+/* ---- Combat VFX ---- */
+.vfx { position: absolute; pointer-events: none; z-index: 3; }
+.vfx-slash {
+  right: 15%; top: 30px;
+  width: 130px; height: 130px;
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.95) 50%, transparent 58%);
+  animation: vfx-slash 0.4s ease-out forwards;
 }
-@keyframes hit-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
+.vfx-impact {
+  right: 19%; top: 50px;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 240, 200, 0.95), rgba(255, 200, 120, 0.3) 55%, transparent 70%);
+  animation: vfx-impact 0.36s ease-out forwards;
 }
+.vfx-crit {
+  right: 16%; top: 38px;
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 235, 150, 0.95), rgba(255, 140, 0, 0.45) 50%, transparent 72%);
+  box-shadow: 0 0 36px rgba(255, 200, 0, 0.75);
+  animation: vfx-crit 0.5s ease-out forwards;
+}
+.vfx-magic {
+  left: 12%; bottom: 24px;
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  border: 3px solid rgba(120, 180, 255, 0.85);
+  box-shadow: inset 0 0 24px rgba(120, 180, 255, 0.6), 0 0 20px rgba(120, 180, 255, 0.55);
+  animation: vfx-magic 0.7s ease-out forwards;
+}
+.vfx-magic::before {
+  content: ''; position: absolute; inset: 16px;
+  border-radius: 50%; border: 2px dashed rgba(150, 200, 255, 0.7);
+}
+.vfx-projectile {
+  top: 58px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e6f0ff, #5b8cff 60%, transparent);
+  box-shadow: 0 0 18px #5b8cff, 0 0 6px #fff;
+  animation: vfx-projectile 0.36s linear forwards;
+}
+.vfx-guard {
+  left: 17%; top: 36px;
+  width: 78px; height: 78px;
+  border-radius: 50%;
+  border: 3px solid rgba(150, 200, 255, 0.9);
+  box-shadow: 0 0 16px rgba(150, 200, 255, 0.6);
+  animation: vfx-guard 0.4s ease-out forwards;
+}
+
+/* ---- Keyframes ---- */
+@keyframes idle-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @keyframes float-up {
   0% { opacity: 0; transform: translateY(10px) scale(0.8); }
   20% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-36px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-38px) scale(1.1); }
 }
+@keyframes float-crit {
+  0% { opacity: 0; transform: translateY(8px) scale(0.6); }
+  18% { opacity: 1; transform: translateY(0) scale(1.3); }
+  40% { transform: scale(1.1); }
+  100% { opacity: 0; transform: translateY(-46px) scale(1.2); }
+}
+@keyframes hit-flash {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(2.4) drop-shadow(0 0 10px #ff6b6b); }
+  100% { filter: brightness(1); }
+}
+@keyframes p-attack {
+  0% { transform: translateX(0); }
+  22% { transform: translateX(-10px); }
+  46% { transform: translateX(46px); }
+  62% { transform: translateX(38px); }
+  100% { transform: translateX(0); }
+}
+@keyframes p-crit {
+  0% { transform: translateX(0) scale(1); }
+  18% { transform: translateX(-16px) scale(1.03); }
+  44% { transform: translateX(66px) scale(1.1) rotate(-4deg); }
+  62% { transform: translateX(54px) scale(1.05); }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes p-cast {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-12px); }
+}
+@keyframes p-whiff {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(50px); }
+  100% { transform: translateX(0); }
+}
+@keyframes p-hurt {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-16px) rotate(-3deg); }
+  60% { transform: translateX(-5px); }
+}
+@keyframes p-victory {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-16px); }
+  60% { transform: translateY(0); }
+  80% { transform: translateY(-7px); }
+}
+@keyframes p-defeat {
+  0% { transform: translateY(0) rotate(0); filter: none; }
+  100% { transform: translateY(14px) rotate(-12deg); filter: grayscale(0.8) brightness(0.55); }
+}
+@keyframes e-attack {
+  0% { transform: translateX(0); }
+  22% { transform: translateX(12px); }
+  46% { transform: translateX(-44px); }
+  62% { transform: translateX(-36px); }
+  100% { transform: translateX(0); }
+}
+@keyframes e-whiff {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(-42px); }
+  100% { transform: translateX(0); }
+}
+@keyframes e-hurt {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(20px) rotate(4deg); }
+  55% { transform: translateX(7px); }
+  75% { transform: translateX(13px); }
+}
+@keyframes e-dying {
+  0% { transform: translateX(0) scale(1) rotate(0); opacity: 1; filter: none; }
+  18% { filter: brightness(3); }
+  100% { transform: translateX(12px) translateY(22px) scale(0.45) rotate(22deg); opacity: 0; filter: brightness(0.4) blur(2px); }
+}
+@keyframes e-enter {
+  0% { transform: translateX(130px); opacity: 0; }
+  60% { transform: translateX(-8px); opacity: 1; }
+  100% { transform: translateX(0); }
+}
+@keyframes vfx-slash {
+  0% { opacity: 0; transform: rotate(-45deg) scale(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(18deg) scale(1.35); }
+}
+@keyframes vfx-impact {
+  0% { opacity: 0; transform: scale(0.2); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+@keyframes vfx-crit {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+@keyframes vfx-magic {
+  0% { opacity: 0; transform: scale(0.3) rotate(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.2) rotate(230deg); }
+}
+@keyframes vfx-projectile {
+  0% { left: 22%; opacity: 0; }
+  12% { opacity: 1; }
+  100% { left: 76%; opacity: 1; }
+}
+@keyframes vfx-guard {
+  0% { opacity: 0; transform: scale(1.5); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; }
+}
+@keyframes arena-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 2px); }
+  75% { transform: translate(4px, -2px); }
+}
+@keyframes arena-shake-hard {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 3px); }
+  50% { transform: translate(6px, -4px); }
+  80% { transform: translate(-4px, 2px); }
+}
+.combat-arena.shake { animation: arena-shake 0.26s ease; }
+.combat-arena.shake-hard { animation: arena-shake-hard 0.3s ease; }
 
 /* ============================ Tabs ============================ */
 

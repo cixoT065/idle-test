@@ -8,3 +8,4 @@ dist-ssr
 coverage
 .vercel
 tsconfig.tsbuildinfo
+scripts/*.log

@@ -36,6 +36,24 @@ import { saveManager, exportSave, importSave } from '../game/save';
 
 const MAX_LOG = 120;
 
+/** Per-tick combat summary the UI turns into choreographed animations. */
+export interface CombatFx {
+  id: number;
+  playerDmg: number;
+  monsterDmg: number;
+  playerCrit: boolean;
+  spell: boolean;
+  playerMiss: boolean;
+  monsterMiss: boolean;
+  kill: boolean;
+  death: boolean;
+}
+
+const NO_FX: CombatFx = {
+  id: 0, playerDmg: 0, monsterDmg: 0, playerCrit: false, spell: false,
+  playerMiss: false, monsterMiss: false, kill: false, death: false,
+};
+
 interface GameStore {
   state: GameState;
   eventLog: LogEntry[];
@@ -46,6 +64,7 @@ interface GameStore {
   cloudEnabled: boolean;
   offlineReport: OfflineReport | null;
   lrFlash: number;
+  combatFx: CombatFx;
 
   initialize: () => Promise<void>;
   tick: () => void;
@@ -115,6 +134,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     cloudEnabled: false,
     offlineReport: null,
     lrFlash: 0,
+    combatFx: NO_FX,
 
     initialize: async () => {
       const loaded = await saveManager.load();
@@ -134,8 +154,31 @@ export const useGameStore = create<GameStore>((set, get) => {
       const { state } = get();
       if (!state.isRunning || !state.player) return;
       const prevLr = state.stats.lrDrops;
+      const prevMonHp = state.currentMonster?.hp ?? 0;
+      const prevPlayerHp = state.player.currentHp;
+      const prevBL = get().battleLog.length;
       runAction((s, c) => { ensureDaily(s, c, Date.now()); runTick(s, c); runAutomation(s, c); });
-      if (get().state.stats.lrDrops > prevLr) set({ lrFlash: get().lrFlash + 1 });
+      const ns = get().state;
+      if (ns.stats.lrDrops > prevLr) set({ lrFlash: get().lrFlash + 1 });
+
+      // Distil this tick's battle log + HP deltas into an animation event.
+      const txt = get().battleLog.slice(prevBL).map((l) => l.message).join('\n');
+      const has = (sub: string) => txt.includes(sub);
+      const kill = has('You have defeated the');
+      const death = has('have been defeated');
+      const newMonHp = ns.currentMonster?.hp ?? 0;
+      const fx: CombatFx = {
+        id: get().combatFx.id + 1,
+        playerDmg: kill ? Math.max(0, Math.ceil(prevMonHp)) : Math.max(0, Math.round(prevMonHp - newMonHp)),
+        monsterDmg: death ? 0 : Math.max(0, Math.round(prevPlayerHp - (ns.player?.currentHp ?? prevPlayerHp))),
+        playerCrit: has('(CRIT!)'),
+        spell: has('Arcane Power') || has('Chain Lightning') || has('Reality Break') || has('Combustion') || has('Paradox') || has('true damage'),
+        playerMiss: has('Your attack was evaded'),
+        monsterMiss: (has('attack was evaded') && !has('Your attack was evaded')) || has('nullified') || has('phase through'),
+        kill,
+        death,
+      };
+      set({ combatFx: fx });
     },
 
     dismissOffline: () => set({ offlineReport: null }),
