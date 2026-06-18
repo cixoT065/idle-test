@@ -150,7 +150,7 @@ export function CombatArena() {
 
   return (
     <div className={`combat-arena ${shake}`}>
-      <div className={`fighter player anim-${playerAnim}`}>
+      <div className={`fighter player class-${p.baseClassName.toLowerCase()} anim-${playerAnim}`}>
         <div className="fighter-shadow" />
         <div className="fighter-portrait" style={{ backgroundImage: `url(${playerImg})` }} role="img" aria-label={p.className} />
         <div className="fighter-name">{p.className}</div>

@@ -453,6 +453,11 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--p
 /* --- Player animation states (faces right) --- */
 .fighter.player.anim-attack { animation: p-attack 0.42s ease; }
 .fighter.player.anim-crit { animation: p-crit 0.52s ease; }
+/* Per-class attack motion: Warrior slashes (rotating arc), Rogue stabs (quick thrusts). */
+.fighter.player.class-warrior.anim-attack { animation: p-slash 0.42s ease; }
+.fighter.player.class-warrior.anim-crit { animation: p-slash-crit 0.52s ease; }
+.fighter.player.class-rogue.anim-attack { animation: p-stab 0.42s ease; }
+.fighter.player.class-rogue.anim-crit { animation: p-stab-crit 0.52s ease; }
 .fighter.player.anim-cast { animation: p-cast 0.82s ease; }
 .fighter.player.anim-whiff { animation: p-whiff 0.46s ease; }
 .fighter.player.anim-victory { animation: p-victory 0.7s ease; }
@@ -610,6 +615,40 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--p
   44% { transform: translateX(66px) scale(1.1) rotate(-4deg); }
   62% { transform: translateX(54px) scale(1.05); }
   100% { transform: translateX(0) scale(1); }
+}
+/* Warrior: wind back, then sweep through with a rotating slash. */
+@keyframes p-slash {
+  0% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-14px) rotate(-15deg); }
+  48% { transform: translateX(44px) rotate(18deg); }
+  64% { transform: translateX(32px) rotate(8deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+@keyframes p-slash-crit {
+  0% { transform: translateX(0) rotate(0deg) scale(1); }
+  16% { transform: translateX(-22px) rotate(-22deg) scale(1.04); }
+  46% { transform: translateX(66px) rotate(28deg) scale(1.1); }
+  64% { transform: translateX(48px) rotate(12deg) scale(1.05); }
+  100% { transform: translateX(0) rotate(0deg) scale(1); }
+}
+/* Rogue: a small wind-up then sharp in-and-out thrusts. */
+@keyframes p-stab {
+  0% { transform: translateX(0); }
+  22% { transform: translateX(-8px); }
+  38% { transform: translateX(44px); }
+  52% { transform: translateX(22px); }
+  66% { transform: translateX(48px); }
+  100% { transform: translateX(0); }
+}
+@keyframes p-stab-crit {
+  0% { transform: translateX(0); }
+  16% { transform: translateX(-10px); }
+  30% { transform: translateX(48px); }
+  42% { transform: translateX(24px); }
+  54% { transform: translateX(52px); }
+  66% { transform: translateX(28px); }
+  80% { transform: translateX(60px); }
+  100% { transform: translateX(0); }
 }
 @keyframes p-cast {
   0%, 100% { transform: translateY(0); }
