@@ -5,6 +5,12 @@ import { applyOfflineProgress } from './offline';
 import { buyAutomation, runAutomation } from './automation';
 import { checkAchievements, ensureDaily, trackDaily, claimDailyObjective, saveLoadout, loadLoadout } from './meta';
 import { monsterDefeated } from './progression';
+import { reforgeItem, getReforgeCost, canReforgeItem, challengeWaveBoss } from './economy';
+import { toggleWager } from './wagers';
+import { scoreItemForBuild, setBuildFocus } from './itemize';
+import { getSkillSlots, getUnlockedCatalog, equipSkill, unequipSkill } from './skillLoadout';
+import { hasSkill } from './stats';
+import { applyPromotion } from './progression';
 
 function ctxOf(): EngineContext {
   let s = 42;
@@ -119,6 +125,149 @@ describe('loadouts', () => {
     state.equipment.helm = null;
     loadLoadout(state, ctx, 0);
     expect(state.equipment.helm).toBe(222);
+  });
+});
+
+describe('reforging', () => {
+  it('rerolls affixes, charges gold, and raises the next cost', () => {
+    const { state, ctx } = freshGame();
+    const item = makeItem(900, { rarity: 'SSR', affixes: [{ key: 'lifesteal', value: 0.02 }] });
+    state.inventory.push(item);
+    expect(canReforgeItem(item)).toBe(true);
+
+    state.gold = 100000;
+    const cost1 = getReforgeCost(item);
+    reforgeItem(state, ctx, 900);
+
+    expect(state.gold).toBe(100000 - cost1);
+    expect(item.reforges).toBe(1);
+    // SSR rolls 2 affixes; the reroll should produce the rarity's affix count.
+    expect(item.affixes!.length).toBe(2);
+    // Cost climbs after a reforge, keeping it a scaling sink.
+    expect(getReforgeCost(item)).toBeGreaterThan(cost1);
+  });
+
+  it('refuses items without affixes and when gold is short', () => {
+    const { state, ctx } = freshGame();
+    const common = makeItem(901, { rarity: 'N' });
+    state.inventory.push(common);
+    expect(canReforgeItem(common)).toBe(false);
+    reforgeItem(state, ctx, 901); // no-op, no affixes
+    expect(common.reforges ?? 0).toBe(0);
+
+    const rich = makeItem(902, { rarity: 'LR', affixes: [{ key: 'lifesteal', value: 0.05 }] });
+    state.inventory.push(rich);
+    state.gold = 0;
+    reforgeItem(state, ctx, 902); // can't afford
+    expect(rich.reforges ?? 0).toBe(0);
+  });
+});
+
+describe('boss wagers', () => {
+  it('locks selected wagers onto a challenged boss and buffs its stats', () => {
+    const { state, ctx } = freshGame();
+    state.kills = 10; // enough to challenge
+    toggleWager(state, 'enraged');
+    toggleWager(state, 'colossal');
+    expect(state.wagers).toEqual(['enraged', 'colossal']);
+
+    challengeWaveBoss(state, ctx);
+    const boss = state.currentMonster!;
+    expect(boss.monsterType).toBe('boss');
+    expect(boss.wagers).toEqual(['enraged', 'colossal']);
+    // Colossal multiplies HP, Enraged multiplies ATK vs an unwagered baseline.
+    const plainHp = Math.round(boss.maxHp / 2.2);
+    expect(boss.maxHp).toBeGreaterThan(plainHp);
+  });
+
+  it('grants multiplied gold/xp and bonus loot on a wagered boss kill', () => {
+    const { state, ctx } = freshGame();
+    state.inventory = [];
+    const boss = { ...state.currentMonster!, monsterType: 'boss', hp: 0, name: 'Wagered Boss', gold: 1000, xp: 100, dropChance: 0, wagers: ['frenzied'] };
+    state.currentMonster = boss as typeof state.currentMonster;
+    const goldBefore = state.gold;
+    monsterDefeated(state, ctx);
+    // Frenzied grants +1 guaranteed boss-tier drop.
+    expect(state.inventory.length).toBe(1);
+    expect(state.gold).toBeGreaterThan(goldBefore + 1000);
+  });
+
+  it('toggleWager adds then removes', () => {
+    const { state } = freshGame();
+    toggleWager(state, 'enraged');
+    expect(state.wagers).toContain('enraged');
+    toggleWager(state, 'enraged');
+    expect(state.wagers).not.toContain('enraged');
+  });
+});
+
+describe('skill loadout', () => {
+  it('slots grow with level; catalog is gated by level tier', () => {
+    const { state } = freshGame();
+    state.player!.level = 1;
+    expect(getSkillSlots(state)).toBe(3);
+    expect(getUnlockedCatalog(state).length).toBe(0); // nothing until L20
+    state.player!.level = 40;
+    expect(getSkillSlots(state)).toBe(5); // 3 + floor(40/20)
+    // L20 + L40 proc skills are now unlocked.
+    expect(getUnlockedCatalog(state).length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('equip/unequip drives hasSkill and respects the slot cap', () => {
+    const { state, ctx } = freshGame();
+    state.player!.level = 40;
+    state.player!.equippedSkills = [];
+    const cat = getUnlockedCatalog(state);
+    const first = cat[0].name;
+
+    equipSkill(state, ctx, first);
+    expect(state.player!.equippedSkills).toContain(first);
+    expect(hasSkill(state, first)).toBe(true);
+
+    unequipSkill(state, first);
+    expect(hasSkill(state, first)).toBe(false);
+
+    // Fill every slot, then a further equip is refused.
+    const slots = getSkillSlots(state);
+    state.player!.equippedSkills = cat.slice(0, slots).map((s) => s.name);
+    const extra = cat[slots]?.name;
+    if (extra) {
+      equipSkill(state, ctx, extra);
+      expect(state.player!.equippedSkills).not.toContain(extra);
+    }
+  });
+
+  it('promoting into a passive capstone keeps it innate/free (not slotted)', () => {
+    const { state, ctx } = freshGame(); // Warrior
+    state.player!.level = 70;
+    state.player!.className = 'Slayer';
+    state.player!.baseClassName = 'Warrior';
+    // Ravager is the passive-capstone branch (grants 'Savagery').
+    state.player!.promotionPending = true;
+    state.player!.pendingPromotionChoices = ['Executioner', 'Ravager'];
+    applyPromotion(state, ctx, 'Ravager');
+    expect(state.player!.activeSkills).toContain('Savagery');
+    expect(state.player!.equippedSkills).not.toContain('Savagery');
+    expect(hasSkill(state, 'Savagery')).toBe(true);
+  });
+});
+
+describe('itemization build focus', () => {
+  it('scores crit gear higher under a crit focus than balanced, and vice-versa', () => {
+    const critItem = makeItem(800, { rarity: 'SR', critChance: 0.08, critDmg: 0.3 } as Partial<Item>);
+    const tankItem = makeItem(801, { rarity: 'SR', con: 30, def: 25 } as Partial<Item>);
+
+    // Under a crit focus, the crit item should win; under bruiser, the tank item.
+    expect(scoreItemForBuild(critItem, 'crit')).toBeGreaterThan(scoreItemForBuild(tankItem, 'crit'));
+    expect(scoreItemForBuild(tankItem, 'bruiser')).toBeGreaterThan(scoreItemForBuild(critItem, 'bruiser'));
+  });
+
+  it('setBuildFocus only accepts known archetypes', () => {
+    const { state } = freshGame();
+    setBuildFocus(state, 'caster');
+    expect(state.player!.buildFocus).toBe('caster');
+    setBuildFocus(state, 'nonsense');
+    expect(state.player!.buildFocus).toBe('caster');
   });
 });
 

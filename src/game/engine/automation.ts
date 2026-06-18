@@ -1,5 +1,6 @@
-import type { GameState, EngineContext, Item, Rarity } from '../types';
+import type { GameState, EngineContext, Rarity } from '../types';
 import { getPlayerTotalStats } from './stats';
+import { scoreItemForBuild } from './itemize';
 import { equipItem, sellItems, buyPotion, canChallengeWaveBoss, challengeWaveBoss } from './economy';
 
 export type AutomationKey = 'autoEquip' | 'autoSell' | 'autoBoss' | 'autoPotion';
@@ -38,24 +39,15 @@ export function buyAutomation(state: GameState, ctx: EngineContext, key: Automat
   ctx.log(`Unlocked ${AUTOMATION_INFO[key].name}!`, 'log-system', 'event');
 }
 
-function itemScore(it: Item): number {
-  let s = 0;
-  for (const k of ['str', 'con', 'def', 'dex', 'agl', 'int'] as const) {
-    if (typeof it[k] === 'number') s += it[k] as number;
-    s += it.enhancementBonusStats?.[k] || 0;
-  }
-  for (const v of Object.values(it.bonusStats || {})) s += v as number;
-  return s;
-}
-
-/** Equip the best class-appropriate item in each slot (by raw stat sum). */
+/** Equip the best class-appropriate item in each slot (scored for the chosen build focus). */
 function runAutoEquip(state: GameState, ctx: EngineContext): void {
   const cls = state.player?.baseClassName;
   if (!cls) return;
+  const focus = state.player?.buildFocus ?? 'balanced';
   for (const item of state.inventory) {
     if (item.classReq !== cls) continue;
     const cur = state.inventory.find((i) => i.id === state.equipment[item.type]);
-    if (!cur || itemScore(item) > itemScore(cur)) equipItem(state, ctx, item);
+    if (!cur || scoreItemForBuild(item, focus) > scoreItemForBuild(cur, focus)) equipItem(state, ctx, item);
   }
 }
 

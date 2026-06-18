@@ -1,10 +1,14 @@
 import type { GameState, EngineContext, Item, ItemType, Rarity, StatName } from '../types';
-import { itemData } from '../data/items';
+import { itemData, affixPool, AFFIX_COUNT } from '../data/items';
+import { buildAffixWeights } from '../data/builds';
 import { getPlayerTotalStats } from './stats';
-import { spawnMonster } from './loot';
+import { spawnMonster, rollAffixes } from './loot';
 import { checkAchievements, trackDaily } from './meta';
 
 const MAX_ENHANCEMENT = 10;
+
+/** Base gold cost of a reforge before rarity/repeat multipliers. */
+const REFORGE_BASE_COST = 250;
 
 export function equipItem(state: GameState, ctx: EngineContext, item: Item): void {
   if (item.classReq !== state.player!.baseClassName) {
@@ -140,6 +144,55 @@ export function enhanceItem(state: GameState, ctx: EngineContext, itemId: number
 
   const displayIncrease = isPercent ? `${(increase * 100).toFixed(1)}%` : `+${increase}`;
   ctx.log(`Successfully enhanced <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span>! ${statToEnhance} increased by ${displayIncrease}.`, 'log-system', 'event');
+}
+
+/** Only SR+ gear carries affixes, so only those can be reforged. */
+export function canReforgeItem(item: Item | undefined): boolean {
+  return !!item && AFFIX_COUNT[item.rarity] > 0;
+}
+
+/**
+ * Gold cost to reroll an item's affixes. Scales with rarity (rich items cost
+ * more) and with how many times it has already been reforged (1.35x each), so
+ * chasing a perfect roll is a deep, ever-rising gold sink rather than a flat fee.
+ */
+export function getReforgeCost(item: Item | undefined): number {
+  if (!item) return 0;
+  const rarityMod = itemData.rarities[item.rarity].enhanceCostMod;
+  const repeatMod = Math.pow(1.35, item.reforges ?? 0);
+  return Math.round(REFORGE_BASE_COST * rarityMod * repeatMod);
+}
+
+const affixLabel = (key: string): string => affixPool.find((a) => a.key === key)?.label ?? key;
+
+/** Reroll an item's affixes for gold — the forge "gamble". Base/bonus stats and
+ *  enhancement are untouched; only the special modifiers (lifesteal/%HP/…) change. */
+export function reforgeItem(state: GameState, ctx: EngineContext, itemId: number): void {
+  const item = state.inventory.find((i) => i.id === itemId);
+  if (!item) return;
+  if (!canReforgeItem(item)) {
+    ctx.log('Only SR+ items (which carry affixes) can be reforged.', 'log-error', 'event');
+    return;
+  }
+  const cost = getReforgeCost(item);
+  if (state.gold < cost) {
+    ctx.log('Not enough gold to reforge.', 'log-error', 'event');
+    return;
+  }
+
+  state.gold -= cost;
+  // Bias the reroll toward the player's build focus, so reforging is a tool to
+  // shape gear toward your archetype rather than a pure coin-flip.
+  const focusWeights = buildAffixWeights(state.player?.buildFocus ?? 'balanced');
+  item.affixes = rollAffixes(item.rarity, ctx.rng, focusWeights);
+  item.reforges = (item.reforges ?? 0) + 1;
+
+  const rolled = item.affixes.map((a) => `${affixLabel(a.key)} +${(a.value * 100).toFixed(1)}%`).join(', ');
+  ctx.log(
+    `Reforged <span style="color:${itemData.rarities[item.rarity].color};">${item.name}</span> → ${rolled || 'no affixes'}.`,
+    'log-system',
+    'event',
+  );
 }
 
 /** Directly invest a single stat point (simplified from the legacy stage/confirm flow). */

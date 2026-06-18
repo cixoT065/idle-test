@@ -1,9 +1,11 @@
 import type { GameState, EngineContext, Player, Monster } from '../types';
 import { classes, promotionGrowthAdjustments, promotionInfo } from '../data/classes';
-import { promotionSkills } from '../data/skills';
+import { promotionSkills, isCapstoneSkill } from '../data/skills';
 import { getPlayerTotalStats } from './stats';
+import { autoFillSkillSlots } from './skillLoadout';
 import { generateItemDrop, spawnMonster, weakenFinalBoss } from './loot';
 import { getModifierRewardMult, applyModifierOnDeath } from './bosses';
+import { getWagerRewards } from './wagers';
 import { checkAchievements, trackDaily } from './meta';
 
 export interface AvailablePromotion {
@@ -56,6 +58,8 @@ export function levelUp(state: GameState, ctx: EngineContext): void {
   p.currentHp = getPlayerTotalStats(state).hp;
   ctx.log(`LEVEL UP! You are now level ${p.level}. Gained ${pointsGained} stat points.`, 'log-system', 'event');
 
+  // New level may grant a slot or unlock a catalog tier — fill any free slots.
+  autoFillSkillSlots(state);
   checkForPendingPromotion(state, ctx);
 }
 
@@ -67,10 +71,19 @@ export function applyPromotion(state: GameState, ctx: EngineContext, selection: 
   p.promotionPending = false;
   p.pendingPromotionChoices = null;
   const skill = promotionSkills[selection];
-  if (skill && !p.activeSkills.includes(skill.name)) {
-    p.activeSkills.push(skill.name);
-    ctx.log(`You have learned the skill: <span class="log-skill">${skill.name}</span>!`, 'log-system', 'event');
+  if (skill) {
+    if (isCapstoneSkill(skill.name)) {
+      // Passive capstones stay innate/always-on (they don't use a loadout slot).
+      if (!p.activeSkills.includes(skill.name)) {
+        p.activeSkills.push(skill.name);
+        ctx.log(`You have mastered the passive: <span class="log-skill">${skill.name}</span>!`, 'log-system', 'event');
+      }
+    } else {
+      ctx.log(`<span class="log-skill">${skill.name}</span> is now available in your skill catalog.`, 'log-system', 'event');
+    }
   }
+  // A new tier may have just unlocked — keep the skill bar full where there's room.
+  autoFillSkillSlots(state);
   ctx.log(`You have been promoted to ${p.className}! ${promotionInfo[selection]?.description ?? ''}`, 'log-system', 'event');
   p.currentHp = getPlayerTotalStats(state).hp;
   state.isRunning = true;
@@ -80,10 +93,12 @@ export function monsterDefeated(state: GameState, ctx: EngineContext): void {
   const monster = state.currentMonster as Monster & { isFinalBoss?: boolean };
   ctx.log(`You have defeated the ${monster.name}!`, 'log-system', 'event');
 
+  const wager = getWagerRewards(monster);
+
   // Final boss victory.
   if (monster.isFinalBoss) {
     state.finalBossDefeated = true;
-    state.gold += monster.gold;
+    state.gold += Math.round(monster.gold * wager.goldMult);
     ctx.log(`You have vanquished ${monster.name}! The realm is safe!`, 'log-system', 'event');
     checkAchievements(state, ctx);
     state.isRunning = false;
@@ -102,10 +117,11 @@ export function monsterDefeated(state: GameState, ctx: EngineContext): void {
     ctx.log(`Void-Drinker set restores ${healAmount} HP on kill.`, 'log-skill', 'event');
   }
 
-  // Affixed monsters (Vampiric, Frenzied, ...) grant richer rewards.
+  // Affixed monsters (Vampiric, Frenzied, ...) grant richer rewards; boss wagers
+  // multiply on top of that for opted-in risk.
   const rewardMult = getModifierRewardMult(monster);
-  const goldBonus = (1 + state.rebirth.bonuses.gold) * rewardMult;
-  const xpRebirthBonus = (1 + state.rebirth.bonuses.xp) * rewardMult;
+  const goldBonus = (1 + state.rebirth.bonuses.gold) * rewardMult * wager.goldMult;
+  const xpRebirthBonus = (1 + state.rebirth.bonuses.xp) * rewardMult * wager.xpMult;
   const goldGained = Math.round(monster.gold * goldBonus);
   state.stats.totalGoldEarned += goldGained;
   trackDaily(state, 'gold', goldGained);
@@ -123,6 +139,9 @@ export function monsterDefeated(state: GameState, ctx: EngineContext): void {
 
   const dropChance = (monster.dropChance ?? 0) * rewardMult * (1 + state.rebirth.bonuses.dropRate);
   if (ctx.rng() < dropChance) generateItemDrop(state, ctx, monster);
+
+  // Wager bonus loot: extra guaranteed boss-tier rolls for accepting the stakes.
+  for (let i = 0; i < wager.bonusDrops; i++) generateItemDrop(state, ctx, monster);
 
   state.kills++;
   state.stats.totalKills++;

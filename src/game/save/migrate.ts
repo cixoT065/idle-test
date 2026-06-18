@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { STAT_KEYS } from '../data/constants';
+import { isCapstoneSkill } from '../data/skills';
 import { getDefaultGameState, createDefaultPlayerTemp } from '../engine/state';
 
 /**
@@ -12,6 +13,7 @@ function migrateFields(loaded: Record<string, any>): Record<string, any> {
     for (const item of loaded.inventory) {
       if (!item) continue;
       if (item.enhancementLevel === undefined) item.enhancementLevel = 0;
+      if (item.reforges === undefined) item.reforges = 0;
       if (item.bonusStats === undefined) item.bonusStats = {};
       if (item.enhancementBonusStats === undefined) item.enhancementBonusStats = {};
       if (item.enhancementProgress) delete item.enhancementProgress;
@@ -24,11 +26,20 @@ function migrateFields(loaded: Record<string, any>): Record<string, any> {
     if (loaded.player.promotionPending === undefined) loaded.player.promotionPending = false;
     if (loaded.player.pendingPromotionChoices === undefined) loaded.player.pendingPromotionChoices = null;
     if (loaded.player.activeSkills === undefined) loaded.player.activeSkills = [];
+    if (loaded.player.buildFocus === undefined) loaded.player.buildFocus = 'balanced';
+    // Skill-loadout split: proc skills the character learned become its starting
+    // equipped loadout; passive capstones stay innate in activeSkills.
+    if (!Array.isArray(loaded.player.equippedSkills)) {
+      const learned: string[] = Array.isArray(loaded.player.activeSkills) ? loaded.player.activeSkills : [];
+      loaded.player.equippedSkills = learned.filter((s) => !isCapstoneSkill(s));
+      loaded.player.activeSkills = learned.filter((s) => isCapstoneSkill(s));
+    }
   }
   if (loaded.maxWaveReached === undefined) loaded.maxWaveReached = loaded.wave || 1;
   if (loaded.finalBoss === undefined) loaded.finalBoss = null;
   if (loaded.finalBossDefeated === undefined) loaded.finalBossDefeated = false;
   if (loaded.totalBossesDefeatedInRun === undefined) loaded.totalBossesDefeatedInRun = 0;
+  if (!Array.isArray(loaded.wagers)) loaded.wagers = [];
   return loaded;
 }
 

@@ -1,6 +1,7 @@
 import type { GameState, Item, TotalStats, BaseClassName } from '../types';
 import { itemSets } from '../data/items';
 import { capstonePassives } from '../data/skills';
+import { getEquippedSkills } from './skillLoadout';
 import {
   STAT_NAMES,
   STAT_CONTRIBUTIONS,
@@ -46,11 +47,15 @@ export function getEquippedSetCounts(state: GameState): Record<string, number> {
 }
 
 /**
- * The player's effective skill list: skills learned via promotions PLUS skills
- * granted by equipped set thresholds (e.g. an LR 5-piece set's 2/5, 4/5 bonuses).
+ * The player's effective skill list, combining three free-to-stack sources:
+ *  - innate always-on skills (`activeSkills`: passive L70 capstones),
+ *  - the proc skills the player has slotted from their class catalog
+ *    (`equippedSkills`, validated against the level-gated catalog),
+ *  - skills granted by equipped set thresholds (LR 5-piece 2/5, 4/5 bonuses).
  */
 export function getActiveSkills(state: GameState): string[] {
   const skills = state.player ? [...state.player.activeSkills] : [];
+  for (const s of getEquippedSkills(state)) if (!skills.includes(s)) skills.push(s);
   const counts = getEquippedSetCounts(state);
   for (const setName in counts) {
     const set = itemSets[setName];
@@ -64,9 +69,8 @@ export function getActiveSkills(state: GameState): string[] {
   return skills;
 }
 
-/** Does the player currently have a skill active (learned or set-granted)? */
+/** Does the player currently have a skill active (innate, slotted, or set-granted)? */
 export function hasSkill(state: GameState, name: string): boolean {
-  if (state.player?.activeSkills.includes(name)) return true;
   return getActiveSkills(state).includes(name);
 }
 

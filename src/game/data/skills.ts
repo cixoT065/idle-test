@@ -1,3 +1,6 @@
+import { classes } from './classes';
+import type { BaseClassName } from '../types';
+
 export interface PromotionSkill {
   name: string;
   description: string;
@@ -67,6 +70,48 @@ export const promotionSkills: Record<string, PromotionSkill> = {
  * per-attack combat logic. `atkPercent`/`hpPercent` are multiplicative; the
  * rest are additive onto the derived stat of the same name.
  */
+/** A slottable skill in a base class's catalog, with the level it unlocks at. */
+export interface CatalogSkill {
+  name: string;
+  description: string;
+  unlockLevel: number;
+}
+
+/** True if a skill is a passive L70 capstone (these stay always-on/free, never slotted). */
+export function isCapstoneSkill(name: string): boolean {
+  return name in capstonePassives;
+}
+
+/**
+ * The full active-skill catalog for a base class: every proc skill across all of
+ * its promotion paths, tagged with the level it unlocks at (the promotion tier
+ * level: 20/40/70). Passive capstones are excluded — they remain innate, granted
+ * by actually promoting into that capstone class. Players freely slot a limited
+ * subset of this catalog (see engine/skillLoadout.ts).
+ */
+const catalogCache: Partial<Record<BaseClassName, CatalogSkill[]>> = {};
+
+export function getClassSkillCatalog(base: BaseClassName): CatalogSkill[] {
+  const cached = catalogCache[base];
+  if (cached) return cached;
+  const out: CatalogSkill[] = [];
+  const seen = new Set<string>();
+  const proms = classes[base].promotions;
+  for (const tierStr of Object.keys(proms)) {
+    const tier = Number(tierStr);
+    const node = proms[tier];
+    const classNames: string[] = Array.isArray(node) ? node : Object.values(node).flat();
+    for (const cn of classNames) {
+      const skill = promotionSkills[cn];
+      if (!skill || isCapstoneSkill(skill.name) || seen.has(skill.name)) continue;
+      seen.add(skill.name);
+      out.push({ name: skill.name, description: skill.description, unlockLevel: tier });
+    }
+  }
+  catalogCache[base] = out;
+  return out;
+}
+
 export const capstonePassives: Record<string, Record<string, number>> = {
   Conviction: { lifesteal: 0.12, hpPercent: 0.15 },
   'Retribution Aura': { reflectDamage: 0.2, hpPercent: 0.2 },

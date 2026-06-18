@@ -3,6 +3,7 @@ import { useGame, useTotalStats } from './useGame';
 import { tooltipHandlers } from './tooltip';
 import { STAT_KEYS, STAT_NAMES, DEF_INVEST_FACTOR } from '../game/data/constants';
 import { itemData } from '../game/data/items';
+import { BUILDS, BUILD_KEYS } from '../game/data/builds';
 import { getActiveSkills } from '../game/engine';
 import { STAT_ICON, SLOT_ICON } from './icons';
 import type { StatName } from '../game/types';
@@ -27,6 +28,39 @@ function LoadoutsPanel() {
             {l && <button className="button-danger" style={{ width: 'auto', margin: 0, padding: '4px 8px' }} onClick={() => del(i)}>✕</button>}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** Build archetype picker — steers auto-equip scoring and reforge bias. */
+function BuildFocusPanel() {
+  const state = useGame();
+  const setFocus = useGameStore((s) => s.setFocus);
+  const focus = state.player?.buildFocus ?? 'balanced';
+  return (
+    <div className="panel">
+      <div className="panel-header">Build Focus</div>
+      <div className="panel-body">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {BUILD_KEYS.map((k) => {
+            const b = BUILDS[k];
+            const on = focus === k;
+            return (
+              <button
+                key={k}
+                className={on ? '' : 'button-secondary'}
+                style={{ width: 'auto', margin: 0, padding: '4px 8px', fontSize: 12 }}
+                title={b.desc}
+                onClick={() => setFocus(k)}
+              >
+                {b.icon} {b.name}
+              </button>
+            );
+          })}
+        </div>
+        <p style={{ color: 'var(--muted-color)', fontSize: 11, margin: '6px 0 0' }}>{BUILDS[focus]?.desc}</p>
+        <p style={{ color: 'var(--muted-color)', fontSize: 11, margin: '4px 0 0' }}>Steers auto-equip and biases reforge rolls toward this build.</p>
       </div>
     </div>
   );
@@ -64,6 +98,9 @@ export function Sidebar() {
           <div className="gold-display">🪙 Gold: <span>{state.gold.toLocaleString()}</span>G</div>
         </div>
       </div>
+
+      <BuildFocusPanel />
+
 
       <div className="panel">
         <div className="panel-header">Combat Stats</div>
@@ -126,15 +163,15 @@ export function Sidebar() {
       {(() => {
         const skills = getActiveSkills(state);
         if (skills.length === 0) return null;
-        const learned = new Set(p.activeSkills);
+        const innate = new Set(p.activeSkills);          // passive capstones
+        const slotted = new Set(p.equippedSkills ?? []); // catalog picks
+        const tag = (s: string) => (slotted.has(s) ? '' : innate.has(s) ? ' (passive)' : ' (set)');
         return (
           <div className="panel">
             <div className="panel-header">Active Skills</div>
             <div className="panel-body" id="skill-display">
               {skills.map((s) => (
-                <div key={s} className="log-skill">
-                  {s}{learned.has(s) ? '' : ' (set)'}
-                </div>
+                <div key={s} className="log-skill">{s}{tag(s)}</div>
               ))}
             </div>
           </div>

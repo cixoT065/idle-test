@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useGame } from './useGame';
 import { itemData } from '../game/data/items';
-import { getEnhancementCost, getEnhanceableStats, AUTOMATION_COSTS, AUTOMATION_INFO, type AutomationKey } from '../game/engine';
+import { getEnhancementCost, getEnhanceableStats, getReforgeCost, canReforgeItem, getSkillSlots, getActiveSkills, AUTOMATION_COSTS, AUTOMATION_INFO, type AutomationKey } from '../game/engine';
 import { achievements } from '../game/data/achievements';
+import { affixPool } from '../game/data/items';
+import { getClassSkillCatalog } from '../game/data/skills';
 import { tooltipHandlers } from './tooltip';
 import { TAB_ICON, SLOT_ICON } from './icons';
 import type { ItemType, Rarity } from '../game/types';
 
-type TabKey = 'shop' | 'inventory' | 'blacksmith' | 'rebirth' | 'goals';
-const TABS: TabKey[] = ['shop', 'inventory', 'blacksmith', 'rebirth', 'goals'];
+type TabKey = 'shop' | 'inventory' | 'skills' | 'blacksmith' | 'rebirth' | 'goals';
+const TABS: TabKey[] = ['shop', 'inventory', 'skills', 'blacksmith', 'rebirth', 'goals'];
 
 // Worst → best; index doubles as sort rank.
 const RARITY_ORDER: Rarity[] = ['N', 'R', 'SR', 'SSR', 'UR', 'LR'];
@@ -31,6 +33,7 @@ export function Tabs() {
       <div className="panel-body">
         {active === 'shop' && <ShopTab />}
         {active === 'inventory' && <InventoryTab />}
+        {active === 'skills' && <SkillsTab />}
         {active === 'blacksmith' && <BlacksmithTab />}
         {active === 'rebirth' && <RebirthTab />}
         {active === 'goals' && <GoalsTab />}
@@ -138,9 +141,67 @@ function InventoryTab() {
   );
 }
 
+function SkillsTab() {
+  const state = useGame();
+  const slotSkill = useGameStore((s) => s.slotSkill);
+  const unslotSkill = useGameStore((s) => s.unslotSkill);
+  const p = state.player;
+  if (!p) return <p>Choose a class first.</p>;
+
+  const slots = getSkillSlots(state);
+  const equipped = p.equippedSkills ?? [];
+  const catalog = getClassSkillCatalog(p.baseClassName);
+  // "Free" skills are everything active that isn't a slotted catalog pick:
+  // innate L70 capstones and set-granted skills.
+  const equippedSet = new Set(equipped);
+  const freeSkills = getActiveSkills(state).filter((s) => !equippedSet.has(s));
+
+  return (
+    <>
+      <h3 style={{ marginTop: 0 }}>✨ Active Skills <small style={{ color: equipped.length >= slots ? 'var(--gold-color)' : 'var(--muted-color)' }}>({equipped.length}/{slots} slots)</small></h3>
+      <p style={{ color: 'var(--muted-color)', fontSize: 12, marginTop: 0 }}>
+        Slot proc skills from your <strong>{p.baseClassName}</strong> catalog. Slots grow every 20 levels; new skills unlock as you promote (L20/40/70).
+      </p>
+
+      <div style={{ display: 'grid', gap: 6 }}>
+        {catalog.map((sk) => {
+          const unlocked = p.level >= sk.unlockLevel;
+          const isOn = equippedSet.has(sk.name);
+          const full = equipped.length >= slots;
+          return (
+            <div key={sk.name} className="inventory-item" style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', opacity: unlocked ? 1 : 0.45 }}>
+              <span title={sk.description} style={{ cursor: 'help' }}>
+                <span className={isOn ? 'log-skill' : ''} style={{ fontWeight: isOn ? 'bold' : 'normal' }}>{sk.name}</span>
+                {!unlocked && <small style={{ color: 'var(--muted-color)' }}> — unlocks L{sk.unlockLevel}</small>}
+              </span>
+              {unlocked && (
+                isOn
+                  ? <button className="button-secondary" style={{ width: 'auto', margin: 0, padding: '4px 8px' }} onClick={() => unslotSkill(sk.name)}>Unequip</button>
+                  : <button style={{ width: 'auto', margin: 0, padding: '4px 8px' }} disabled={full} onClick={() => slotSkill(sk.name)}>{full ? 'Slots full' : 'Equip'}</button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {freeSkills.length > 0 && (
+        <>
+          <h3 style={{ marginTop: 16, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>Always-on <small style={{ color: 'var(--muted-color)' }}>(free — capstones &amp; set bonuses)</small></h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {freeSkills.map((s) => <span key={s} className="log-skill">{s}</span>)}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+const affixLabelOf = (key: string) => affixPool.find((a) => a.key === key)?.label ?? key;
+
 function BlacksmithTab() {
   const state = useGame();
   const enhance = useGameStore((s) => s.enhance);
+  const reforge = useGameStore((s) => s.reforge);
   const [selected, setSelected] = useState<ItemType>('weapon');
   const item = state.inventory.find((i) => i.id === state.equipment[selected]);
 
@@ -165,6 +226,27 @@ function BlacksmithTab() {
           ))}
           <p style={{ textAlign: 'center' }}>Level {item.enhancementLevel}/10 — Cost: <span style={{ color: 'var(--gold-color)' }}>{getEnhancementCost(item)}G</span></p>
           <button style={{ textAlign: 'center' }} disabled={item.enhancementLevel >= 10 || state.gold < getEnhancementCost(item)} onClick={() => enhance(item.id)}>Enhance</button>
+
+          <div style={{ marginTop: 16, borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
+            <h3 style={{ marginTop: 0 }}>🎲 Reforge Affixes</h3>
+            {canReforgeItem(item) ? (
+              <>
+                <div style={{ marginBottom: 8 }}>
+                  {item.affixes?.length ? item.affixes.map((af) => (
+                    <p key={af.key} style={{ margin: '2px 0', color: 'var(--set-bonus-active, #6cc)' }}>
+                      {affixLabelOf(af.key)}: +{(af.value * 100).toFixed(1)}%
+                    </p>
+                  )) : <p style={{ margin: 0, color: 'var(--muted-color)' }}><em>No affixes — reforge to roll some.</em></p>}
+                </div>
+                <p style={{ textAlign: 'center', color: 'var(--muted-color)', fontSize: 12, marginTop: 0 }}>
+                  Rerolls all affixes{item.reforges ? ` · reforged ${item.reforges}×` : ''} — Cost: <span style={{ color: 'var(--gold-color)' }}>{getReforgeCost(item)}G</span>
+                </p>
+                <button className="button-secondary" style={{ textAlign: 'center' }} disabled={state.gold < getReforgeCost(item)} onClick={() => reforge(item.id)}>Reforge</button>
+              </>
+            ) : (
+              <p style={{ color: 'var(--muted-color)', margin: 0 }}>Only SR+ gear carries affixes to reforge.</p>
+            )}
+          </div>
         </div>
       ) : (
         <p>Equip an item in this slot to enhance it.</p>

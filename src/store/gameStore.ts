@@ -15,10 +15,15 @@ import {
   buyPotion,
   buyXpBoost,
   enhanceItem,
+  reforgeItem,
   investStat,
   spendRebirthPoint,
   challengeWaveBoss,
   challengeFinalBoss,
+  toggleWager,
+  setBuildFocus,
+  equipSkill,
+  unequipSkill,
   applyOfflineProgress,
   runAutomation,
   buyAutomation,
@@ -87,10 +92,15 @@ interface GameStore {
   potion: (percent: 25 | 50 | 75 | 100) => void;
   xpBoost: (multiplier: 2 | 3) => void;
   enhance: (itemId: number) => void;
+  reforge: (itemId: number) => void;
   rebirthRun: () => void;
   spendRebirth: (stat: keyof GameState['rebirth']['bonuses']) => void;
   challengeBoss: () => void;
   challengeFinal: () => void;
+  toggleWager: (key: string) => void;
+  setFocus: (focus: string) => void;
+  slotSkill: (name: string) => void;
+  unslotSkill: (name: string) => void;
   exportSaveCode: () => string;
   importSaveCode: (code: string) => boolean;
   setCloudUser: (userId: string | null) => void;
@@ -201,6 +211,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     potion: (percent) => runAction((s, c) => buyPotion(s, c, percent)),
     xpBoost: (multiplier) => runAction((s, c) => buyXpBoost(s, c, multiplier)),
     enhance: (itemId) => runAction((s, c) => enhanceItem(s, c, itemId)),
+    reforge: (itemId) => runAction((s, c) => reforgeItem(s, c, itemId)),
     rebirthRun: () =>
       runAction((s, c) => {
         engineRebirth(s, c);
@@ -208,6 +219,10 @@ export const useGameStore = create<GameStore>((set, get) => {
     spendRebirth: (stat) => runAction((s) => spendRebirthPoint(s, stat)),
     challengeBoss: () => runAction((s, c) => challengeWaveBoss(s, c)),
     challengeFinal: () => runAction((s, c) => challengeFinalBoss(s, c)),
+    toggleWager: (key) => runAction((s) => toggleWager(s, key)),
+    setFocus: (focus) => runAction((s) => setBuildFocus(s, focus)),
+    slotSkill: (name) => runAction((s, c) => equipSkill(s, c, name)),
+    unslotSkill: (name) => runAction((s) => unequipSkill(s, name)),
 
     exportSaveCode: () => exportSave(get().state),
     importSaveCode: (code) => {

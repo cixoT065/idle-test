@@ -3,6 +3,7 @@ import { monsters } from '../data/monsters';
 import { itemData, itemSets, affixPool, AFFIX_COUNT } from '../data/items';
 import { STAT_KEYS, FINAL_BOSS_BASE_STATS } from '../data/constants';
 import { applyMonsterModifiers } from './bosses';
+import { applyWagersToBoss } from './wagers';
 import { trackDaily } from './meta';
 
 /** Core (guaranteed) stat per equipment slot — gives each slot an identity. */
@@ -20,6 +21,32 @@ function shuffleArray<T>(array: T[], rng: () => number): T[] {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+/**
+ * Roll the affix set for an item of the given rarity (lifesteal/%HP/reflect/…).
+ * Shared by fresh drops and the forge's reforge, so both stay in lockstep with
+ * `AFFIX_COUNT` and the affix value ranges. Optional `weights` bias which affixes
+ * are picked (used by reforge to lean toward a build focus); default is uniform.
+ */
+export function rollAffixes(rarity: Rarity, rng: () => number, weights: Record<string, number> = {}): Affix[] {
+  const count = AFFIX_COUNT[rarity];
+  if (count <= 0) return [];
+  const pool = [...affixPool];
+  const affixes: Affix[] = [];
+  for (let i = 0; i < count && pool.length > 0; i++) {
+    // Weighted pick without replacement (uniform when no weights given).
+    const total = pool.reduce((s, d) => s + (weights[d.key] ?? 1), 0);
+    let r = rng() * total;
+    let idx = 0;
+    for (; idx < pool.length - 1; idx++) {
+      r -= weights[pool[idx].key] ?? 1;
+      if (r <= 0) break;
+    }
+    const def = pool.splice(idx, 1)[0];
+    affixes.push({ key: def.key, value: Math.round((rng() * (def.max - def.min) + def.min) * 1000) / 1000 });
+  }
+  return affixes;
 }
 
 export function getRarityProbabilities(state: GameState, monsterType: string): Record<Rarity, number> {
@@ -143,16 +170,8 @@ export function generateItemDrop(state: GameState, ctx: EngineContext, monster: 
   }
 
   // Affixes: extra special modifiers (lifesteal, %HP, reflect, ...) on higher rarities.
-  const affixCount = AFFIX_COUNT[rarityKey];
-  if (affixCount > 0) {
-    const pool = shuffleArray([...affixPool], rng);
-    const affixes: Affix[] = [];
-    for (let i = 0; i < affixCount && pool.length > 0; i++) {
-      const def = pool.pop()!;
-      affixes.push({ key: def.key, value: Math.round((rng() * (def.max - def.min) + def.min) * 1000) / 1000 });
-    }
-    if (affixes.length) newItem.affixes = affixes;
-  }
+  const affixes = rollAffixes(rarityKey, rng);
+  if (affixes.length) newItem.affixes = affixes;
 
   if (rarityKey === 'LR') state.stats.lrDrops += 1;
   trackDaily(state, 'drops', 1);
@@ -221,6 +240,7 @@ export function spawnMonster(state: GameState, ctx: EngineContext, isBoss = fals
   } as Monster;
 
   if (!isBoss) applyMonsterModifiers(ctx, state.currentMonster);
+  else applyWagersToBoss(state, ctx, state.currentMonster);
 
   // Rare "champion" elite: chunky, dangerous, and drops boss-tier loot.
   if (!isBoss && state.wave > 2 && rng() < 0.03) {
@@ -252,5 +272,6 @@ export function challengeFinalBoss(state: GameState, ctx: EngineContext): void {
   // Always recompute so the encounter reflects the current run's weakening.
   weakenFinalBoss(state);
   state.currentMonster = { ...(state.finalBoss as Monster), debuffs: {}, missNextAttack: false };
+  applyWagersToBoss(state, ctx, state.currentMonster);
   ctx.log(`You challenge the mighty ${state.currentMonster.name}!`, 'log-system', 'event');
 }

@@ -71,6 +71,7 @@ export function getDefaultGameState(): GameState {
     loadouts: [null, null, null],
     killStreak: 0,
     bestKillStreak: 0,
+    wagers: [],
   };
 }
 
@@ -101,8 +102,10 @@ export function selectClass(state: GameState, ctx: EngineContext, className: Bas
     investedStats: { str: 0, con: 0, def: 0, dex: 0, agl: 0, int: 0, critChance: 0, critDmg: 0 } as Record<StatName, number>,
     currentHp: classInfo.base.hp,
     activeSkills: [],
+    equippedSkills: [],
     promotionPending: false,
     pendingPromotionChoices: null,
+    buildFocus: 'balanced',
   };
   resetTransientData(state);
   ctx.log(`You have chosen the path of the ${className}.`, 'log-system', 'event');

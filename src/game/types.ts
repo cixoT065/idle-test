@@ -28,6 +28,8 @@ export interface Item {
   affixes?: Affix[];
   enhancementLevel: number;
   enhancementBonusStats: Record<StatName, number>;
+  /** Times this item's affixes have been rerolled at the forge (drives reforge cost). */
+  reforges?: number;
   // Core/base rolled stats live directly on the item (str, def, int, ...).
   [key: string]: unknown;
 }
@@ -43,9 +45,14 @@ export interface Player {
   baseStats: Record<string, number>;
   investedStats: Record<StatName, number>;
   currentHp: number;
+  /** Innate always-on skills: passive L70 capstones (and legacy-learned skills). */
   activeSkills: string[];
+  /** Player-chosen active proc skills, slotted from the class catalog (limited slots). */
+  equippedSkills: string[];
   promotionPending: boolean;
   pendingPromotionChoices: string[] | null;
+  /** Chosen build archetype — re-weights item scoring (auto-equip) and reforge bias. */
+  buildFocus: string;
 }
 
 export interface Debuff {
@@ -84,6 +91,8 @@ export interface Monster {
   enrageStacks?: number;
   phase?: number;
   shielded?: boolean;
+  /** Opt-in boss wagers locked onto this boss at spawn (risk/reward stakes). */
+  wagers?: string[];
 }
 
 export interface PlayerTemp {
@@ -194,6 +203,8 @@ export interface GameState {
   loadouts: (Loadout | null)[];
   killStreak: number;
   bestKillStreak: number;
+  /** Player's selected boss wagers (a persisted preference, locked in on challenge). */
+  wagers: string[];
 }
 
 /** Computed/derived combat stats produced by getPlayerTotalStats. */

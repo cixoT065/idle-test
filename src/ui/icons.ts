@@ -20,7 +20,7 @@ export const STAT_ICON: Record<string, string> = {
 };
 
 export const TAB_ICON: Record<string, string> = {
-  shop: '🛒', inventory: '🎒', blacksmith: '🔨', rebirth: '♻️', goals: '🎯',
+  shop: '🛒', inventory: '🎒', skills: '✨', blacksmith: '🔨', rebirth: '♻️', goals: '🎯',
 };
 
 export const MODIFIER_ICON: Record<string, string> = {

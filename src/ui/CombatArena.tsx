@@ -141,9 +141,41 @@ export function CombatArena() {
       });
       at(420, () => { setPlayerAnim('victory'); at(380, () => setPlayerAnim('idle')); });
     }
-    if (death) { setPlayerAnim('defeat'); flash('shake-hard'); at(800, () => setPlayerAnim('idle')); }
+    if (death) {
+      setPlayerAnim('defeat'); flash('shake-hard'); at(800, () => setPlayerAnim('idle'));
+      // Losing to a wave/final boss respawns a fresh normal foe in the engine.
+      // The kill path swaps the displayed enemy for us, but a death tick never
+      // does — so without this the avatar stays stuck on the vanquished boss.
+      const next = useGameStore.getState().state.currentMonster;
+      if (next && next.name !== viewRef.current?.name) {
+        at(700, () => {
+          setView(toView(next));
+          setEnemyAnim('enter');
+          at(420, () => setEnemyAnim('idle'));
+        });
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fx.id]);
+
+  // Backstop reconciliation: the choreographed branches above handle the pretty
+  // transitions, but they depend on fragile per-tick timing (kill vs death vs
+  // challenge). This guarantees the displayed foe always catches up to the live
+  // monster once the animation window has passed — so the sprite can never stay
+  // stuck on a vanquished boss after a boss battle, however it ended.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const m = useGameStore.getState().state.currentMonster;
+      const cur = viewRef.current;
+      if (m && cur && cur.name !== m.name) {
+        setView(toView(m));
+        setEnemyAnim('enter');
+        setTimeout(() => setEnemyAnim('idle'), 420);
+      }
+    }, 950);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live?.name, fx.id]);
 
   useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
 
