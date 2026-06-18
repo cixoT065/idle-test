@@ -1,64 +1,61 @@
 import type { BaseClassName } from '../game/types';
-import warrior from '../assets/generated/warrior.png';
-import rogue from '../assets/generated/rogue.png';
-import wizard from '../assets/generated/wizard.png';
-import slime from '../assets/generated/slime.png';
-import giantRat from '../assets/generated/giant_rat.png';
-import goblinScout from '../assets/generated/goblin_scout.png';
-import caveBat from '../assets/generated/cave_bat.png';
-import kobold from '../assets/generated/kobold_miner.png';
-import forestSpider from '../assets/generated/forest_spider.png';
-import undeadSoldier from '../assets/generated/undead_soldier.png';
-import mutatedSlime from '../assets/generated/mutated_slime.png';
-import rabidWolf from '../assets/generated/rabid_wolf.png';
-import shriekingFungus from '../assets/generated/shrieking_fungus.png';
-import orcGrunt from '../assets/generated/orc_grunt.png';
-import troll from '../assets/generated/troll.png';
-import ogreMage from '../assets/generated/ogre_mage.png';
-import goblinShaman from '../assets/generated/goblin_shaman.png';
-import stoneGolem from '../assets/generated/stone_golem.png';
-import goblinKing from '../assets/generated/goblin_king.png';
-import slimeMother from '../assets/generated/slime_mother.png';
-import hydra from '../assets/generated/hydra.png';
-import dragonWhelp from '../assets/generated/dragon_whelp.png';
-import chronos from '../assets/generated/chronos_tyrant.png';
 
-export const CLASS_SPRITE: Record<BaseClassName, string> = { Warrior: warrior, Rogue: rogue, Wizard: wizard };
+// Eagerly import every generated sprite as a URL, keyed by file path.
+const URLS = import.meta.glob('../assets/generated/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+function url(slug: string): string | undefined {
+  const hit = Object.keys(URLS).find((p) => p.endsWith(`/${slug}.png`));
+  return hit ? URLS[hit] : undefined;
+}
+
+export interface Frames { idle: [string, string]; atk: string }
+
+/** Build the {idle pair, attack} frame set for a slug, falling back to the base frame. */
+function frames(slug: string): Frames | null {
+  const base = url(slug);
+  if (!base) return null;
+  return { idle: [base, url(`${slug}_b`) ?? base], atk: url(`${slug}_atk`) ?? base };
+}
+
+const CLASS_SLUG: Record<BaseClassName, string> = { Warrior: 'warrior', Rogue: 'rogue', Wizard: 'wizard' };
+
+export function classFrames(c: BaseClassName): Frames {
+  return frames(CLASS_SLUG[c]) ?? { idle: [url('warrior')!, url('warrior')!], atk: url('warrior')! };
+}
 
 /**
- * Monster name → generated sprite. Names may carry modifier prefixes
- * ("Armored Orc Grunt", "⭐ Champion Slime"), so the base template name is always
- * a substring. Most-specific keys are listed first so e.g. "Mutated Slime" and
- * "The Slime Mother" win over the generic "slime".
+ * Monster name → sprite slug. Names may carry modifier prefixes ("Armored Orc
+ * Grunt", "⭐ Champion Slime"), so the base template name is always a substring.
+ * Most-specific keys first so "Mutated Slime"/"Slime Mother" beat generic "slime".
  */
-const MONSTER_SPRITES: [string, string][] = [
-  ['chronos', chronos],
-  ['slime mother', slimeMother],
-  ['mutated slime', mutatedSlime],
-  ['grimgnaw', goblinKing],
-  ['goblin king', goblinKing],
-  ['goblin scout', goblinScout],
-  ['goblin shaman', goblinShaman],
-  ['giant rat', giantRat],
-  ['cave bat', caveBat],
-  ['kobold', kobold],
-  ['forest spider', forestSpider],
-  ['undead soldier', undeadSoldier],
-  ['rabid wolf', rabidWolf],
-  ['shrieking fungus', shriekingFungus],
-  ['orc grunt', orcGrunt],
-  ['ogre mage', ogreMage],
-  ['goblin', goblinScout],
-  ['stone golem', stoneGolem],
-  ['dragon whelp', dragonWhelp],
-  ['dragon', dragonWhelp],
-  ['hydra', hydra],
-  ['troll', troll],
-  ['slime', slime],
+const MONSTER_SLUGS: [string, string][] = [
+  ['chronos', 'chronos_tyrant'],
+  ['slime mother', 'slime_mother'],
+  ['mutated slime', 'mutated_slime'],
+  ['grimgnaw', 'goblin_king'],
+  ['goblin king', 'goblin_king'],
+  ['goblin scout', 'goblin_scout'],
+  ['goblin shaman', 'goblin_shaman'],
+  ['giant rat', 'giant_rat'],
+  ['cave bat', 'cave_bat'],
+  ['kobold', 'kobold_miner'],
+  ['forest spider', 'forest_spider'],
+  ['undead soldier', 'undead_soldier'],
+  ['rabid wolf', 'rabid_wolf'],
+  ['shrieking fungus', 'shrieking_fungus'],
+  ['orc grunt', 'orc_grunt'],
+  ['ogre mage', 'ogre_mage'],
+  ['goblin', 'goblin_scout'],
+  ['stone golem', 'stone_golem'],
+  ['dragon whelp', 'dragon_whelp'],
+  ['dragon', 'dragon_whelp'],
+  ['hydra', 'hydra'],
+  ['troll', 'troll'],
+  ['slime', 'slime'],
 ];
 
-export function monsterSprite(name: string): string | null {
+export function monsterFrames(name: string): Frames | null {
   const n = name.toLowerCase();
-  for (const [kw, asset] of MONSTER_SPRITES) if (n.includes(kw)) return asset;
+  for (const [kw, slug] of MONSTER_SLUGS) if (n.includes(kw)) return frames(slug);
   return null;
 }

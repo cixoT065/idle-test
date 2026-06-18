@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useGame } from './useGame';
 import { monsterIcon } from './icons';
-import { CLASS_SPRITE, monsterSprite } from './sprites';
+import { classFrames, monsterFrames } from './sprites';
 
 type PlayerAnim = 'idle' | 'attack' | 'crit' | 'cast' | 'whiff' | 'hurt' | 'victory' | 'defeat';
 type EnemyAnim = 'idle' | 'attack' | 'whiff' | 'hurt' | 'dying' | 'enter';
@@ -30,6 +30,13 @@ export function CombatArena() {
   const [vfx, setVfx] = useState<Vfx[]>([]);
   const [floats, setFloats] = useState<Float[]>([]);
   const [view, setView] = useState<MonsterView | null>(null);
+  const [idleFrame, setIdleFrame] = useState<0 | 1>(0);
+
+  // Slow breathing toggle between the two idle frames.
+  useEffect(() => {
+    const id = setInterval(() => setIdleFrame((f) => (f ? 0 : 1)), 560);
+    return () => clearInterval(id);
+  }, []);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const seq = useRef(0);
@@ -136,18 +143,16 @@ export function CombatArena() {
   useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
 
   if (!p) return null;
-  const enemySprite = view ? monsterSprite(view.name) : null;
+  const pf = classFrames(p.baseClassName);
+  const playerImg = playerAnim === 'attack' || playerAnim === 'crit' || playerAnim === 'cast' ? pf.atk : pf.idle[idleFrame];
+  const ef = view ? monsterFrames(view.name) : null;
+  const enemyImg = ef ? (enemyAnim === 'attack' ? ef.atk : ef.idle[idleFrame]) : null;
 
   return (
     <div className={`combat-arena ${shake}`}>
       <div className={`fighter player anim-${playerAnim}`}>
         <div className="fighter-shadow" />
-        <div
-          className="fighter-portrait"
-          style={{ backgroundImage: `url(${CLASS_SPRITE[p.baseClassName]})` }}
-          role="img"
-          aria-label={p.className}
-        />
+        <div className="fighter-portrait" style={{ backgroundImage: `url(${playerImg})` }} role="img" aria-label={p.className} />
         <div className="fighter-name">{p.className}</div>
       </div>
 
@@ -155,8 +160,8 @@ export function CombatArena() {
 
       <div className={`fighter enemy anim-${enemyAnim}${view?.isBoss ? ' is-bossfoe' : ''}${view?.isChampion ? ' is-champion' : ''}`}>
         <div className="fighter-shadow" />
-        {enemySprite
-          ? <div className="fighter-portrait enemy-portrait" style={{ backgroundImage: `url(${enemySprite})` }} role="img" aria-label={view!.name} />
+        {enemyImg
+          ? <div className="fighter-portrait enemy-portrait" style={{ backgroundImage: `url(${enemyImg})` }} role="img" aria-label={view!.name} />
           : <div className="fighter-emoji">{view ? monsterIcon(view.name) : '❓'}</div>}
         <div className="fighter-name">{view?.name ?? '—'}</div>
       </div>

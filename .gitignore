@@ -9,3 +9,4 @@ coverage
 .vercel
 tsconfig.tsbuildinfo
 scripts/*.log
+scripts/frames/
