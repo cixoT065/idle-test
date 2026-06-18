@@ -32,6 +32,7 @@ export function CombatArena() {
   const [view, setView] = useState<MonsterView | null>(null);
   const [idleFrame, setIdleFrame] = useState<0 | 1>(0);
   const [atkStep, setAtkStep] = useState(0);
+  const [enemyAtkStep, setEnemyAtkStep] = useState(0);
 
   // Slow breathing toggle between the two idle frames.
   useEffect(() => {
@@ -78,7 +79,7 @@ export function CombatArena() {
     lastFxId.current = fx.id;
     timers.current.forEach(clearTimeout);
     timers.current = [];
-    setAtkStep(0); // start every swing on the wind-up frame
+    setAtkStep(0); setEnemyAtkStep(0); // start every swing on the wind-up frame
 
     const { playerDmg, monsterDmg, playerCrit, spell, playerMiss, monsterMiss, kill, death } = fx;
 
@@ -97,7 +98,8 @@ export function CombatArena() {
       at(460, () => setPlayerAnim('idle'));
     } else {
       setPlayerAnim(playerCrit ? 'crit' : 'attack');
-      at(150, () => setAtkStep(1)); // wind-up → strike pose
+      at(150, () => setAtkStep(1)); // wind-up → strike
+      at(290, () => setAtkStep(2)); // strike → recovery
       at(200, () => {
         addVfx('slash', 400);
         if (playerDmg > 0) {
@@ -115,11 +117,11 @@ export function CombatArena() {
     if (!kill) {
       at(430, () => {
         if (monsterMiss) {
-          setEnemyAnim('attack');
+          setEnemyAnim('attack'); at(120, () => setEnemyAtkStep(1)); at(250, () => setEnemyAtkStep(2));
           at(170, () => { setPlayerAnim('hurt'); addVfx('guard'); addFloat('MISS', 'player'); at(220, () => { setPlayerAnim('idle'); }); });
           at(380, () => setEnemyAnim('idle'));
         } else if (monsterDmg > 0) {
-          setEnemyAnim('attack');
+          setEnemyAnim('attack'); at(120, () => setEnemyAtkStep(1)); at(250, () => setEnemyAtkStep(2));
           at(190, () => {
             setPlayerAnim('hurt'); addFloat(`-${monsterDmg.toLocaleString()}`, 'player'); flash('shake');
             at(260, () => setPlayerAnim((a) => (a === 'hurt' ? 'idle' : a)));
@@ -148,9 +150,14 @@ export function CombatArena() {
   if (!p) return null;
   const pf = classFrames(p.baseClassName);
   const inAttack = playerAnim === 'attack' || playerAnim === 'crit' || playerAnim === 'cast';
-  const playerImg = inAttack ? pf.atk[Math.min(atkStep, pf.atk.length - 1)] : pf.idle[idleFrame];
+  const playerImg = inAttack
+    ? pf.atk[Math.min(atkStep, pf.atk.length - 1)]
+    : playerAnim === 'hurt' ? pf.hurt : pf.idle[idleFrame];
   const ef = view ? monsterFrames(view.name) : null;
-  const enemyImg = ef ? (enemyAnim === 'attack' ? ef.atk[0] : ef.idle[idleFrame]) : null;
+  const enemyImg = ef
+    ? enemyAnim === 'attack' ? ef.atk[Math.min(enemyAtkStep, ef.atk.length - 1)]
+      : enemyAnim === 'hurt' ? ef.hurt : ef.idle[idleFrame]
+    : null;
 
   return (
     <div className={`combat-arena ${shake}`}>

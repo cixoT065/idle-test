@@ -8,21 +8,23 @@ function url(slug: string): string | undefined {
   return hit ? URLS[hit] : undefined;
 }
 
-export interface Frames { idle: [string, string]; atk: string[] }
+export interface Frames { idle: [string, string]; atk: string[]; hurt: string }
 
-/** Build the {idle pair, attack sequence} frame set for a slug. The attack may be
- *  1 frame (most foes/Wizard cast) or 2 (Warrior slash, Rogue stab: windup→strike). */
+/** Build the frame set for a slug: idle breathing pair, a 1–3 frame attack
+ *  sequence (a1 windup → a2 strike → a3 recovery), and a hurt pose. Missing
+ *  frames fall back to the base sprite. */
 function frames(slug: string): Frames | null {
   const base = url(slug);
   if (!base) return null;
-  const atk = [url(`${slug}_atk`), url(`${slug}_atk2`)].filter(Boolean) as string[];
-  return { idle: [base, url(`${slug}_b`) ?? base], atk: atk.length ? atk : [base] };
+  const atk = [url(`${slug}_a1`), url(`${slug}_a2`), url(`${slug}_a3`)].filter(Boolean) as string[];
+  return { idle: [base, url(`${slug}_b`) ?? base], atk: atk.length ? atk : [base], hurt: url(`${slug}_hurt`) ?? base };
 }
 
 const CLASS_SLUG: Record<BaseClassName, string> = { Warrior: 'warrior', Rogue: 'rogue', Wizard: 'wizard' };
 
 export function classFrames(c: BaseClassName): Frames {
-  return frames(CLASS_SLUG[c]) ?? { idle: [url('warrior')!, url('warrior')!], atk: [url('warrior')!] };
+  const w = url('warrior')!;
+  return frames(CLASS_SLUG[c]) ?? { idle: [w, w], atk: [w], hurt: w };
 }
 
 /**
